@@ -4,9 +4,8 @@ import Browser
 import Grid exposing (Grid)
 import Html exposing (Html, main_)
 import Html.Attributes
-import Render
+import Render exposing (Config)
 import Svg exposing (Svg)
-import Svg.Attributes
 
 
 
@@ -14,17 +13,25 @@ import Svg.Attributes
 
 
 type alias Model =
-    Grid ()
+    { grid : Grid ()
+    , config : Config
+    }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Grid.fromList
-        [ ( ( 0, 0, 0 ), () )
-        , ( ( 1, 0, -1 ), () )
-        , ( ( 0, -1, 1 ), () )
-        , ( ( 0, 1, -1 ), () )
-        ]
+    ( Model
+        (Grid.fromList
+            [ ( ( 0, 0, 0 ), () )
+            , ( ( 1, 0, -1 ), () )
+            , ( ( 0, -1, 1 ), () )
+            , ( ( 0, 1, -1 ), () )
+            ]
+        )
+        (Render.initConfig
+            |> Render.withPointyTop
+            |> Render.withZoom 4
+        )
     , Cmd.none
     )
 
@@ -51,21 +58,15 @@ update msg model =
 view : Model -> Html Msg
 view model =
     main_ [ Html.Attributes.id "app" ]
-        [ Render.customSvg Render.initConfig
-            [ Render.viewGrid Render.initConfig model viewHex
+        [ Render.customSvg model.config
+            [ Render.viewGrid model.config model.grid (viewHex model.config)
             ]
         ]
 
 
-viewHex : ( Grid.Point, () ) -> Svg msg
-viewHex _ =
-    Svg.circle
-        [ Svg.Attributes.fill "beige"
-        , Svg.Attributes.cx "0"
-        , Svg.Attributes.cy "0"
-        , Svg.Attributes.r "50"
-        ]
-        []
+viewHex : Config -> ( Grid.Point, () ) -> Svg msg
+viewHex config _ =
+    Render.renderHex config []
 
 
 

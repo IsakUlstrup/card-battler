@@ -1,10 +1,18 @@
-module Render exposing (Config, customSvg, initConfig, viewGrid)
+module Render exposing
+    ( Config
+    , customSvg
+    , initConfig
+    , renderHex
+    , viewGrid
+    , withPointyTop
+    , withZoom
+    )
 
 {-| A custom SVG element with camera support
 -}
 
 import Grid exposing (Grid, Point)
-import Svg exposing (Svg)
+import Svg exposing (Attribute, Svg)
 import Svg.Attributes
 import Svg.Keyed
 
@@ -25,6 +33,16 @@ type alias Config =
 initConfig : Config
 initConfig =
     Config ( 0, 0, 0 ) 1 True
+
+
+withPointyTop : Config -> Config
+withPointyTop config =
+    { config | hexFlatTop = False }
+
+
+withZoom : Float -> Config -> Config
+withZoom zoom config =
+    { config | cameraZoom = max 0 zoom }
 
 
 
@@ -96,7 +114,7 @@ hexTransform config position =
 customSvg : Config -> List (Svg msg) -> Svg msg
 customSvg config children =
     Svg.svg
-        [ Svg.Attributes.viewBox "-500 -500 1000 1000"
+        [ Svg.Attributes.viewBox "-1000 -1000 2000 2000"
         , Svg.Attributes.preserveAspectRatio "xMidyMid meet"
         , Svg.Attributes.class "hex-svg"
         ]
@@ -115,6 +133,32 @@ viewGrid config grid viewHex =
     let
         viewHexWrapper : ( Point, a ) -> ( String, Svg msg )
         viewHexWrapper ( position, hex ) =
-            ( Grid.pointToString position, Svg.g [ hexTransform config position, Svg.Attributes.class "tile" ] [ viewHex ( position, hex ) ] )
+            ( Grid.pointToString position
+            , Svg.g
+                [ hexTransform config position
+                , Svg.Attributes.class "tile"
+                ]
+                [ viewHex ( position, hex ) ]
+            )
     in
     Svg.Keyed.node "g" [ Svg.Attributes.class "grid" ] (grid |> Grid.toList |> List.map viewHexWrapper)
+
+
+
+-- HELPERS
+
+
+renderHex : Config -> List (Attribute msg) -> Svg msg
+renderHex config attrs =
+    let
+        points : String
+        points =
+            if config.hexFlatTop then
+                -- hardcoded flat top points based on hexSize constant
+                "75,25 50,68 0,68 -25,25 0,-18 50,-18"
+
+            else
+                -- hardcoded pointy top points based on hexSize constant
+                "68,0 68,50 25,75 -18,50 -18,0 25,-25"
+    in
+    Svg.polygon (Svg.Attributes.points points :: attrs) []
