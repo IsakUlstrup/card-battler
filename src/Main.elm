@@ -1,8 +1,9 @@
 module Main exposing (Model, Msg, main)
 
 import Browser
-import Html exposing (Html, button, h3, main_, p, text)
-import Html.Events exposing (onClick)
+import Grid exposing (Grid)
+import Html exposing (Html, main_)
+import Html.Attributes
 
 
 
@@ -10,12 +11,17 @@ import Html.Events exposing (onClick)
 
 
 type alias Model =
-    Int
+    Grid ()
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( 0, Cmd.none )
+    ( Grid.fromList
+        [ ( ( 0, 0, 0 ), () )
+        , ( ( 1, 0, -1 ), () )
+        ]
+    , Cmd.none
+    )
 
 
 
@@ -23,22 +29,14 @@ init _ =
 
 
 type Msg
-    = Increment
-    | Decrement
-    | Reset
+    = NoOp
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : Msg -> Model -> Model
 update msg model =
     case msg of
-        Increment ->
-            ( model + 1, Cmd.none )
-
-        Decrement ->
-            ( model - 1, Cmd.none )
-
-        Reset ->
-            ( 0, Cmd.none )
+        NoOp ->
+            model
 
 
 
@@ -46,14 +44,9 @@ update msg model =
 
 
 view : Model -> Html Msg
-view model =
-    main_ []
-        [ h3 [] [ text "Elm counter" ]
-        , p [] [ text <| String.fromInt model ]
-        , button [ onClick Increment ] [ text "+" ]
-        , button [ onClick Decrement ] [ text "-" ]
-        , button [ onClick Reset ] [ text "Reset" ]
-        ]
+view _ =
+    main_ [ Html.Attributes.id "app" ]
+        []
 
 
 
@@ -74,7 +67,6 @@ main =
     Browser.element
         { init = init
         , view = view
-        , update = update
+        , update = \msg model -> ( update msg model, Cmd.none )
         , subscriptions = subscriptions
         }
-
