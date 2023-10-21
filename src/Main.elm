@@ -4,6 +4,9 @@ import Browser
 import Grid exposing (Grid)
 import Html exposing (Html, main_)
 import Html.Attributes
+import Render
+import Svg exposing (Svg)
+import Svg.Attributes
 
 
 
@@ -44,9 +47,14 @@ update msg model =
 
 
 view : Model -> Html Msg
-view _ =
+view model =
     main_ [ Html.Attributes.id "app" ]
-        []
+        [ Render.customSvg Render.initConfig [ Render.viewGrid model viewHex ] ]
+
+
+viewHex : ( Grid.Point, () ) -> Svg msg
+viewHex _ =
+    Svg.text_ [ Svg.Attributes.fill "white" ] [ Svg.text "o" ]
 
 
 

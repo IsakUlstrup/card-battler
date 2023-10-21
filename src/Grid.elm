@@ -2,6 +2,7 @@ module Grid exposing
     ( Grid
     , Point
     , fromList
+    , pointToAxial
     , toList
     )
 
@@ -19,6 +20,18 @@ type alias Point =
 isValid : ( Int, Int, Int ) -> Bool
 isValid ( x, y, z ) =
     x + y + z == 0
+
+
+{-| Convert cube point to axial point
+Note: returns (0, 0) if point is invalid
+-}
+pointToAxial : Point -> ( Int, Int )
+pointToAxial ( x, y, z ) =
+    if isValid ( x, y, z ) then
+        ( x, z )
+
+    else
+        ( 0, 0 )
 
 
 
