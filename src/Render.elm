@@ -110,8 +110,6 @@ customSvg config children =
     Svg.svg
         [ viewBoxAttr
         , Svg.Attributes.preserveAspectRatio "xMidyMid meet"
-        , Svg.Attributes.width "1000px"
-        , Svg.Attributes.height "1000px"
         , Svg.Attributes.class "hex-svg"
         ]
         [ Svg.g
