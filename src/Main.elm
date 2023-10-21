@@ -21,7 +21,7 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( Grid.fromList
         [ ( ( 0, 0, 0 ), () )
-        , ( ( 1, 0, -1 ), () )
+        , ( ( 2, 0, -2 ), () )
         ]
     , Cmd.none
     )
@@ -49,7 +49,10 @@ update msg model =
 view : Model -> Html Msg
 view model =
     main_ [ Html.Attributes.id "app" ]
-        [ Render.customSvg Render.initConfig [ Render.viewGrid model viewHex ] ]
+        [ Render.customSvg Render.initConfig
+            [ Render.viewGrid Render.initConfig model viewHex
+            ]
+        ]
 
 
 viewHex : ( Grid.Point, () ) -> Svg msg

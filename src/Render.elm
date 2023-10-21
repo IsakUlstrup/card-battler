@@ -6,6 +6,7 @@ module Render exposing (Config, customSvg, initConfig, viewGrid)
 import Grid exposing (Grid, Point)
 import Svg exposing (Svg)
 import Svg.Attributes
+import Svg.Keyed
 
 
 
@@ -17,14 +18,13 @@ import Svg.Attributes
 type alias Config =
     { cameraPosition : Point
     , cameraZoom : Float
-    , hexScale : Float
     , hexFlatTop : Bool
     }
 
 
 initConfig : Config
 initConfig =
-    Config ( 0, 0, 0 ) 1 1 True
+    Config ( 0, 0, 0 ) 1 True
 
 
 
@@ -55,6 +55,8 @@ pointToPixel flatTop point =
         )
 
 
+{-| Camera transform attribute
+-}
 cameraTransform : Config -> Svg.Attribute msg
 cameraTransform config =
     let
@@ -63,15 +65,34 @@ cameraTransform config =
     in
     Svg.Attributes.style
         ("transform: translate("
-            ++ String.fromFloat -(camX * config.cameraZoom)
+            ++ String.fromInt -(camX * config.cameraZoom |> round)
             ++ "px, "
-            ++ String.fromFloat -(camY * config.cameraZoom)
+            ++ String.fromInt -(camY * config.cameraZoom |> round)
             ++ "px) scale("
             ++ String.fromFloat config.cameraZoom
             ++ ");"
         )
 
 
+{-| Hex transform attribute
+-}
+hexTransform : Config -> Point -> Svg.Attribute msg
+hexTransform config position =
+    let
+        ( x, y ) =
+            position |> pointToPixel config.hexFlatTop
+    in
+    Svg.Attributes.style
+        ("transform: translate("
+            ++ String.fromInt (round x)
+            ++ "px, "
+            ++ String.fromInt (round y)
+            ++ "px)"
+        )
+
+
+{-| Viewbox attribute, (0, 0) is set to the center of the screen
+-}
 viewBoxAttr : Svg.Attribute msg
 viewBoxAttr =
     Svg.Attributes.viewBox
@@ -82,6 +103,8 @@ viewBoxAttr =
         )
 
 
+{-| Render an svg element with camera support
+-}
 customSvg : Config -> List (Svg msg) -> Svg msg
 customSvg config children =
     Svg.svg
@@ -99,6 +122,13 @@ customSvg config children =
         ]
 
 
-viewGrid : Grid a -> (( Point, a ) -> Svg msg) -> Svg msg
-viewGrid grid viewHex =
-    Svg.g [] (grid |> Grid.toList |> List.map viewHex)
+{-| View a grid
+-}
+viewGrid : Config -> Grid a -> (( Point, a ) -> Svg msg) -> Svg msg
+viewGrid config grid viewHex =
+    let
+        viewHexWrapper : ( Point, a ) -> ( String, Svg msg )
+        viewHexWrapper ( position, hex ) =
+            ( Grid.pointToString position, Svg.g [ hexTransform config position, Svg.Attributes.class "tile" ] [ viewHex ( position, hex ) ] )
+    in
+    Svg.Keyed.node "g" [ Svg.Attributes.class "grid" ] (grid |> Grid.toList |> List.map viewHexWrapper)

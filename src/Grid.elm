@@ -3,6 +3,7 @@ module Grid exposing
     , Point
     , fromList
     , pointToAxial
+    , pointToString
     , toList
     )
 
@@ -32,6 +33,15 @@ pointToAxial ( x, y, z ) =
 
     else
         ( 0, 0 )
+
+
+{-| Convert point to string
+-}
+pointToString : Point -> String
+pointToString ( x, y, z ) =
+    String.fromInt x
+        ++ String.fromInt y
+        ++ String.fromInt z
 
 
 
