@@ -91,24 +91,12 @@ hexTransform config position =
         )
 
 
-{-| Viewbox attribute, (0, 0) is set to the center of the screen
--}
-viewBoxAttr : Svg.Attribute msg
-viewBoxAttr =
-    Svg.Attributes.viewBox
-        ([ -500, -500, 1000, 1000 ]
-            |> List.map String.fromFloat
-            |> List.intersperse " "
-            |> String.concat
-        )
-
-
 {-| Render an svg element with camera support
 -}
 customSvg : Config -> List (Svg msg) -> Svg msg
 customSvg config children =
     Svg.svg
-        [ viewBoxAttr
+        [ Svg.Attributes.viewBox "-500 -500 1000 1000"
         , Svg.Attributes.preserveAspectRatio "xMidyMid meet"
         , Svg.Attributes.class "hex-svg"
         ]
