@@ -21,7 +21,9 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( Grid.fromList
         [ ( ( 0, 0, 0 ), () )
-        , ( ( 2, 0, -2 ), () )
+        , ( ( 1, 0, -1 ), () )
+        , ( ( 0, -1, 1 ), () )
+        , ( ( 0, 1, -1 ), () )
         ]
     , Cmd.none
     )
@@ -57,7 +59,13 @@ view model =
 
 viewHex : ( Grid.Point, () ) -> Svg msg
 viewHex _ =
-    Svg.text_ [ Svg.Attributes.fill "white" ] [ Svg.text "o" ]
+    Svg.circle
+        [ Svg.Attributes.fill "beige"
+        , Svg.Attributes.cx "0"
+        , Svg.Attributes.cy "0"
+        , Svg.Attributes.r "50"
+        ]
+        []
 
 
 
