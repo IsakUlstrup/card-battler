@@ -6,6 +6,7 @@ import Html exposing (Html, main_)
 import Html.Attributes
 import Render exposing (Config)
 import Svg exposing (Svg)
+import Svg.Attributes
 
 
 
@@ -13,7 +14,8 @@ import Svg exposing (Svg)
 
 
 type alias Model =
-    { grid : Grid ()
+    { map : Grid ()
+    , animals : Grid Char
     , config : Config
     }
 
@@ -26,6 +28,11 @@ init _ =
             , ( ( 1, 0, -1 ), () )
             , ( ( 0, -1, 1 ), () )
             , ( ( 0, 1, -1 ), () )
+            ]
+        )
+        (Grid.fromList
+            [ ( ( 0, 0, 0 ), '🐼' )
+            , ( ( 1, 0, -1 ), '🦝' )
             ]
         )
         (Render.initConfig
@@ -59,7 +66,8 @@ view : Model -> Html Msg
 view model =
     main_ [ Html.Attributes.id "app" ]
         [ Render.customSvg model.config
-            [ Render.viewGrid model.config model.grid (viewHex model.config)
+            [ Render.viewGrid model.config model.map (viewHex model.config)
+            , Render.viewGrid model.config model.animals viewAnimal
             ]
         ]
 
@@ -67,6 +75,18 @@ view model =
 viewHex : Config -> ( Grid.Point, () ) -> Svg msg
 viewHex config _ =
     Render.renderHex config []
+
+
+viewAnimal : ( Grid.Point, Char ) -> Svg msg
+viewAnimal ( _, animal ) =
+    Svg.text_
+        [ Svg.Attributes.textAnchor "middle"
+        , Svg.Attributes.fontSize "5rem"
+        , Svg.Attributes.x "25px"
+        , Svg.Attributes.y "25px"
+        , Svg.Attributes.class "animal"
+        ]
+        [ Svg.text (String.fromChar animal) ]
 
 
 
