@@ -67,15 +67,15 @@ view : Model -> Html Msg
 view model =
     main_ [ Html.Attributes.id "app" ]
         [ Render.customSvg model.config
-            [ Render.viewGrid model.config model.map (viewHex model.config)
+            [ Render.viewGrid model.config model.map (viewHex model.config.hexFlatTop)
             , Render.viewGrid model.config model.animals viewAnimal
             ]
         ]
 
 
-viewHex : Config -> ( Grid.Point, () ) -> Svg msg
-viewHex config _ =
-    Render.renderHex config []
+viewHex : Bool -> ( Grid.Point, () ) -> Svg msg
+viewHex flatTop _ =
+    Render.renderHex flatTop []
 
 
 viewAnimal : ( Grid.Point, Char ) -> Svg msg

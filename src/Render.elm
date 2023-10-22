@@ -148,12 +148,14 @@ viewGrid config grid viewHex =
 -- HELPERS
 
 
-renderHex : Config -> List (Attribute msg) -> Svg msg
-renderHex config attrs =
+{-| View hex polygon
+-}
+renderHex : Bool -> List (Attribute msg) -> Svg msg
+renderHex flatTop attrs =
     let
         points : String
         points =
-            if config.hexFlatTop then
+            if flatTop then
                 -- hardcoded flat top points based on hexSize constant
                 "75,25 50,68 0,68 -25,25 0,-18 50,-18"
 
