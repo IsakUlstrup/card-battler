@@ -1,6 +1,7 @@
 module Grid exposing
     ( Grid
     , Point
+    , circle
     , fromList
     , pointToAxial
     , pointToString
@@ -51,28 +52,7 @@ scale factor ( x, y, z ) =
 
 add : Point -> Point -> Point
 add ( x1, y1, z1 ) ( x2, y2, z2 ) =
-    ( x1 + y1, y1 + y2, z1 + z2 )
-
-
-type alias Directions =
-    { one : Point
-    , two : Point
-    , three : Point
-    , four : Point
-    , five : Point
-    , six : Point
-    }
-
-
-neighbours : Directions
-neighbours =
-    Directions
-        ( 1, 0, -1 )
-        ( 1, -1, 0 )
-        ( 0, -1, 1 )
-        ( -1, 0, 1 )
-        ( -1, 1, 0 )
-        ( 0, 1, -1 )
+    ( x1 + x2, y1 + y2, z1 + z2 )
 
 
 
@@ -108,20 +88,48 @@ toList (Grid grid) =
     Dict.toList grid
 
 
-addRing : Point -> Int -> a -> Grid a -> Grid a
-addRing center radius hex (Grid grid) =
-    -- function cube_ring(center, radius):
-    -- var results = []
-    -- # this code doesn't work for radius == 0; can you see why?
-    -- var hex = cube_add(center,
-    --                     cube_scale(cube_direction(4), radius))
-    -- for each 0 ≤ i < 6:
-    --     for each 0 ≤ j < radius:
-    --         results.append(hex)
-    --         hex = cube_neighbor(hex, i)
-    -- return results
+{-| Get direction given hex side
+-}
+direction : Int -> Point
+direction dir =
+    case dir of
+        0 ->
+            ( 1, -1, 0 )
+
+        1 ->
+            ( 1, 0, -1 )
+
+        2 ->
+            ( 0, 1, -1 )
+
+        3 ->
+            ( -1, 1, 0 )
+
+        4 ->
+            ( -1, 0, 1 )
+
+        _ ->
+            ( 0, -1, 1 )
+
+
+{-| Returns a ring of points around given point with given radius
+-}
+ring : Int -> Point -> List Point
+ring radius center =
     let
-        h =
-            add center (scale radius neighbours.four)
+        start : Int -> Point
+        start index =
+            add center (scale radius (direction (modBy 6 (index + 4))))
+
+        side : Int -> List Point
+        side index =
+            List.map (\i -> add (start index) (scale i (direction index))) (List.range 0 radius)
     in
-    Grid grid
+    List.concatMap side (List.range 0 5)
+
+
+{-| Returns a circle around center of all points within given radius
+-}
+circle : Int -> Point -> List Point
+circle radius center =
+    List.range 0 radius |> List.concatMap (\r -> ring r center)

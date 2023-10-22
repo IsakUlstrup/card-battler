@@ -24,11 +24,7 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( Model
         (Grid.fromList
-            [ ( ( 0, 0, 0 ), () )
-            , ( ( 1, 0, -1 ), () )
-            , ( ( 0, -1, 1 ), () )
-            , ( ( 0, 1, -1 ), () )
-            ]
+            (Grid.circle 2 ( 0, 0, 0 ) |> List.map (\p -> ( p, () )))
         )
         (Grid.fromList
             [ ( ( 0, 0, 0 ), '🐼' )
