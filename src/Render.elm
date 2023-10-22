@@ -102,9 +102,9 @@ hexTransform config position =
     in
     Svg.Attributes.style
         ("transform: translate("
-            ++ String.fromInt (round x)
+            ++ String.fromInt (round x - (round hexSize // 2))
             ++ "px, "
-            ++ String.fromInt (round y)
+            ++ String.fromInt (round y - (round hexSize // 2))
             ++ "px)"
         )
 
