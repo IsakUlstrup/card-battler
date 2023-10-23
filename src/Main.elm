@@ -23,17 +23,17 @@ randomTile emptyChance tile =
 
 {-| Generate a circle with some tiles missing
 -}
-randomCircle : Int -> Point -> Seed -> ( Seed, List ( Point, () ) )
-randomCircle radius center seed =
+randomCircle : Int -> Point -> a -> Seed -> ( Seed, List ( Point, a ) )
+randomCircle radius center tile seed =
     let
-        helper tile ( s, accum ) =
+        helper position ( s, accum ) =
             let
                 ( maybeTile, newSeed ) =
-                    Random.step (randomTile 30 ()) s
+                    Random.step (randomTile 30 tile) s
             in
             case maybeTile of
                 Just justTile ->
-                    ( newSeed, ( tile, justTile ) :: accum )
+                    ( newSeed, ( position, justTile ) :: accum )
 
                 Nothing ->
                     ( newSeed, accum )
@@ -42,28 +42,48 @@ randomCircle radius center seed =
 
 
 
+-- TILE
+
+
+type Tile
+    = PlayerTile
+    | EnemyTile
+
+
+tileToString : Tile -> String
+tileToString tile =
+    case tile of
+        PlayerTile ->
+            "playerTile"
+
+        EnemyTile ->
+            "enemyTile"
+
+
+
 -- MODEL
 
 
 type alias Model =
-    { map : Grid ()
+    { map : Grid Tile
     , animals : Grid Char
     , config : Config
+    , seed : Seed
     }
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
+init : Int -> ( Model, Cmd Msg )
+init timestamp =
     let
-        ( newSeed, tiles ) =
-            randomCircle 2 ( -1, -1, 2 ) (Random.initialSeed 22)
+        ( newSeed, playerTiles ) =
+            randomCircle 2 ( -1, -1, 2 ) PlayerTile (Random.initialSeed timestamp)
 
-        ( _, tiles2 ) =
-            randomCircle 1 ( 2, 2, -4 ) newSeed
+        ( newSeed2, enemyTiles ) =
+            randomCircle 1 ( 2, 2, -4 ) EnemyTile newSeed
     in
     ( Model
         (Grid.fromList
-            (tiles ++ tiles2)
+            (playerTiles ++ enemyTiles)
         )
         (Grid.fromList
             []
@@ -72,6 +92,7 @@ init _ =
             |> Render.withPointyTop
             |> Render.withZoom 4
         )
+        newSeed2
     , Cmd.none
     )
 
@@ -105,9 +126,12 @@ view model =
         ]
 
 
-viewHex : Bool -> ( Point, () ) -> Svg msg
-viewHex flatTop _ =
-    Render.renderHex flatTop []
+viewHex : Bool -> ( Point, Tile ) -> Svg msg
+viewHex flatTop ( _, tile ) =
+    Render.renderHex flatTop
+        [ Svg.Attributes.class (tileToString tile)
+        , Svg.Attributes.class "tile"
+        ]
 
 
 viewAnimal : ( Point, Char ) -> Svg msg
@@ -135,7 +159,7 @@ subscriptions _ =
 -- MAIN
 
 
-main : Program () Model Msg
+main : Program Int Model Msg
 main =
     Browser.element
         { init = init
