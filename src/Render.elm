@@ -114,7 +114,7 @@ hexTransform config position =
 customSvg : Config -> List (Svg msg) -> Svg msg
 customSvg config children =
     Svg.svg
-        [ Svg.Attributes.viewBox "-1000 -1000 2000 2000"
+        [ Svg.Attributes.viewBox "-1000 -1150 2000 2000"
         , Svg.Attributes.preserveAspectRatio "xMidyMid meet"
         , Svg.Attributes.class "hex-svg"
         ]
