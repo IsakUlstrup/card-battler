@@ -127,10 +127,18 @@ view model =
 
 
 viewHex : Bool -> ( Point, Tile ) -> Svg msg
-viewHex flatTop ( _, tile ) =
-    Render.renderHex flatTop
-        [ Svg.Attributes.class (tileToString tile)
-        , Svg.Attributes.class "tile"
+viewHex flatTop ( position, tile ) =
+    Svg.g []
+        [ Render.renderHex flatTop
+            [ Svg.Attributes.class (tileToString tile)
+            , Svg.Attributes.class "tile"
+            ]
+        , Svg.text_
+            [ Svg.Attributes.x "25px"
+            , Svg.Attributes.y "25px"
+            , Svg.Attributes.textAnchor "middle"
+            ]
+            [ Svg.text (Grid.pointToString position) ]
         ]
 
 

@@ -40,9 +40,13 @@ pointToAxial ( x, y, z ) =
 -}
 pointToString : Point -> String
 pointToString ( x, y, z ) =
-    String.fromInt x
+    "("
+        ++ String.fromInt x
+        ++ ", "
         ++ String.fromInt y
+        ++ ", "
         ++ String.fromInt z
+        ++ ")"
 
 
 scale : Int -> Point -> Point
@@ -132,4 +136,8 @@ ring radius center =
 -}
 circle : Int -> Point -> List Point
 circle radius center =
-    List.range 0 radius |> List.concatMap (\r -> ring r center)
+    if isValid center then
+        List.range 0 radius |> List.concatMap (\r -> ring r center)
+
+    else
+        []
