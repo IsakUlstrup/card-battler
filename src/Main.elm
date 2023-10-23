@@ -1,12 +1,44 @@
 module Main exposing (Model, Msg, main)
 
 import Browser
-import Grid exposing (Grid)
+import Grid exposing (Grid, Point)
 import Html exposing (Html, main_)
 import Html.Attributes
+import Random exposing (Generator, Seed)
 import Render exposing (Config)
 import Svg exposing (Svg)
 import Svg.Attributes
+
+
+{-| Generate a maybe tiles based on emptyChance percentage
+-}
+randomTile : Float -> a -> Generator (Maybe a)
+randomTile emptyChance tile =
+    let
+        clampedChance =
+            clamp 0 100 emptyChance
+    in
+    Random.weighted ( 100 - clampedChance, Just tile ) [ ( clampedChance, Nothing ) ]
+
+
+{-| Generate a circle with some tiles missing
+-}
+randomCircle : Int -> Point -> Seed -> ( Seed, List ( Point, () ) )
+randomCircle radius center seed =
+    let
+        helper tile ( s, accum ) =
+            let
+                ( maybeTile, newSeed ) =
+                    Random.step (randomTile 30 ()) s
+            in
+            case maybeTile of
+                Just justTile ->
+                    ( newSeed, ( tile, justTile ) :: accum )
+
+                Nothing ->
+                    ( newSeed, accum )
+    in
+    List.foldl helper ( seed, [] ) (Grid.circle radius center)
 
 
 
@@ -22,15 +54,19 @@ type alias Model =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
+    let
+        ( newSeed, tiles ) =
+            randomCircle 2 ( -1, -1, 2 ) (Random.initialSeed 22)
+
+        ( _, tiles2 ) =
+            randomCircle 1 ( 2, 2, -4 ) newSeed
+    in
     ( Model
         (Grid.fromList
-            (Grid.circle 2 ( 0, 0, 0 ) |> List.map (\p -> ( p, () )))
+            (tiles ++ tiles2)
         )
         (Grid.fromList
-            [ ( ( 0, 0, 0 ), '🐼' )
-            , ( ( 1, 0, -1 ), '🦝' )
-            , ( ( 0, 1, -1 ), '🌳' )
-            ]
+            []
         )
         (Render.initConfig
             |> Render.withPointyTop
@@ -69,12 +105,12 @@ view model =
         ]
 
 
-viewHex : Bool -> ( Grid.Point, () ) -> Svg msg
+viewHex : Bool -> ( Point, () ) -> Svg msg
 viewHex flatTop _ =
     Render.renderHex flatTop []
 
 
-viewAnimal : ( Grid.Point, Char ) -> Svg msg
+viewAnimal : ( Point, Char ) -> Svg msg
 viewAnimal ( _, animal ) =
     Svg.text_
         [ Svg.Attributes.textAnchor "middle"
