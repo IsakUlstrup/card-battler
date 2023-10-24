@@ -349,7 +349,7 @@ viewAnimal ( _, animal ) =
             , Svg.Attributes.y "25px"
             , Svg.Attributes.class "stats"
             ]
-            [ Svg.text ("✨" ++ String.fromInt animal.power ++ " ❤️" ++ String.fromInt animal.health) ]
+            [ Svg.text ("❊" ++ String.fromInt animal.power ++ " ♥︎" ++ String.fromInt animal.health) ]
         ]
 
 
