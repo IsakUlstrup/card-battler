@@ -75,11 +75,22 @@ type alias Model =
 init : Int -> ( Model, Cmd Msg )
 init timestamp =
     let
+        flatTopHexes : Bool
+        flatTopHexes =
+            False
+
+        ( playerTilesCenter, enemyTilesCenter ) =
+            if flatTopHexes then
+                ( ( 0, -2, 2 ), ( 0, 3, -3 ) )
+
+            else
+                ( ( -1, -1, 2 ), ( 2, 2, -4 ) )
+
         ( newSeed, playerTiles ) =
-            randomCircle 2 ( -1, -1, 2 ) PlayerTile (Random.initialSeed timestamp)
+            randomCircle 2 playerTilesCenter PlayerTile (Random.initialSeed timestamp)
 
         ( newSeed2, enemyTiles ) =
-            randomCircle 1 ( 2, 2, -4 ) EnemyTile newSeed
+            randomCircle 1 enemyTilesCenter EnemyTile newSeed
     in
     ( Model
         (Grid.fromList
@@ -89,8 +100,14 @@ init timestamp =
             []
         )
         (Render.initConfig
-            |> Render.withPointyTop
             |> Render.withZoom 4
+            |> (\config ->
+                    if not flatTopHexes then
+                        Render.withPointyTop config
+
+                    else
+                        config
+               )
         )
         newSeed2
     , Cmd.none
