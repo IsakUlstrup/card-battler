@@ -90,7 +90,18 @@ placeCard card tiles cards seed =
 
 
 type alias Card =
-    Char
+    { icon : Char
+    , cooldown : ( Float, Float )
+    }
+
+
+tickCardCooldown : Float -> Card -> Card
+tickCardCooldown dt card =
+    if Tuple.first card.cooldown == 0 then
+        { card | cooldown = Tuple.mapFirst (always (Tuple.second card.cooldown)) card.cooldown }
+
+    else
+        { card | cooldown = Tuple.mapFirst (\cd -> max 0 (cd - dt)) card.cooldown }
 
 
 
@@ -162,7 +173,7 @@ init timestamp =
 
         playerDeck : List Card
         playerDeck =
-            [ '🐼', '🐻', '🦅', '🦖' ]
+            [ Card '🐼' ( 1000, 1000 ), Card '🐻' ( 1500, 1500 ), Card '🦅' ( 500, 500 ), Card '🦖' ( 700, 700 ) ]
     in
     ( Model
         grid
@@ -188,6 +199,36 @@ init timestamp =
 -- UPDATE
 
 
+tickTurnState : Float -> Model -> Model
+tickTurnState dt model =
+    case model.turnState of
+        PlaceCards [] _ ->
+            { model | turnState = DonePlacingCards }
+
+        PlaceCards (c :: cs) ( cd, maxCd ) ->
+            if cd == 0 then
+                let
+                    ( newSeed, cards ) =
+                        placeCard c model.map model.animals model.seed
+                in
+                { model
+                    | turnState = PlaceCards cs ( maxCd, maxCd )
+                    , animals = cards
+                    , seed = newSeed
+                }
+
+            else
+                { model | turnState = PlaceCards (c :: cs) ( max 0 (cd - dt), maxCd ) }
+
+        DonePlacingCards ->
+            model
+
+
+tickCardCooldowns : Float -> Model -> Model
+tickCardCooldowns dt model =
+    { model | animals = Grid.map (\_ c -> tickCardCooldown dt c) model.animals }
+
+
 type Msg
     = Tick Float
 
@@ -196,27 +237,9 @@ update : Msg -> Model -> Model
 update msg model =
     case msg of
         Tick dt ->
-            case model.turnState of
-                PlaceCards [] _ ->
-                    { model | turnState = DonePlacingCards }
-
-                PlaceCards (c :: cs) ( cd, maxCd ) ->
-                    if cd == 0 then
-                        let
-                            ( newSeed, cards ) =
-                                placeCard c model.map model.animals model.seed
-                        in
-                        { model
-                            | turnState = PlaceCards cs ( maxCd, maxCd )
-                            , animals = cards
-                            , seed = newSeed
-                        }
-
-                    else
-                        { model | turnState = PlaceCards (c :: cs) ( max 0 (cd - dt), maxCd ) }
-
-                DonePlacingCards ->
-                    model
+            model
+                |> tickTurnState dt
+                |> tickCardCooldowns dt
 
 
 
@@ -250,11 +273,12 @@ viewHex flatTop ( position, tile ) =
         ]
 
 
-viewAnimal : ( Point, Char ) -> Svg msg
+viewAnimal : ( Point, Card ) -> Svg msg
 viewAnimal ( _, animal ) =
     Svg.g [ Svg.Attributes.class "animal" ]
         [ Render.renderHex False
             [ Svg.Attributes.class "cooldown-indicator"
+            , Svg.Attributes.style ("transform: scale(" ++ (1 - (Tuple.first animal.cooldown / Tuple.second animal.cooldown) |> String.fromFloat) ++ ")")
             ]
         , Svg.text_
             [ Svg.Attributes.textAnchor "middle"
@@ -262,7 +286,7 @@ viewAnimal ( _, animal ) =
             , Svg.Attributes.x "25px"
             , Svg.Attributes.y "25px"
             ]
-            [ Svg.text (String.fromChar animal) ]
+            [ Svg.text (String.fromChar animal.icon) ]
         ]
 
 

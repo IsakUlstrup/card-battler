@@ -6,6 +6,7 @@ module Grid exposing
     , get
     , insert
     , keys
+    , map
     , pointToAxial
     , pointToString
     , toList
@@ -108,6 +109,11 @@ insert position tile (Grid grid) =
 get : Point -> Grid a -> Maybe a
 get position (Grid grid) =
     Dict.get position grid
+
+
+map : (Point -> a -> b) -> Grid a -> Grid b
+map f (Grid grid) =
+    Grid (Dict.map f grid)
 
 
 {-| Get direction given hex side
