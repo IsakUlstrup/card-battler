@@ -283,8 +283,6 @@ viewAnimal ( _, animal ) =
         , Svg.text_
             [ Svg.Attributes.textAnchor "middle"
             , Svg.Attributes.fontSize "5rem"
-            , Svg.Attributes.x "25px"
-            , Svg.Attributes.y "25px"
             ]
             [ Svg.text (String.fromChar animal.icon) ]
         ]

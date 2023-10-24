@@ -102,9 +102,9 @@ hexTransform config position =
     in
     Svg.Attributes.style
         ("transform: translate("
-            ++ String.fromInt (round x - (round hexSize // 2))
+            ++ String.fromInt (round x)
             ++ "px, "
-            ++ String.fromInt (round y - (round hexSize // 2))
+            ++ String.fromInt (round y)
             ++ "px)"
         )
 
@@ -157,10 +157,10 @@ renderHex flatTop attrs =
         points =
             if flatTop then
                 -- hardcoded flat top points based on hexSize constant
-                "75,25 50,68 0,68 -25,25 0,-18 50,-18"
+                "50,0 25,43 -25,43 -50,0 -25,-43 25,-43"
 
             else
                 -- hardcoded pointy top points based on hexSize constant
-                "68,0 68,50 25,75 -18,50 -18,0 25,-25"
+                "43,-25 43,25 0,50 -43,25 -43,-25 0,-50"
     in
     Svg.polygon (Svg.Attributes.points points :: attrs) []
