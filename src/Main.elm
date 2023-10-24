@@ -1,6 +1,7 @@
 module Main exposing (Model, Msg, main)
 
 import Browser
+import Browser.Events
 import Grid exposing (Grid, Point)
 import Html exposing (Html, main_)
 import Html.Attributes
@@ -112,6 +113,15 @@ tileToString tile =
 
 
 
+-- TURN
+
+
+type TurnState
+    = PlaceCards (List Card) ( Float, Float )
+    | DonePlacingCards
+
+
+
 -- MODEL
 
 
@@ -119,6 +129,7 @@ type alias Model =
     { map : Grid Tile
     , animals : Grid Card
     , deck : List Card
+    , turnState : TurnState
     , config : Config
     , seed : Seed
     }
@@ -149,15 +160,15 @@ init timestamp =
             Grid.fromList
                 (playerTiles ++ enemyTiles)
 
-        ( newSeed3, cards ) =
-            placeCard '🐼' grid (Grid.fromList []) newSeed2
+        playerDeck : List Card
+        playerDeck =
+            [ '🐼', '🐻', '🦅', '🦖' ]
     in
     ( Model
-        (Grid.fromList
-            (playerTiles ++ enemyTiles)
-        )
-        cards
-        [ '🐼', '🐻', '🦅', '🦖' ]
+        grid
+        (Grid.fromList [])
+        playerDeck
+        (PlaceCards playerDeck ( 200, 200 ))
         (Render.initConfig
             |> Render.withZoom 4
             |> (\config ->
@@ -168,7 +179,7 @@ init timestamp =
                         config
                )
         )
-        newSeed3
+        newSeed2
     , Cmd.none
     )
 
@@ -178,14 +189,34 @@ init timestamp =
 
 
 type Msg
-    = NoOp
+    = Tick Float
 
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        NoOp ->
-            model
+        Tick dt ->
+            case model.turnState of
+                PlaceCards [] _ ->
+                    { model | turnState = DonePlacingCards }
+
+                PlaceCards (c :: cs) ( cd, maxCd ) ->
+                    if cd == 0 then
+                        let
+                            ( newSeed, cards ) =
+                                placeCard c model.map model.animals model.seed
+                        in
+                        { model
+                            | turnState = PlaceCards cs ( maxCd, maxCd )
+                            , animals = cards
+                            , seed = newSeed
+                        }
+
+                    else
+                        { model | turnState = PlaceCards (c :: cs) ( max 0 (cd - dt), maxCd ) }
+
+                DonePlacingCards ->
+                    model
 
 
 
@@ -236,7 +267,7 @@ viewAnimal ( _, animal ) =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.none
+    Browser.Events.onAnimationFrameDelta (min 2000 >> Tick)
 
 
 
