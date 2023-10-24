@@ -231,7 +231,12 @@ tickTurnState dt model =
 
 tickCardCooldowns : Float -> Model -> Model
 tickCardCooldowns dt model =
-    { model | animals = Grid.map (\_ c -> tickCardCooldown dt c) model.animals }
+    case model.turnState of
+        DonePlacingCards ->
+            { model | animals = Grid.map (\_ c -> tickCardCooldown dt c) model.animals }
+
+        _ ->
+            model
 
 
 type Msg
