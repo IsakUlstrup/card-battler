@@ -3,6 +3,8 @@ module Grid exposing
     , Point
     , circle
     , fromList
+    , get
+    , insert
     , pointToAxial
     , pointToString
     , toList
@@ -90,6 +92,16 @@ fromList items =
 toList : Grid a -> List ( Point, a )
 toList (Grid grid) =
     Dict.toList grid
+
+
+insert : Point -> a -> Grid a -> Grid a
+insert position tile (Grid grid) =
+    Dict.insert position tile grid |> Grid
+
+
+get : Point -> Grid a -> Maybe a
+get position (Grid grid) =
+    Dict.get position grid
 
 
 {-| Get direction given hex side

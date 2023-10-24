@@ -41,6 +41,25 @@ randomCircle radius center tile seed =
     List.foldl helper ( seed, [] ) (Grid.circle radius center)
 
 
+tileIsOpen : Point -> Grid Tile -> Grid Card -> Bool
+tileIsOpen position tiles cards =
+    case ( Grid.get position tiles, Grid.get position cards ) of
+        ( Just PlayerTile, Nothing ) ->
+            True
+
+        _ ->
+            False
+
+
+placeCard : Card -> Grid Tile -> Grid Card -> Seed -> ( Seed, Grid Card )
+placeCard card tiles cards seed =
+    if tileIsOpen ( -1, 0, 1 ) tiles cards then
+        ( seed, Grid.insert ( -1, 0, 1 ) card cards )
+
+    else
+        ( seed, cards )
+
+
 
 -- CARD
 
@@ -100,14 +119,20 @@ init timestamp =
 
         ( newSeed2, enemyTiles ) =
             randomCircle 1 enemyTilesCenter EnemyTile newSeed
+
+        grid : Grid Tile
+        grid =
+            Grid.fromList
+                (playerTiles ++ enemyTiles)
+
+        ( newSeed3, cards ) =
+            placeCard '🐼' grid (Grid.fromList []) newSeed2
     in
     ( Model
         (Grid.fromList
             (playerTiles ++ enemyTiles)
         )
-        (Grid.fromList
-            []
-        )
+        cards
         [ '🐼', '🐻', '🦅', '🦖' ]
         (Render.initConfig
             |> Render.withZoom 4
@@ -119,7 +144,7 @@ init timestamp =
                         config
                )
         )
-        newSeed2
+        newSeed3
     , Cmd.none
     )
 
