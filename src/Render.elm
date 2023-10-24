@@ -140,9 +140,6 @@ viewGrid viewHex config grid =
                 ]
                 [ viewHex ( position, hex ) ]
             )
-
-        _ =
-            Debug.log "draw" ()
     in
     Svg.Keyed.node "g" [ Svg.Attributes.class "grid" ] (grid |> Grid.toList |> List.map viewHexWrapper)
 
