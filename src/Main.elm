@@ -238,7 +238,7 @@ viewHex flatTop ( position, tile ) =
     Svg.g []
         [ Render.renderHex flatTop
             [ Svg.Attributes.class (tileToString tile)
-            , Svg.Attributes.class "tile"
+            , Svg.Attributes.class "hex"
             ]
 
         -- , Svg.text_

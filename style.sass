@@ -29,9 +29,9 @@ body
     // border: 1px solid beige
     aspect-ratio: 1 / 1.7
 
-    .tile
+    .hex
         stroke-width: 3
-        transform: scale(0.99)
+        // transform: scale(0.8)
 
         &.playerTile
             fill: rgb(91, 85, 62)
@@ -40,15 +40,11 @@ body
             fill: rgb(62, 91, 90)
             stroke: rgb(106, 145, 146)
 
-        &:hover
-            fill-opacity: 0.8
-
     .animal
+
         animation: fade-drop 300ms cubic-bezier(0.34, 1.56, 0.64, 1)
-        pointer-events: none
         filter: saturate(80%) sepia(20%)
 
         .cooldown-indicator
             fill: white
             fill-opacity: 0.3
-            transform: scale(1)
