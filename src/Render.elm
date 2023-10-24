@@ -128,8 +128,8 @@ customSvg config children =
 
 {-| View a grid
 -}
-viewGrid : Config -> Grid a -> (( Point, a ) -> Svg msg) -> Svg msg
-viewGrid config grid viewHex =
+viewGrid : (( Point, a ) -> Svg msg) -> Config -> Grid a -> Svg msg
+viewGrid viewHex config grid =
     let
         viewHexWrapper : ( Point, a ) -> ( String, Svg msg )
         viewHexWrapper ( position, hex ) =
@@ -140,6 +140,9 @@ viewGrid config grid viewHex =
                 ]
                 [ viewHex ( position, hex ) ]
             )
+
+        _ =
+            Debug.log "draw" ()
     in
     Svg.Keyed.node "g" [ Svg.Attributes.class "grid" ] (grid |> Grid.toList |> List.map viewHexWrapper)
 

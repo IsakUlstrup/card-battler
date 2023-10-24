@@ -9,6 +9,7 @@ import Random exposing (Generator, Seed)
 import Render exposing (Config)
 import Svg exposing (Svg)
 import Svg.Attributes
+import Svg.Lazy
 
 
 {-| Generate a maybe tiles based on emptyChance percentage
@@ -254,16 +255,16 @@ view : Model -> Html Msg
 view model =
     main_ [ Html.Attributes.id "app" ]
         [ Render.customSvg model.config
-            [ Render.viewGrid model.config model.map (viewHex model.config.hexFlatTop)
-            , Render.viewGrid model.config model.animals viewAnimal
+            [ Svg.Lazy.lazy3 Render.viewGrid viewHex model.config model.map
+            , Render.viewGrid viewAnimal model.config model.animals
             ]
         ]
 
 
-viewHex : Bool -> ( Point, Tile ) -> Svg msg
-viewHex flatTop ( position, tile ) =
+viewHex : ( Point, Tile ) -> Svg msg
+viewHex ( position, tile ) =
     Svg.g []
-        [ Render.renderHex flatTop
+        [ Render.renderHex False
             [ Svg.Attributes.class (tileToString tile)
             , Svg.Attributes.class "hex"
             ]
