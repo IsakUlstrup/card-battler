@@ -112,6 +112,8 @@ placeCard player card tiles cards seed =
 type alias Card =
     { icon : Char
     , cooldown : ( Float, Float )
+    , power : Int
+    , health : Int
     }
 
 
@@ -126,16 +128,18 @@ tickCardCooldown dt card =
 
 playerDeck : List Card
 playerDeck =
-    [ Card '🐼' ( 2000, 2000 )
-    , Card '🐻' ( 3000, 3000 )
-    , Card '🦅' ( 1000, 1000 )
-    , Card '🦖' ( 1400, 1400 )
+    [ Card '🐼' ( 2000, 2000 ) 7 5
+    , Card '🐻' ( 3000, 3000 ) 8 7
+    , Card '🦅' ( 1000, 1000 ) 4 3
+    , Card '🦖' ( 1400, 1400 ) 9 8
     ]
 
 
 enemyDeck : List Card
 enemyDeck =
-    [ Card '🦡' ( 1200, 1200 ), Card '🦔' ( 500, 500 ) ]
+    [ Card '🦡' ( 1200, 1200 ) 7 4
+    , Card '🦔' ( 500, 500 ) 2 5
+    ]
 
 
 
@@ -336,9 +340,16 @@ viewAnimal ( _, animal ) =
             ]
         , Svg.text_
             [ Svg.Attributes.textAnchor "middle"
-            , Svg.Attributes.fontSize "5rem"
+            , Svg.Attributes.fontSize "4.5rem"
+            , Svg.Attributes.y "10px"
             ]
             [ Svg.text (String.fromChar animal.icon) ]
+        , Svg.text_
+            [ Svg.Attributes.textAnchor "middle"
+            , Svg.Attributes.y "25px"
+            , Svg.Attributes.class "stats"
+            ]
+            [ Svg.text ("✨" ++ String.fromInt animal.power ++ " ❤️" ++ String.fromInt animal.health) ]
         ]
 
 
