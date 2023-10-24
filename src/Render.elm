@@ -49,6 +49,13 @@ withZoom zoom config =
 -- VIEW
 
 
+{-| Get point y position in pixels
+-}
+yPixelPosition : Point -> Float
+yPixelPosition position =
+    pointToPixel False position |> Tuple.second
+
+
 hexSize : Float
 hexSize =
     50
@@ -141,7 +148,13 @@ viewGrid viewHex config grid =
                 [ viewHex ( position, hex ) ]
             )
     in
-    Svg.Keyed.node "g" [ Svg.Attributes.class "grid" ] (grid |> Grid.toList |> List.map viewHexWrapper)
+    Svg.Keyed.node "g"
+        [ Svg.Attributes.class "grid" ]
+        (grid
+            |> Grid.toList
+            |> List.sortBy (Tuple.first >> yPixelPosition)
+            |> List.map viewHexWrapper
+        )
 
 
 
