@@ -240,12 +240,13 @@ viewHex flatTop ( position, tile ) =
             [ Svg.Attributes.class (tileToString tile)
             , Svg.Attributes.class "tile"
             ]
-        , Svg.text_
-            [ Svg.Attributes.x "25px"
-            , Svg.Attributes.y "25px"
-            , Svg.Attributes.textAnchor "middle"
-            ]
-            [ Svg.text (Grid.pointToString position) ]
+
+        -- , Svg.text_
+        --     [ Svg.Attributes.x "25px"
+        --     , Svg.Attributes.y "25px"
+        --     , Svg.Attributes.textAnchor "middle"
+        --     ]
+        --     [ Svg.text (Grid.pointToString position) ]
         ]
 
 
