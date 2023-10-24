@@ -55,6 +55,18 @@ tileIsOpen position tiles =
             False
 
 
+{-| Check if the given position on a tile grid exists and is a enemy tile
+-}
+enemyTileIsOpen : Point -> Grid Tile -> Bool
+enemyTileIsOpen position tiles =
+    case Grid.get position tiles of
+        Just EnemyTile ->
+            True
+
+        _ ->
+            False
+
+
 {-| Check if the given position on a card grid is empty
 -}
 cardIsOpen : Point -> Grid Card -> Bool
@@ -67,12 +79,19 @@ cardIsOpen position cards =
             False
 
 
-placeCard : Card -> Grid Tile -> Grid Card -> Seed -> ( Seed, Grid Card )
-placeCard card tiles cards seed =
+placeCard : Bool -> Card -> Grid Tile -> Grid Card -> Seed -> ( Seed, Grid Card )
+placeCard player card tiles cards seed =
     let
         openTiles =
             Grid.keys tiles
-                |> List.filter (\t -> tileIsOpen t tiles)
+                |> List.filter
+                    (\t ->
+                        if player then
+                            tileIsOpen t tiles
+
+                        else
+                            enemyTileIsOpen t tiles
+                    )
                 |> List.filter (\t -> cardIsOpen t cards)
 
         ( randomInt, newSeed ) =
@@ -105,6 +124,20 @@ tickCardCooldown dt card =
         { card | cooldown = Tuple.mapFirst (\cd -> max 0 (cd - dt)) card.cooldown }
 
 
+playerDeck : List Card
+playerDeck =
+    [ Card '🐼' ( 2000, 2000 )
+    , Card '🐻' ( 3000, 3000 )
+    , Card '🦅' ( 1000, 1000 )
+    , Card '🦖' ( 1400, 1400 )
+    ]
+
+
+enemyDeck : List Card
+enemyDeck =
+    [ Card '🦡' ( 1200, 1200 ), Card '🦔' ( 500, 500 ) ]
+
+
 
 -- TILE
 
@@ -129,7 +162,8 @@ tileToString tile =
 
 
 type TurnState
-    = PlaceCards (List Card) ( Float, Float )
+    = PlaceEnemyCards (List Card) ( Float, Float )
+    | PlacePlayerCards (List Card) ( Float, Float )
     | DonePlacingCards
 
 
@@ -171,20 +205,12 @@ init timestamp =
         grid =
             Grid.fromList
                 (playerTiles ++ enemyTiles)
-
-        playerDeck : List Card
-        playerDeck =
-            [ Card '🐼' ( 2000, 2000 )
-            , Card '🐻' ( 3000, 3000 )
-            , Card '🦅' ( 1000, 1000 )
-            , Card '🦖' ( 1400, 1400 )
-            ]
     in
     ( Model
         grid
         (Grid.fromList [])
         playerDeck
-        (PlaceCards playerDeck ( 200, 200 ))
+        (PlaceEnemyCards enemyDeck ( 200, 200 ))
         (Render.initConfig
             |> Render.withZoom 4
             |> (\config ->
@@ -207,23 +233,41 @@ init timestamp =
 tickTurnState : Float -> Model -> Model
 tickTurnState dt model =
     case model.turnState of
-        PlaceCards [] _ ->
-            { model | turnState = DonePlacingCards }
+        PlaceEnemyCards [] _ ->
+            { model | turnState = PlacePlayerCards model.deck ( 200, 200 ) }
 
-        PlaceCards (c :: cs) ( cd, maxCd ) ->
+        PlaceEnemyCards (c :: cs) ( cd, maxCd ) ->
             if cd == 0 then
                 let
                     ( newSeed, cards ) =
-                        placeCard c model.map model.animals model.seed
+                        placeCard False c model.map model.animals model.seed
                 in
                 { model
-                    | turnState = PlaceCards cs ( maxCd, maxCd )
+                    | turnState = PlaceEnemyCards cs ( maxCd, maxCd )
                     , animals = cards
                     , seed = newSeed
                 }
 
             else
-                { model | turnState = PlaceCards (c :: cs) ( max 0 (cd - dt), maxCd ) }
+                { model | turnState = PlaceEnemyCards (c :: cs) ( max 0 (cd - dt), maxCd ) }
+
+        PlacePlayerCards [] _ ->
+            { model | turnState = DonePlacingCards }
+
+        PlacePlayerCards (c :: cs) ( cd, maxCd ) ->
+            if cd == 0 then
+                let
+                    ( newSeed, cards ) =
+                        placeCard True c model.map model.animals model.seed
+                in
+                { model
+                    | turnState = PlacePlayerCards cs ( maxCd, maxCd )
+                    , animals = cards
+                    , seed = newSeed
+                }
+
+            else
+                { model | turnState = PlacePlayerCards (c :: cs) ( max 0 (cd - dt), maxCd ) }
 
         DonePlacingCards ->
             model
