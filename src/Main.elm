@@ -252,14 +252,18 @@ viewHex flatTop ( position, tile ) =
 
 viewAnimal : ( Point, Char ) -> Svg msg
 viewAnimal ( _, animal ) =
-    Svg.text_
-        [ Svg.Attributes.textAnchor "middle"
-        , Svg.Attributes.fontSize "5rem"
-        , Svg.Attributes.x "25px"
-        , Svg.Attributes.y "25px"
-        , Svg.Attributes.class "animal"
+    Svg.g [ Svg.Attributes.class "animal" ]
+        [ Render.renderHex False
+            [ Svg.Attributes.class "cooldown-indicator"
+            ]
+        , Svg.text_
+            [ Svg.Attributes.textAnchor "middle"
+            , Svg.Attributes.fontSize "5rem"
+            , Svg.Attributes.x "25px"
+            , Svg.Attributes.y "25px"
+            ]
+            [ Svg.text (String.fromChar animal) ]
         ]
-        [ Svg.text (String.fromChar animal) ]
 
 
 
