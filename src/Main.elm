@@ -173,7 +173,11 @@ init timestamp =
 
         playerDeck : List Card
         playerDeck =
-            [ Card '🐼' ( 1000, 1000 ), Card '🐻' ( 1500, 1500 ), Card '🦅' ( 500, 500 ), Card '🦖' ( 700, 700 ) ]
+            [ Card '🐼' ( 2000, 2000 )
+            , Card '🐻' ( 3000, 3000 )
+            , Card '🦅' ( 1000, 1000 )
+            , Card '🦖' ( 1400, 1400 )
+            ]
     in
     ( Model
         grid
