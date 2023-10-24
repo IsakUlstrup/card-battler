@@ -41,10 +41,24 @@ randomCircle radius center tile seed =
     List.foldl helper ( seed, [] ) (Grid.circle radius center)
 
 
-tileIsOpen : Point -> Grid Tile -> Grid Card -> Bool
-tileIsOpen position tiles cards =
-    case ( Grid.get position tiles, Grid.get position cards ) of
-        ( Just PlayerTile, Nothing ) ->
+{-| Check if the given position on a tile grid exists and is a player tile
+-}
+tileIsOpen : Point -> Grid Tile -> Bool
+tileIsOpen position tiles =
+    case Grid.get position tiles of
+        Just PlayerTile ->
+            True
+
+        _ ->
+            False
+
+
+{-| Check if the given position on a card grid is empty
+-}
+cardIsOpen : Point -> Grid Card -> Bool
+cardIsOpen position cards =
+    case Grid.get position cards of
+        Nothing ->
             True
 
         _ ->
@@ -53,11 +67,21 @@ tileIsOpen position tiles cards =
 
 placeCard : Card -> Grid Tile -> Grid Card -> Seed -> ( Seed, Grid Card )
 placeCard card tiles cards seed =
-    if tileIsOpen ( -1, 0, 1 ) tiles cards then
-        ( seed, Grid.insert ( -1, 0, 1 ) card cards )
+    let
+        openTiles =
+            Grid.keys tiles
+                |> List.filter (\t -> tileIsOpen t tiles)
+                |> List.filter (\t -> cardIsOpen t cards)
 
-    else
-        ( seed, cards )
+        ( randomInt, newSeed ) =
+            Random.step (Random.int 0 (List.length openTiles - 1)) seed
+    in
+    case openTiles |> List.drop randomInt |> List.head of
+        Just tile ->
+            ( newSeed, Grid.insert tile card cards )
+
+        Nothing ->
+            ( seed, cards )
 
 
 

@@ -5,6 +5,7 @@ module Grid exposing
     , fromList
     , get
     , insert
+    , keys
     , pointToAxial
     , pointToString
     , toList
@@ -92,6 +93,11 @@ fromList items =
 toList : Grid a -> List ( Point, a )
 toList (Grid grid) =
     Dict.toList grid
+
+
+keys : Grid a -> List Point
+keys (Grid grid) =
+    Dict.keys grid
 
 
 insert : Point -> a -> Grid a -> Grid a
