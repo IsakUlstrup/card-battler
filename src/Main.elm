@@ -42,6 +42,14 @@ randomCircle radius center tile seed =
 
 
 
+-- CARD
+
+
+type alias Card =
+    Char
+
+
+
 -- TILE
 
 
@@ -66,7 +74,8 @@ tileToString tile =
 
 type alias Model =
     { map : Grid Tile
-    , animals : Grid Char
+    , animals : Grid Card
+    , deck : List Card
     , config : Config
     , seed : Seed
     }
@@ -99,6 +108,7 @@ init timestamp =
         (Grid.fromList
             []
         )
+        [ '🐼', '🐻', '🦅', '🦖' ]
         (Render.initConfig
             |> Render.withZoom 4
             |> (\config ->
