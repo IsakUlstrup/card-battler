@@ -5,42 +5,11 @@ import Browser.Events
 import Grid exposing (Grid, Point)
 import Html exposing (Html, main_)
 import Html.Attributes
-import Random exposing (Generator, Seed)
+import Random exposing (Seed)
 import Render exposing (Config)
 import Svg exposing (Svg)
 import Svg.Attributes
 import Svg.Lazy
-
-
-{-| Generate a maybe tiles based on emptyChance percentage
--}
-randomTile : Float -> a -> Generator (Maybe a)
-randomTile emptyChance tile =
-    let
-        clampedChance =
-            clamp 0 100 emptyChance
-    in
-    Random.weighted ( 100 - clampedChance, Just tile ) [ ( clampedChance, Nothing ) ]
-
-
-{-| Generate a circle with some tiles missing
--}
-randomCircle : Int -> Point -> a -> Seed -> ( Seed, List ( Point, a ) )
-randomCircle radius center tile seed =
-    let
-        helper position ( s, accum ) =
-            let
-                ( maybeTile, newSeed ) =
-                    Random.step (randomTile 30 tile) s
-            in
-            case maybeTile of
-                Just justTile ->
-                    ( newSeed, ( position, justTile ) :: accum )
-
-                Nothing ->
-                    ( newSeed, accum )
-    in
-    List.foldl helper ( seed, [] ) (Grid.circle radius center)
 
 
 {-| Check if the given position on a tile grid exists and is a player tile
@@ -207,10 +176,10 @@ init timestamp =
             ( ( -1, -1, 2 ), ( 2, 2, -4 ) )
 
         ( newSeed, playerTiles ) =
-            randomCircle 2 playerTilesCenter PlayerTile (Random.initialSeed timestamp)
+            Grid.randomCircle 2 playerTilesCenter PlayerTile (Random.initialSeed timestamp)
 
         ( newSeed2, enemyTiles ) =
-            randomCircle 1 enemyTilesCenter EnemyTile newSeed
+            Grid.randomCircle 1 enemyTilesCenter EnemyTile newSeed
     in
     ( Model
         (Grid.fromList (playerTiles ++ enemyTiles))

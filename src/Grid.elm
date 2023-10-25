@@ -9,10 +9,12 @@ module Grid exposing
     , map
     , pointToAxial
     , pointToString
+    , randomCircle
     , toList
     )
 
 import Dict exposing (Dict)
+import Random exposing (Generator, Seed)
 
 
 
@@ -140,6 +142,10 @@ direction dir =
             ( 0, -1, 1 )
 
 
+
+-- GENERATORS
+
+
 {-| Returns a ring of points around given point with given radius
 -}
 ring : Int -> Point -> List Point
@@ -165,3 +171,34 @@ circle radius center =
 
     else
         []
+
+
+{-| Generate a maybe tiles based on emptyChance percentage
+-}
+randomTile : Float -> a -> Generator (Maybe a)
+randomTile emptyChance tile =
+    let
+        clampedChance =
+            clamp 0 100 emptyChance
+    in
+    Random.weighted ( 100 - clampedChance, Just tile ) [ ( clampedChance, Nothing ) ]
+
+
+{-| Generate a circle with some tiles missing
+-}
+randomCircle : Int -> Point -> a -> Seed -> ( Seed, List ( Point, a ) )
+randomCircle radius center tile seed =
+    let
+        helper position ( s, accum ) =
+            let
+                ( maybeTile, newSeed ) =
+                    Random.step (randomTile 30 tile) s
+            in
+            case maybeTile of
+                Just justTile ->
+                    ( newSeed, ( position, justTile ) :: accum )
+
+                Nothing ->
+                    ( newSeed, accum )
+    in
+    List.foldl helper ( seed, [] ) (circle radius center)
