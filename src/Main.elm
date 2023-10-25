@@ -151,9 +151,12 @@ type TurnState
 
 
 type alias Model =
-    { map : Grid Tile
-    , cards : Grid Card
-    , deck : List Card
+    { playerMap : Grid Tile
+    , playerCards : Grid Card
+    , playerDeck : List Card
+    , enemyMap : Grid Tile
+    , enemyCards : Grid Card
+    , enemyDeck : List Card
     , turnState : TurnState
     , config : Config
     , seed : Seed
@@ -173,9 +176,12 @@ init timestamp =
             Grid.randomCircle 1 enemyTilesCenter EnemyTile newSeed
     in
     ( Model
-        (Grid.fromList (playerTiles ++ enemyTiles))
+        (Grid.fromList playerTiles)
         (Grid.fromList [])
         playerDeck
+        (Grid.fromList enemyTiles)
+        (Grid.fromList [])
+        enemyDeck
         (PlaceEnemyCards enemyDeck ( 100, 100 ))
         (Render.initConfig |> Render.withZoom 4)
         newSeed2
@@ -191,17 +197,17 @@ tickTurnState : Float -> Model -> Model
 tickTurnState dt model =
     case model.turnState of
         PlaceEnemyCards [] _ ->
-            { model | turnState = PlacePlayerCards model.deck ( 100, 100 ) }
+            { model | turnState = PlacePlayerCards model.playerDeck ( 100, 100 ) }
 
         PlaceEnemyCards (c :: cs) ( cd, maxCd ) ->
             if cd == 0 then
                 let
                     ( newSeed, cards ) =
-                        placeCard False c model.map model.cards model.seed
+                        placeCard False c model.enemyMap model.enemyCards model.seed
                 in
                 { model
                     | turnState = PlaceEnemyCards cs ( maxCd, maxCd )
-                    , cards = cards
+                    , enemyCards = cards
                     , seed = newSeed
                 }
 
@@ -215,11 +221,11 @@ tickTurnState dt model =
             if cd == 0 then
                 let
                     ( newSeed, cards ) =
-                        placeCard True c model.map model.cards model.seed
+                        placeCard True c model.playerMap model.playerCards model.seed
                 in
                 { model
                     | turnState = PlacePlayerCards cs ( maxCd, maxCd )
-                    , cards = cards
+                    , playerCards = cards
                     , seed = newSeed
                 }
 
@@ -234,7 +240,11 @@ tickTurnState dt model =
                 { model | turnState = DonePlacingCards }
 
         DonePlacingCards ->
-            case model.cards |> Grid.toList |> List.filter (\( _, c ) -> cooldownIsDone c) of
+            let
+                getDone cards =
+                    cards |> Grid.toList |> List.filter (\( _, c ) -> cooldownIsDone c)
+            in
+            case getDone model.playerCards ++ getDone model.enemyCards of
                 c :: _ ->
                     { model | turnState = CardAction (Tuple.first c) 1000 }
 
@@ -246,7 +256,10 @@ tickCardCooldowns : Float -> Model -> Model
 tickCardCooldowns dt model =
     case model.turnState of
         DonePlacingCards ->
-            { model | cards = Grid.map (\_ c -> tickCardCooldown dt c) model.cards }
+            { model
+                | playerCards = Grid.map (\_ c -> tickCardCooldown dt c) model.playerCards
+                , enemyCards = Grid.map (\_ c -> tickCardCooldown dt c) model.enemyCards
+            }
 
         _ ->
             model
@@ -283,8 +296,10 @@ view : Model -> Html Msg
 view model =
     main_ [ Html.Attributes.id "app" ]
         [ Render.customSvg model.config
-            [ Svg.Lazy.lazy2 Render.viewGrid viewHex model.map
-            , Render.viewGrid (viewCard (activeCard model.turnState)) model.cards
+            [ Svg.Lazy.lazy2 Render.viewGrid viewHex model.playerMap
+            , Svg.Lazy.lazy2 Render.viewGrid viewHex model.enemyMap
+            , Render.viewGrid (viewCard (activeCard model.turnState)) model.playerCards
+            , Render.viewGrid (viewCard (activeCard model.turnState)) model.enemyCards
             ]
         ]
 
