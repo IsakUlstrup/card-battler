@@ -203,36 +203,21 @@ type alias Model =
 init : Int -> ( Model, Cmd Msg )
 init timestamp =
     let
-        flatTopHexes : Bool
-        flatTopHexes =
-            False
-
         ( playerTilesCenter, enemyTilesCenter ) =
-            if flatTopHexes then
-                ( ( 0, -2, 2 ), ( 0, 3, -3 ) )
-
-            else
-                ( ( -1, -1, 2 ), ( 2, 2, -4 ) )
+            ( ( -1, -1, 2 ), ( 2, 2, -4 ) )
 
         ( newSeed, playerTiles ) =
             randomCircle 2 playerTilesCenter PlayerTile (Random.initialSeed timestamp)
 
         ( newSeed2, enemyTiles ) =
             randomCircle 1 enemyTilesCenter EnemyTile newSeed
-
-        grid : Grid Tile
-        grid =
-            Grid.fromList
-                (playerTiles ++ enemyTiles)
     in
     ( Model
-        grid
+        (Grid.fromList (playerTiles ++ enemyTiles))
         (Grid.fromList [])
         playerDeck
         (PlaceEnemyCards enemyDeck ( 100, 100 ))
-        (Render.initConfig
-            |> Render.withZoom 4
-        )
+        (Render.initConfig |> Render.withZoom 4)
         newSeed2
     , Cmd.none
     )
@@ -329,13 +314,6 @@ viewHex ( position, tile ) =
             [ Svg.Attributes.class (tileToString tile)
             , Svg.Attributes.class "hex"
             ]
-
-        -- , Svg.text_
-        --     [ Svg.Attributes.x "25px"
-        --     , Svg.Attributes.y "25px"
-        --     , Svg.Attributes.textAnchor "middle"
-        --     ]
-        --     [ Svg.text (Grid.pointToString position) ]
         ]
 
 
