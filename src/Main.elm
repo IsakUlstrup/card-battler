@@ -143,7 +143,7 @@ type TurnState
     = PlaceEnemyCards (List Card) ( Float, Float )
     | PlacePlayerCards (List Card) ( Float, Float )
     | CardAction (List Point) Float
-    | DonePlacingCards
+    | Idle
 
 
 
@@ -215,7 +215,7 @@ tickTurnState dt model =
                 { model | turnState = PlaceEnemyCards (c :: cs) ( max 0 (cd - dt), maxCd ) }
 
         PlacePlayerCards [] _ ->
-            { model | turnState = DonePlacingCards }
+            { model | turnState = Idle }
 
         PlacePlayerCards (c :: cs) ( cd, maxCd ) ->
             if cd == 0 then
@@ -233,7 +233,7 @@ tickTurnState dt model =
                 { model | turnState = PlacePlayerCards (c :: cs) ( max 0 (cd - dt), maxCd ) }
 
         CardAction [] _ ->
-            { model | turnState = DonePlacingCards }
+            { model | turnState = Idle }
 
         CardAction (c :: cs) cd ->
             if cd > 0 then
@@ -242,7 +242,7 @@ tickTurnState dt model =
             else
                 { model | turnState = CardAction cs 1000 }
 
-        DonePlacingCards ->
+        Idle ->
             let
                 getDone cards =
                     cards |> Grid.toList |> List.filter (\( _, c ) -> cooldownIsDone c)
@@ -258,7 +258,7 @@ tickTurnState dt model =
 tickCardCooldowns : Float -> Model -> Model
 tickCardCooldowns dt model =
     case model.turnState of
-        DonePlacingCards ->
+        Idle ->
             { model
                 | playerCards = Grid.map (\_ c -> tickCardCooldown dt c) model.playerCards
                 , enemyCards = Grid.map (\_ c -> tickCardCooldown dt c) model.enemyCards
