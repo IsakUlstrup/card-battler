@@ -4,7 +4,6 @@ module Render exposing
     , initConfig
     , renderHex
     , viewGrid
-    , withPointyTop
     , withZoom
     )
 
@@ -26,18 +25,12 @@ import Svg.Keyed
 type alias Config =
     { cameraPosition : Point
     , cameraZoom : Float
-    , hexFlatTop : Bool
     }
 
 
 initConfig : Config
 initConfig =
-    Config ( 0, 0, 0 ) 1 True
-
-
-withPointyTop : Config -> Config
-withPointyTop config =
-    { config | hexFlatTop = False }
+    Config ( 0, 0, 0 ) 1
 
 
 withZoom : Float -> Config -> Config
@@ -53,7 +46,7 @@ withZoom zoom config =
 -}
 yPixelPosition : Point -> Float
 yPixelPosition position =
-    pointToPixel False position |> Tuple.second
+    pointToPixel position |> Tuple.second
 
 
 hexSize : Float
@@ -61,10 +54,15 @@ hexSize =
     50
 
 
+flatTop : Bool
+flatTop =
+    False
+
+
 {-| Get the center of a given point in screen coordinates
 -}
-pointToPixel : Bool -> Point -> ( Float, Float )
-pointToPixel flatTop point =
+pointToPixel : Point -> ( Float, Float )
+pointToPixel point =
     let
         ( q, r ) =
             Grid.pointToAxial point
@@ -86,7 +84,7 @@ cameraTransform : Config -> Svg.Attribute msg
 cameraTransform config =
     let
         ( camX, camY ) =
-            config.cameraPosition |> pointToPixel config.hexFlatTop
+            config.cameraPosition |> pointToPixel
     in
     Svg.Attributes.style
         ("transform: translate("
@@ -101,11 +99,11 @@ cameraTransform config =
 
 {-| Hex transform attribute
 -}
-hexTransform : Config -> Point -> Svg.Attribute msg
-hexTransform config position =
+hexTransform : Point -> Svg.Attribute msg
+hexTransform position =
     let
         ( x, y ) =
-            position |> pointToPixel config.hexFlatTop
+            position |> pointToPixel
     in
     Svg.Attributes.style
         ("transform: translate("
@@ -135,14 +133,14 @@ customSvg config children =
 
 {-| View a grid
 -}
-viewGrid : (( Point, a ) -> Svg msg) -> Config -> Grid a -> Svg msg
-viewGrid viewHex config grid =
+viewGrid : (( Point, a ) -> Svg msg) -> Grid a -> Svg msg
+viewGrid viewHex grid =
     let
         viewHexWrapper : ( Point, a ) -> ( String, Svg msg )
         viewHexWrapper ( position, hex ) =
             ( Grid.pointToString position
             , Svg.g
-                [ hexTransform config position
+                [ hexTransform position
                 , Svg.Attributes.class "tile"
                 ]
                 [ viewHex ( position, hex ) ]
@@ -163,8 +161,8 @@ viewGrid viewHex config grid =
 
 {-| View hex polygon
 -}
-renderHex : Bool -> List (Attribute msg) -> Svg msg
-renderHex flatTop attrs =
+renderHex : List (Attribute msg) -> Svg msg
+renderHex attrs =
     let
         points : String
         points =

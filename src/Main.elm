@@ -132,6 +132,21 @@ playerDeck =
     , Card '🐻' ( 3000, 3000 ) 8 7
     , Card '🦅' ( 1000, 1000 ) 4 3
     , Card '🦖' ( 1400, 1400 ) 9 8
+    , Card '🐻' ( 3000, 3000 ) 8 7
+    , Card '🦅' ( 1000, 1000 ) 4 3
+    , Card '🦖' ( 1400, 1400 ) 9 8
+    , Card '🐻' ( 3000, 3000 ) 8 7
+    , Card '🦅' ( 1000, 1000 ) 4 3
+    , Card '🦖' ( 1400, 1400 ) 9 8
+    , Card '🐻' ( 3000, 3000 ) 8 7
+    , Card '🦅' ( 1000, 1000 ) 4 3
+    , Card '🦖' ( 1400, 1400 ) 9 8
+    , Card '🐻' ( 3000, 3000 ) 8 7
+    , Card '🦅' ( 1000, 1000 ) 4 3
+    , Card '🦖' ( 1400, 1400 ) 9 8
+    , Card '🐻' ( 3000, 3000 ) 8 7
+    , Card '🦅' ( 1000, 1000 ) 4 3
+    , Card '🦖' ( 1400, 1400 ) 9 8
     ]
 
 
@@ -217,13 +232,6 @@ init timestamp =
         (PlaceEnemyCards enemyDeck ( 200, 200 ))
         (Render.initConfig
             |> Render.withZoom 4
-            |> (\config ->
-                    if not flatTopHexes then
-                        Render.withPointyTop config
-
-                    else
-                        config
-               )
         )
         newSeed2
     , Cmd.none
@@ -308,8 +316,8 @@ view : Model -> Html Msg
 view model =
     main_ [ Html.Attributes.id "app" ]
         [ Render.customSvg model.config
-            [ Svg.Lazy.lazy3 Render.viewGrid viewHex model.config model.map
-            , Render.viewGrid viewAnimal model.config model.animals
+            [ Svg.Lazy.lazy2 Render.viewGrid viewHex model.map
+            , Render.viewGrid viewAnimal model.animals
             ]
         ]
 
@@ -317,7 +325,7 @@ view model =
 viewHex : ( Point, Tile ) -> Svg msg
 viewHex ( position, tile ) =
     Svg.g []
-        [ Render.renderHex False
+        [ Render.renderHex
             [ Svg.Attributes.class (tileToString tile)
             , Svg.Attributes.class "hex"
             ]
@@ -334,7 +342,7 @@ viewHex ( position, tile ) =
 viewAnimal : ( Point, Card ) -> Svg msg
 viewAnimal ( _, animal ) =
     Svg.g [ Svg.Attributes.class "animal" ]
-        [ Render.renderHex False
+        [ Render.renderHex
             [ Svg.Attributes.class "cooldown-indicator"
             , Svg.Attributes.style ("transform: scale(" ++ (1 - (Tuple.first animal.cooldown / Tuple.second animal.cooldown) |> String.fromFloat) ++ ")")
             ]
