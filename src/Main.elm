@@ -152,7 +152,7 @@ type TurnState
 
 type alias Model =
     { map : Grid Tile
-    , animals : Grid Card
+    , cards : Grid Card
     , deck : List Card
     , turnState : TurnState
     , config : Config
@@ -197,11 +197,11 @@ tickTurnState dt model =
             if cd == 0 then
                 let
                     ( newSeed, cards ) =
-                        placeCard False c model.map model.animals model.seed
+                        placeCard False c model.map model.cards model.seed
                 in
                 { model
                     | turnState = PlaceEnemyCards cs ( maxCd, maxCd )
-                    , animals = cards
+                    , cards = cards
                     , seed = newSeed
                 }
 
@@ -215,11 +215,11 @@ tickTurnState dt model =
             if cd == 0 then
                 let
                     ( newSeed, cards ) =
-                        placeCard True c model.map model.animals model.seed
+                        placeCard True c model.map model.cards model.seed
                 in
                 { model
                     | turnState = PlacePlayerCards cs ( maxCd, maxCd )
-                    , animals = cards
+                    , cards = cards
                     , seed = newSeed
                 }
 
@@ -234,7 +234,7 @@ tickTurnState dt model =
                 { model | turnState = DonePlacingCards }
 
         DonePlacingCards ->
-            case model.animals |> Grid.toList |> List.filter (\( _, c ) -> cooldownIsDone c) of
+            case model.cards |> Grid.toList |> List.filter (\( _, c ) -> cooldownIsDone c) of
                 c :: _ ->
                     { model | turnState = CardAction (Tuple.first c) 1000 }
 
@@ -246,7 +246,7 @@ tickCardCooldowns : Float -> Model -> Model
 tickCardCooldowns dt model =
     case model.turnState of
         DonePlacingCards ->
-            { model | animals = Grid.map (\_ c -> tickCardCooldown dt c) model.animals }
+            { model | cards = Grid.map (\_ c -> tickCardCooldown dt c) model.cards }
 
         _ ->
             model
@@ -284,7 +284,7 @@ view model =
     main_ [ Html.Attributes.id "app" ]
         [ Render.customSvg model.config
             [ Svg.Lazy.lazy2 Render.viewGrid viewHex model.map
-            , Render.viewGrid (viewAnimal (activeCard model.turnState)) model.animals
+            , Render.viewGrid (viewCard (activeCard model.turnState)) model.cards
             ]
         ]
 
@@ -299,8 +299,8 @@ viewHex ( position, tile ) =
         ]
 
 
-viewAnimal : Maybe Point -> ( Point, Card ) -> Svg msg
-viewAnimal selected ( position, animal ) =
+viewCard : Maybe Point -> ( Point, Card ) -> Svg msg
+viewCard selected ( position, card ) =
     let
         isSelected =
             case selected of
@@ -311,15 +311,15 @@ viewAnimal selected ( position, animal ) =
                     False
     in
     Svg.g
-        [ Svg.Attributes.class "animal"
+        [ Svg.Attributes.class "card"
         , Render.classList
-            [ ( "ready", cooldownIsDone animal )
+            [ ( "ready", cooldownIsDone card )
             , ( "selected", isSelected )
             ]
         ]
         [ Render.renderHex
             [ Svg.Attributes.class "cooldown-indicator"
-            , Svg.Attributes.style ("transform: scale(" ++ (1 - (Tuple.first animal.cooldown / Tuple.second animal.cooldown) |> String.fromFloat) ++ ")")
+            , Svg.Attributes.style ("transform: scale(" ++ (1 - (Tuple.first card.cooldown / Tuple.second card.cooldown) |> String.fromFloat) ++ ")")
             ]
         , Svg.text_
             [ Svg.Attributes.textAnchor "middle"
@@ -327,13 +327,13 @@ viewAnimal selected ( position, animal ) =
             , Svg.Attributes.y "10px"
             , Svg.Attributes.class "icon"
             ]
-            [ Svg.text (String.fromChar animal.icon) ]
+            [ Svg.text (String.fromChar card.icon) ]
         , Svg.text_
             [ Svg.Attributes.textAnchor "middle"
             , Svg.Attributes.y "25px"
             , Svg.Attributes.class "stats"
             ]
-            [ Svg.text ("❊" ++ String.fromInt animal.power ++ " ♥︎" ++ String.fromInt animal.health) ]
+            [ Svg.text ("❊" ++ String.fromInt card.power ++ " ♥︎" ++ String.fromInt card.health) ]
         ]
 
 
