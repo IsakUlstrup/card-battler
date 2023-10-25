@@ -142,7 +142,7 @@ tileToString tile =
 type TurnState
     = PlaceEnemyCards (List Card) ( Float, Float )
     | PlacePlayerCards (List Card) ( Float, Float )
-    | CardAction Point Float
+    | CardAction (List Point) Float
     | DonePlacingCards
 
 
@@ -232,12 +232,15 @@ tickTurnState dt model =
             else
                 { model | turnState = PlacePlayerCards (c :: cs) ( max 0 (cd - dt), maxCd ) }
 
-        CardAction cardPosition cd ->
+        CardAction [] _ ->
+            { model | turnState = DonePlacingCards }
+
+        CardAction (c :: cs) cd ->
             if cd > 0 then
-                { model | turnState = CardAction cardPosition (max 0 (cd - dt)) }
+                { model | turnState = CardAction (c :: cs) (max 0 (cd - dt)) }
 
             else
-                { model | turnState = DonePlacingCards }
+                { model | turnState = CardAction cs 1000 }
 
         DonePlacingCards ->
             let
@@ -245,10 +248,10 @@ tickTurnState dt model =
                     cards |> Grid.toList |> List.filter (\( _, c ) -> cooldownIsDone c)
             in
             case getDone model.playerCards ++ getDone model.enemyCards of
-                c :: _ ->
-                    { model | turnState = CardAction (Tuple.first c) 1000 }
+                c :: cs ->
+                    { model | turnState = CardAction (List.map Tuple.first (c :: cs)) 1000 }
 
-                _ ->
+                [] ->
                     model
 
 
@@ -285,8 +288,8 @@ update msg model =
 activeCard : TurnState -> Maybe Point
 activeCard turn =
     case turn of
-        CardAction position _ ->
-            Just position
+        CardAction positions _ ->
+            List.head positions
 
         _ ->
             Nothing
