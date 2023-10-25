@@ -95,34 +95,24 @@ tickCardCooldown dt card =
         { card | cooldown = Tuple.mapFirst (\cd -> max 0 (cd - dt)) card.cooldown }
 
 
+cooldownIsDone : Card -> Bool
+cooldownIsDone card =
+    Tuple.first card.cooldown == 0
+
+
 playerDeck : List Card
 playerDeck =
-    [ Card '🐼' ( 2000, 2000 ) 7 5
-    , Card '🐻' ( 3000, 3000 ) 8 7
-    , Card '🦅' ( 1000, 1000 ) 4 3
-    , Card '🦖' ( 1400, 1400 ) 9 8
-    , Card '🐻' ( 3000, 3000 ) 8 7
-    , Card '🦅' ( 1000, 1000 ) 4 3
-    , Card '🦖' ( 1400, 1400 ) 9 8
-    , Card '🐻' ( 3000, 3000 ) 8 7
-    , Card '🦅' ( 1000, 1000 ) 4 3
-    , Card '🦖' ( 1400, 1400 ) 9 8
-    , Card '🐻' ( 3000, 3000 ) 8 7
-    , Card '🦅' ( 1000, 1000 ) 4 3
-    , Card '🦖' ( 1400, 1400 ) 9 8
-    , Card '🐻' ( 3000, 3000 ) 8 7
-    , Card '🦅' ( 1000, 1000 ) 4 3
-    , Card '🦖' ( 1400, 1400 ) 9 8
-    , Card '🐻' ( 3000, 3000 ) 8 7
-    , Card '🦅' ( 1000, 1000 ) 4 3
-    , Card '🦖' ( 1400, 1400 ) 9 8
+    [ Card '🐼' ( 4000, 4000 ) 7 5
+    , Card '🐻' ( 6000, 6000 ) 8 7
+    , Card '🦅' ( 2000, 2000 ) 4 3
+    , Card '🦖' ( 2800, 2800 ) 9 8
     ]
 
 
 enemyDeck : List Card
 enemyDeck =
-    [ Card '🦡' ( 1200, 1200 ) 7 4
-    , Card '🦔' ( 500, 500 ) 2 5
+    [ Card '🦡' ( 2400, 2400 ) 7 4
+    , Card '🦔' ( 2000, 2000 ) 2 5
     ]
 
 
@@ -152,6 +142,7 @@ tileToString tile =
 type TurnState
     = PlaceEnemyCards (List Card) ( Float, Float )
     | PlacePlayerCards (List Card) ( Float, Float )
+    | CardAction Point Float
     | DonePlacingCards
 
 
@@ -235,8 +226,20 @@ tickTurnState dt model =
             else
                 { model | turnState = PlacePlayerCards (c :: cs) ( max 0 (cd - dt), maxCd ) }
 
+        CardAction cardPosition cd ->
+            if cd > 0 then
+                { model | turnState = CardAction cardPosition (max 0 (cd - dt)) }
+
+            else
+                { model | turnState = DonePlacingCards }
+
         DonePlacingCards ->
-            model
+            case model.animals |> Grid.toList |> List.filter (\( _, c ) -> cooldownIsDone c) of
+                c :: _ ->
+                    { model | turnState = CardAction (Tuple.first c) 1000 }
+
+                _ ->
+                    model
 
 
 tickCardCooldowns : Float -> Model -> Model
@@ -266,12 +269,22 @@ update msg model =
 -- VIEW
 
 
+activeCard : TurnState -> Maybe Point
+activeCard turn =
+    case turn of
+        CardAction position _ ->
+            Just position
+
+        _ ->
+            Nothing
+
+
 view : Model -> Html Msg
 view model =
     main_ [ Html.Attributes.id "app" ]
         [ Render.customSvg model.config
             [ Svg.Lazy.lazy2 Render.viewGrid viewHex model.map
-            , Render.viewGrid viewAnimal model.animals
+            , Render.viewGrid (viewAnimal (activeCard model.turnState)) model.animals
             ]
         ]
 
@@ -286,9 +299,24 @@ viewHex ( position, tile ) =
         ]
 
 
-viewAnimal : ( Point, Card ) -> Svg msg
-viewAnimal ( _, animal ) =
-    Svg.g [ Svg.Attributes.class "animal" ]
+viewAnimal : Maybe Point -> ( Point, Card ) -> Svg msg
+viewAnimal selected ( position, animal ) =
+    let
+        isSelected =
+            case selected of
+                Just selectedPosition ->
+                    selectedPosition == position
+
+                Nothing ->
+                    False
+    in
+    Svg.g
+        [ Svg.Attributes.class "animal"
+        , Render.classList
+            [ ( "ready", cooldownIsDone animal )
+            , ( "selected", isSelected )
+            ]
+        ]
         [ Render.renderHex
             [ Svg.Attributes.class "cooldown-indicator"
             , Svg.Attributes.style ("transform: scale(" ++ (1 - (Tuple.first animal.cooldown / Tuple.second animal.cooldown) |> String.fromFloat) ++ ")")
@@ -297,6 +325,7 @@ viewAnimal ( _, animal ) =
             [ Svg.Attributes.textAnchor "middle"
             , Svg.Attributes.fontSize "4.5rem"
             , Svg.Attributes.y "10px"
+            , Svg.Attributes.class "icon"
             ]
             [ Svg.text (String.fromChar animal.icon) ]
         , Svg.text_

@@ -1,5 +1,6 @@
 module Render exposing
     ( Config
+    , classList
     , customSvg
     , initConfig
     , renderHex
@@ -157,6 +158,16 @@ viewGrid viewHex grid =
 
 
 -- HELPERS
+
+
+classList : List ( String, Bool ) -> Attribute msg
+classList classes =
+    classes
+        |> List.filter Tuple.second
+        |> List.map Tuple.first
+        |> List.intersperse " "
+        |> String.concat
+        |> Svg.Attributes.class
 
 
 {-| View hex polygon

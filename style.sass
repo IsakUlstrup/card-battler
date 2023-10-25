@@ -46,6 +46,17 @@ body
         animation: fade-drop 300ms cubic-bezier(0.34, 1.56, 0.64, 1)
         filter: saturate(80%) sepia(20%)
 
+        &.selected
+            .icon
+                transform: scale(1.5)
+                filter: drop-shadow(0 0 1rem orange)
+
+        &.ready .cooldown-indicator
+            fill: lime
+
+        .icon
+            transition: transform 200ms, filter 200ms
+
         .cooldown-indicator
             fill: beige
             fill-opacity: 0.1
