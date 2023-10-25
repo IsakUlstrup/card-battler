@@ -12,24 +12,12 @@ import Svg.Attributes
 import Svg.Lazy
 
 
-{-| Check if the given position on a tile grid exists and is a player tile
+{-| Check if the given position on a tile grid exists
 -}
-tileIsOpen : Point -> Grid Tile -> Bool
-tileIsOpen position tiles =
+tileIsOpen : Grid Tile -> Point -> Bool
+tileIsOpen tiles position =
     case Grid.get position tiles of
-        Just PlayerTile ->
-            True
-
-        _ ->
-            False
-
-
-{-| Check if the given position on a tile grid exists and is a enemy tile
--}
-enemyTileIsOpen : Point -> Grid Tile -> Bool
-enemyTileIsOpen position tiles =
-    case Grid.get position tiles of
-        Just EnemyTile ->
+        Just _ ->
             True
 
         _ ->
@@ -48,19 +36,13 @@ cardIsOpen position cards =
             False
 
 
-placeCard : Bool -> Card -> Grid Tile -> Grid Card -> Seed -> ( Seed, Grid Card )
-placeCard player card tiles cards seed =
+placeCard : Card -> Grid Tile -> Grid Card -> Seed -> ( Seed, Grid Card )
+placeCard card tiles cards seed =
     let
         openTiles =
             Grid.keys tiles
                 |> List.filter
-                    (\t ->
-                        if player then
-                            tileIsOpen t tiles
-
-                        else
-                            enemyTileIsOpen t tiles
-                    )
+                    (tileIsOpen tiles)
                 |> List.filter (\t -> cardIsOpen t cards)
 
         ( randomInt, newSeed ) =
@@ -203,7 +185,7 @@ tickTurnState dt model =
             if cd == 0 then
                 let
                     ( newSeed, cards ) =
-                        placeCard False c model.enemyMap model.enemyCards model.seed
+                        placeCard c model.enemyMap model.enemyCards model.seed
                 in
                 { model
                     | turnState = PlaceEnemyCards cs ( maxCd, maxCd )
@@ -221,7 +203,7 @@ tickTurnState dt model =
             if cd == 0 then
                 let
                     ( newSeed, cards ) =
-                        placeCard True c model.playerMap model.playerCards model.seed
+                        placeCard c model.playerMap model.playerCards model.seed
                 in
                 { model
                     | turnState = PlacePlayerCards cs ( maxCd, maxCd )
