@@ -229,7 +229,7 @@ init timestamp =
         grid
         (Grid.fromList [])
         playerDeck
-        (PlaceEnemyCards enemyDeck ( 200, 200 ))
+        (PlaceEnemyCards enemyDeck ( 100, 100 ))
         (Render.initConfig
             |> Render.withZoom 4
         )
@@ -246,7 +246,7 @@ tickTurnState : Float -> Model -> Model
 tickTurnState dt model =
     case model.turnState of
         PlaceEnemyCards [] _ ->
-            { model | turnState = PlacePlayerCards model.deck ( 200, 200 ) }
+            { model | turnState = PlacePlayerCards model.deck ( 100, 100 ) }
 
         PlaceEnemyCards (c :: cs) ( cd, maxCd ) ->
             if cd == 0 then
