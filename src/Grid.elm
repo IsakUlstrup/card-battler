@@ -11,6 +11,7 @@ module Grid exposing
     , pointToString
     , randomCircle
     , toList
+    , update
     )
 
 import Dict exposing (Dict)
@@ -116,6 +117,11 @@ get position (Grid grid) =
 map : (Point -> a -> b) -> Grid a -> Grid b
 map f (Grid grid) =
     Grid (Dict.map f grid)
+
+
+update : (a -> a) -> Point -> Grid a -> Grid a
+update f position (Grid grid) =
+    Grid (Dict.update position (\v -> Maybe.map f v) grid)
 
 
 {-| Get direction given hex side

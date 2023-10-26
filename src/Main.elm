@@ -70,11 +70,12 @@ type alias Card =
 
 tickCardCooldown : Float -> Card -> Card
 tickCardCooldown dt card =
-    if Tuple.first card.cooldown == 0 then
-        { card | cooldown = Tuple.mapFirst (always (Tuple.second card.cooldown)) card.cooldown }
+    { card | cooldown = Tuple.mapFirst (\cd -> max 0 (cd - dt)) card.cooldown }
 
-    else
-        { card | cooldown = Tuple.mapFirst (\cd -> max 0 (cd - dt)) card.cooldown }
+
+resetCooldown : Card -> Card
+resetCooldown card =
+    { card | cooldown = Tuple.mapFirst (always (Tuple.second card.cooldown)) card.cooldown }
 
 
 cooldownIsDone : Card -> Bool
@@ -222,7 +223,11 @@ tickTurnState dt model =
                 { model | turnState = CardAction (c :: cs) (max 0 (cd - dt)) }
 
             else
-                { model | turnState = CardAction cs 1000 }
+                { model
+                    | turnState = CardAction cs 1000
+                    , playerCards = Grid.update resetCooldown c model.playerCards
+                    , enemyCards = Grid.update resetCooldown c model.enemyCards
+                }
 
         Idle ->
             let
