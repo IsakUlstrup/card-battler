@@ -125,7 +125,7 @@ tileToString tile =
 type TurnState
     = PlaceEnemyCards (List Card) ( Float, Float )
     | PlacePlayerCards (List Card) ( Float, Float )
-    | CardAction (List Point) Float
+    | CardAction Point Float
     | Idle
 
 
@@ -215,18 +215,15 @@ tickTurnState dt model =
             else
                 { model | turnState = PlacePlayerCards (c :: cs) ( max 0 (cd - dt), maxCd ) }
 
-        CardAction [] _ ->
-            { model | turnState = Idle }
-
-        CardAction (c :: cs) cd ->
+        CardAction p cd ->
             if cd > 0 then
-                { model | turnState = CardAction (c :: cs) (max 0 (cd - dt)) }
+                { model | turnState = CardAction p (max 0 (cd - dt)) }
 
             else
                 { model
-                    | turnState = CardAction cs 1000
-                    , playerCards = Grid.update resetCooldown c model.playerCards
-                    , enemyCards = Grid.update resetCooldown c model.enemyCards
+                    | turnState = Idle
+                    , playerCards = Grid.update resetCooldown p model.playerCards
+                    , enemyCards = Grid.update resetCooldown p model.enemyCards
                 }
 
         Idle ->
@@ -234,11 +231,11 @@ tickTurnState dt model =
                 getDone cards =
                     cards |> Grid.toList |> List.filter (\( _, c ) -> cooldownIsDone c)
             in
-            case getDone model.playerCards ++ getDone model.enemyCards of
-                c :: cs ->
-                    { model | turnState = CardAction (List.map Tuple.first (c :: cs)) 1000 }
+            case getDone model.playerCards ++ getDone model.enemyCards |> List.head of
+                Just c ->
+                    { model | turnState = CardAction (Tuple.first c) 1000 }
 
-                [] ->
+                Nothing ->
                     model
 
 
@@ -275,8 +272,8 @@ update msg model =
 activeCard : TurnState -> Maybe Point
 activeCard turn =
     case turn of
-        CardAction positions _ ->
-            List.head positions
+        CardAction position _ ->
+            Just position
 
         _ ->
             Nothing
