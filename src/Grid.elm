@@ -2,6 +2,7 @@ module Grid exposing
     ( Grid
     , Point
     , circle
+    , filter
     , fromList
     , get
     , insert
@@ -117,6 +118,11 @@ get position (Grid grid) =
 map : (Point -> a -> b) -> Grid a -> Grid b
 map f (Grid grid) =
     Grid (Dict.map f grid)
+
+
+filter : (Point -> a -> Bool) -> Grid a -> Grid a
+filter pred (Grid grid) =
+    Grid (Dict.filter pred grid)
 
 
 update : (a -> a) -> Point -> Grid a -> Grid a

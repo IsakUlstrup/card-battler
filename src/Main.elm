@@ -70,7 +70,11 @@ type alias Card =
 
 tickCardCooldown : Float -> Card -> Card
 tickCardCooldown dt card =
-    { card | cooldown = Tuple.mapFirst (\cd -> max 0 (cd - dt)) card.cooldown }
+    if card.health > 0 then
+        { card | cooldown = Tuple.mapFirst (\cd -> max 0 (cd - dt)) card.cooldown }
+
+    else
+        card
 
 
 resetCooldown : Card -> Card
@@ -81,6 +85,16 @@ resetCooldown card =
 cooldownIsDone : Card -> Bool
 cooldownIsDone card =
     Tuple.first card.cooldown == 0
+
+
+isAlive : Card -> Bool
+isAlive card =
+    card.health > 0
+
+
+hit : Int -> Card -> Card
+hit amount target =
+    { target | health = max 0 (target.health - amount) }
 
 
 playerDeck : List Card
@@ -224,6 +238,7 @@ tickTurnState dt model =
                 { model
                     | turnState = Idle
                     , playerCards = Grid.update resetCooldown p model.playerCards
+                    , enemyCards = Grid.update (hit 1) t model.enemyCards
                 }
 
         EnemyCardAction p t cd ->
@@ -234,6 +249,7 @@ tickTurnState dt model =
                 { model
                     | turnState = Idle
                     , enemyCards = Grid.update resetCooldown p model.enemyCards
+                    , playerCards = Grid.update (hit 1) t model.playerCards
                 }
 
         Idle ->
@@ -242,7 +258,7 @@ tickTurnState dt model =
                     cards |> Grid.toList |> List.filter (\( _, c ) -> cooldownIsDone c) |> List.head
 
                 getTarget cards =
-                    cards |> Grid.toList |> List.head
+                    cards |> Grid.toList |> List.filter (Tuple.second >> isAlive) |> List.head
             in
             case ( getDone model.playerCards, getTarget model.enemyCards ) of
                 ( Just c, Just t ) ->
@@ -270,6 +286,14 @@ tickCardCooldowns dt model =
             model
 
 
+removeDead : Model -> Model
+removeDead model =
+    { model
+        | playerCards = Grid.filter (\_ card -> isAlive card) model.playerCards
+        , enemyCards = Grid.filter (\_ card -> isAlive card) model.enemyCards
+    }
+
+
 type Msg
     = Tick Float
 
@@ -281,6 +305,7 @@ update msg model =
             model
                 |> tickTurnState dt
                 |> tickCardCooldowns dt
+                |> removeDead
 
 
 
