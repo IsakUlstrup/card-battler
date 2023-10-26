@@ -3,6 +3,7 @@ module Render exposing
     , classList
     , customSvg
     , initConfig
+    , pointToPixel
     , renderHex
     , viewGrid
     , withZoom

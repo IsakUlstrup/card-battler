@@ -125,7 +125,8 @@ tileToString tile =
 type TurnState
     = PlaceEnemyCards (List Card) ( Float, Float )
     | PlacePlayerCards (List Card) ( Float, Float )
-    | CardAction Point Float
+    | PlayerCardAction Point Point Float
+    | EnemyCardAction Point Point Float
     | Idle
 
 
@@ -215,28 +216,45 @@ tickTurnState dt model =
             else
                 { model | turnState = PlacePlayerCards (c :: cs) ( max 0 (cd - dt), maxCd ) }
 
-        CardAction p cd ->
+        PlayerCardAction p t cd ->
             if cd > 0 then
-                { model | turnState = CardAction p (max 0 (cd - dt)) }
+                { model | turnState = PlayerCardAction p t (max 0 (cd - dt)) }
 
             else
                 { model
                     | turnState = Idle
                     , playerCards = Grid.update resetCooldown p model.playerCards
+                }
+
+        EnemyCardAction p t cd ->
+            if cd > 0 then
+                { model | turnState = EnemyCardAction p t (max 0 (cd - dt)) }
+
+            else
+                { model
+                    | turnState = Idle
                     , enemyCards = Grid.update resetCooldown p model.enemyCards
                 }
 
         Idle ->
             let
                 getDone cards =
-                    cards |> Grid.toList |> List.filter (\( _, c ) -> cooldownIsDone c)
-            in
-            case getDone model.playerCards ++ getDone model.enemyCards |> List.head of
-                Just c ->
-                    { model | turnState = CardAction (Tuple.first c) 1000 }
+                    cards |> Grid.toList |> List.filter (\( _, c ) -> cooldownIsDone c) |> List.head
 
-                Nothing ->
-                    model
+                getTarget cards =
+                    cards |> Grid.toList |> List.head
+            in
+            case ( getDone model.playerCards, getTarget model.enemyCards ) of
+                ( Just c, Just t ) ->
+                    { model | turnState = PlayerCardAction (Tuple.first c) (Tuple.first t) 1000 }
+
+                _ ->
+                    case ( getDone model.enemyCards, getTarget model.playerCards ) of
+                        ( Just c, Just t ) ->
+                            { model | turnState = EnemyCardAction (Tuple.first c) (Tuple.first t) 1000 }
+
+                        _ ->
+                            model
 
 
 tickCardCooldowns : Float -> Model -> Model
@@ -269,11 +287,14 @@ update msg model =
 -- VIEW
 
 
-activeCard : TurnState -> Maybe Point
+activeCard : TurnState -> Maybe ( Point, Point )
 activeCard turn =
     case turn of
-        CardAction position _ ->
-            Just position
+        PlayerCardAction position target _ ->
+            Just ( position, target )
+
+        EnemyCardAction position target _ ->
+            Just ( position, target )
 
         _ ->
             Nothing
@@ -301,13 +322,21 @@ viewHex ( position, tile ) =
         ]
 
 
-viewCard : Maybe Point -> ( Point, Card ) -> Svg msg
+viewCard : Maybe ( Point, Point ) -> ( Point, Card ) -> Svg msg
 viewCard selected ( position, card ) =
     let
         isSelected =
             case selected of
-                Just selectedPosition ->
+                Just ( selectedPosition, _ ) ->
                     selectedPosition == position
+
+                Nothing ->
+                    False
+
+        isTargeted =
+            case selected of
+                Just ( _, target ) ->
+                    target == position
 
                 Nothing ->
                     False
@@ -317,6 +346,7 @@ viewCard selected ( position, card ) =
         , Render.classList
             [ ( "ready", cooldownIsDone card )
             , ( "selected", isSelected )
+            , ( "targeted", isTargeted )
             ]
         ]
         [ Render.renderHex
