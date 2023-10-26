@@ -236,10 +236,10 @@ tickTurnState dt model =
 
             else
                 { model
-                    | turnState = Idle
-                    , playerCards = Grid.update resetCooldown p model.playerCards
+                    | playerCards = Grid.update resetCooldown p model.playerCards
                     , enemyCards = Grid.update (hit 1) t model.enemyCards
                 }
+                    |> setCardActionState
 
         EnemyCardAction p t cd ->
             if cd > 0 then
@@ -247,30 +247,35 @@ tickTurnState dt model =
 
             else
                 { model
-                    | turnState = Idle
-                    , enemyCards = Grid.update resetCooldown p model.enemyCards
+                    | enemyCards = Grid.update resetCooldown p model.enemyCards
                     , playerCards = Grid.update (hit 1) t model.playerCards
                 }
+                    |> setCardActionState
 
         Idle ->
-            let
-                getDone cards =
-                    cards |> Grid.toList |> List.filter (\( _, c ) -> cooldownIsDone c) |> List.head
+            setCardActionState model
 
-                getTarget cards =
-                    cards |> Grid.toList |> List.filter (Tuple.second >> isAlive) |> List.head
-            in
-            case ( getDone model.playerCards, getTarget model.enemyCards ) of
+
+setCardActionState : Model -> Model
+setCardActionState model =
+    let
+        getDone cards =
+            cards |> Grid.toList |> List.filter (\( _, c ) -> cooldownIsDone c) |> List.head
+
+        getTarget cards =
+            cards |> Grid.toList |> List.filter (Tuple.second >> isAlive) |> List.head
+    in
+    case ( getDone model.playerCards, getTarget model.enemyCards ) of
+        ( Just c, Just t ) ->
+            { model | turnState = PlayerCardAction (Tuple.first c) (Tuple.first t) 1000 }
+
+        _ ->
+            case ( getDone model.enemyCards, getTarget model.playerCards ) of
                 ( Just c, Just t ) ->
-                    { model | turnState = PlayerCardAction (Tuple.first c) (Tuple.first t) 1000 }
+                    { model | turnState = EnemyCardAction (Tuple.first c) (Tuple.first t) 1000 }
 
                 _ ->
-                    case ( getDone model.enemyCards, getTarget model.playerCards ) of
-                        ( Just c, Just t ) ->
-                            { model | turnState = EnemyCardAction (Tuple.first c) (Tuple.first t) 1000 }
-
-                        _ ->
-                            model
+                    { model | turnState = Idle }
 
 
 tickCardCooldowns : Float -> Model -> Model
