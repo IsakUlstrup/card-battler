@@ -207,8 +207,8 @@ init timestamp =
 -- UPDATE
 
 
-tickTurnState : Float -> Model -> Model
-tickTurnState dt model =
+handleTurnState : Model -> Model
+handleTurnState model =
     case model.turnState of
         PlaceEnemyCards [] _ ->
             { model | turnState = PlacePlayerCards model.playerDeck ( 100, 100 ) }
@@ -226,7 +226,7 @@ tickTurnState dt model =
                 }
 
             else
-                { model | turnState = PlaceEnemyCards (c :: cs) ( max 0 (cd - dt), maxCd ) }
+                model
 
         PlacePlayerCards [] _ ->
             { model | turnState = Idle }
@@ -244,32 +244,51 @@ tickTurnState dt model =
                 }
 
             else
-                { model | turnState = PlacePlayerCards (c :: cs) ( max 0 (cd - dt), maxCd ) }
+                model
 
         PlayerCardAction ( pos, effect ) t cd ->
-            if cd > 0 then
-                { model | turnState = PlayerCardAction ( pos, effect ) t (max 0 (cd - dt)) }
-
-            else
+            if cd == 0 then
                 { model
                     | playerCards = Grid.update resetCooldown pos model.playerCards
                     , enemyCards = Grid.update (applySkillEffect effect) t model.enemyCards
                 }
                     |> setCardActionState
 
-        EnemyCardAction ( pos, effect ) t cd ->
-            if cd > 0 then
-                { model | turnState = EnemyCardAction ( pos, effect ) t (max 0 (cd - dt)) }
-
             else
+                model
+
+        EnemyCardAction ( pos, effect ) t cd ->
+            if cd == 0 then
                 { model
                     | enemyCards = Grid.update resetCooldown pos model.enemyCards
                     , playerCards = Grid.update (applySkillEffect effect) t model.playerCards
                 }
                     |> setCardActionState
 
+            else
+                model
+
         Idle ->
             setCardActionState model
+
+
+tickTurnState : Float -> Model -> Model
+tickTurnState dt model =
+    case model.turnState of
+        PlaceEnemyCards cards ( cd, maxCd ) ->
+            { model | turnState = PlaceEnemyCards cards ( max 0 (cd - dt), maxCd ) }
+
+        PlacePlayerCards cards ( cd, maxCd ) ->
+            { model | turnState = PlacePlayerCards cards ( max 0 (cd - dt), maxCd ) }
+
+        PlayerCardAction action t cd ->
+            { model | turnState = PlayerCardAction action t (max 0 (cd - dt)) }
+
+        EnemyCardAction action t cd ->
+            { model | turnState = EnemyCardAction action t (max 0 (cd - dt)) }
+
+        _ ->
+            model
 
 
 setCardActionState : Model -> Model
@@ -325,6 +344,7 @@ update msg model =
         Tick dt ->
             model
                 |> tickTurnState dt
+                |> handleTurnState
                 |> tickCardCooldowns dt
                 |> removeDead
 
