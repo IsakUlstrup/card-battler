@@ -68,6 +68,10 @@ type alias Card =
     }
 
 
+type SkillEffect
+    = Hit Int
+
+
 tickCardCooldown : Float -> Card -> Card
 tickCardCooldown dt card =
     if card.health > 0 then
@@ -95,6 +99,18 @@ isAlive card =
 hit : Int -> Card -> Card
 hit amount target =
     { target | health = max 0 (target.health - amount) }
+
+
+applySkillEffect : SkillEffect -> Card -> Card
+applySkillEffect effect card =
+    case effect of
+        Hit power ->
+            hit power card
+
+
+hitEffect : Card -> SkillEffect
+hitEffect card =
+    Hit card.power
 
 
 playerDeck : List Card
@@ -139,8 +155,8 @@ tileToString tile =
 type TurnState
     = PlaceEnemyCards (List Card) ( Float, Float )
     | PlacePlayerCards (List Card) ( Float, Float )
-    | PlayerCardAction Point Point Float
-    | EnemyCardAction Point Point Float
+    | PlayerCardAction ( Point, SkillEffect ) Point Float
+    | EnemyCardAction ( Point, SkillEffect ) Point Float
     | Idle
 
 
@@ -230,25 +246,25 @@ tickTurnState dt model =
             else
                 { model | turnState = PlacePlayerCards (c :: cs) ( max 0 (cd - dt), maxCd ) }
 
-        PlayerCardAction p t cd ->
+        PlayerCardAction ( pos, effect ) t cd ->
             if cd > 0 then
-                { model | turnState = PlayerCardAction p t (max 0 (cd - dt)) }
+                { model | turnState = PlayerCardAction ( pos, effect ) t (max 0 (cd - dt)) }
 
             else
                 { model
-                    | playerCards = Grid.update resetCooldown p model.playerCards
-                    , enemyCards = Grid.update (hit 1) t model.enemyCards
+                    | playerCards = Grid.update resetCooldown pos model.playerCards
+                    , enemyCards = Grid.update (applySkillEffect effect) t model.enemyCards
                 }
                     |> setCardActionState
 
-        EnemyCardAction p t cd ->
+        EnemyCardAction ( pos, effect ) t cd ->
             if cd > 0 then
-                { model | turnState = EnemyCardAction p t (max 0 (cd - dt)) }
+                { model | turnState = EnemyCardAction ( pos, effect ) t (max 0 (cd - dt)) }
 
             else
                 { model
-                    | enemyCards = Grid.update resetCooldown p model.enemyCards
-                    , playerCards = Grid.update (hit 1) t model.playerCards
+                    | enemyCards = Grid.update resetCooldown pos model.enemyCards
+                    , playerCards = Grid.update (applySkillEffect effect) t model.playerCards
                 }
                     |> setCardActionState
 
@@ -267,12 +283,12 @@ setCardActionState model =
     in
     case ( getDone model.playerCards, getTarget model.enemyCards ) of
         ( Just c, Just t ) ->
-            { model | turnState = PlayerCardAction (Tuple.first c) (Tuple.first t) 1000 }
+            { model | turnState = PlayerCardAction ( Tuple.first c, hitEffect (Tuple.second c) ) (Tuple.first t) 1000 }
 
         _ ->
             case ( getDone model.enemyCards, getTarget model.playerCards ) of
                 ( Just c, Just t ) ->
-                    { model | turnState = EnemyCardAction (Tuple.first c) (Tuple.first t) 1000 }
+                    { model | turnState = EnemyCardAction ( Tuple.first c, hitEffect (Tuple.second c) ) (Tuple.first t) 1000 }
 
                 _ ->
                     { model | turnState = Idle }
@@ -320,10 +336,10 @@ update msg model =
 activeCard : TurnState -> Maybe ( Point, Point )
 activeCard turn =
     case turn of
-        PlayerCardAction position target _ ->
+        PlayerCardAction ( position, _ ) target _ ->
             Just ( position, target )
 
-        EnemyCardAction position target _ ->
+        EnemyCardAction ( position, _ ) target _ ->
             Just ( position, target )
 
         _ ->
