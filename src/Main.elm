@@ -261,6 +261,7 @@ viewCardCost playerEnergy cost =
                         [ Html.Attributes.classList
                             [ ( "has-energy", playerHasEnergy e c )
                             , ( "insufficient-energy", playerHasEnergy e c |> not )
+                            , ( energyString e, True )
                             ]
                         ]
                         [ Html.text s ]
@@ -287,6 +288,13 @@ viewCardCost playerEnergy cost =
         )
 
 
+viewCardEffect : CardEffect -> Html msg
+viewCardEffect cardEffect =
+    case cardEffect of
+        IncreaseEnergyMax energyType amount ->
+            Html.p [ Html.Attributes.class (energyString energyType) ] [ Html.text ("+" ++ String.fromInt amount ++ " to max " ++ energyString energyType) ]
+
+
 viewCard : Dict Energy PlayerEnergy -> Int -> Card -> Html Msg
 viewCard playerEnergy index card =
     Html.div
@@ -299,7 +307,7 @@ viewCard playerEnergy index card =
         ]
         [ Html.h1 [] [ Html.text card.name ]
         , viewCardCost playerEnergy card.cost
-        , Html.p [] [ Html.text (Debug.toString card.effect) ]
+        , viewCardEffect card.effect
         ]
 
 
