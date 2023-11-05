@@ -292,7 +292,7 @@ viewCardEffect : CardEffect -> Html msg
 viewCardEffect cardEffect =
     case cardEffect of
         IncreaseEnergyMax energyType amount ->
-            Html.p [ Html.Attributes.class (energyString energyType) ] [ Html.text ("+" ++ String.fromInt amount ++ " to max " ++ energyString energyType) ]
+            Html.p [ Html.Attributes.class (energyString energyType) ] [ Html.text ("+" ++ String.fromInt amount ++ " max " ++ energyString energyType) ]
 
 
 viewCard : Dict Energy PlayerEnergy -> Int -> Card -> Html Msg
