@@ -131,17 +131,20 @@ applyCard card model =
             }
 
 
-removeCard : Int -> Model -> Model
-removeCard targetIndex model =
+discardCard : Int -> Card -> Model -> Model
+discardCard targetIndex card model =
     let
-        removeIndex target index card =
+        removeIndex target index c =
             if target == index then
                 Nothing
 
             else
-                Just card
+                Just c
     in
-    { model | cards = List.indexedMap (removeIndex targetIndex) model.cards |> List.filterMap identity }
+    { model
+        | hand = List.indexedMap (removeIndex targetIndex) model.hand |> List.filterMap identity
+        , deck = model.deck ++ [ card ]
+    }
 
 
 tickEnergyCooldowns : Float -> Model -> Model
@@ -179,6 +182,31 @@ recoverEnergy model =
     }
 
 
+drawCard : Model -> Model
+drawCard model =
+    case model.deck of
+        [] ->
+            model
+
+        card :: deck ->
+            if List.length model.hand + 1 > model.maxHandSize then
+                -- discard oldest card
+                let
+                    newHand =
+                        card :: model.hand
+
+                    overflow =
+                        List.drop model.maxHandSize newHand
+                in
+                { model
+                    | hand = newHand |> List.take model.maxHandSize
+                    , deck = deck ++ overflow
+                }
+
+            else
+                { model | hand = card :: model.hand, deck = deck }
+
+
 type alias PlayerEnergy =
     { current : Int
     , max : Int
@@ -188,7 +216,9 @@ type alias PlayerEnergy =
 
 
 type alias Model =
-    { cards : List Card
+    { deck : List Card
+    , hand : List Card
+    , maxHandSize : Int
     , playerEnergy : Dict Energy PlayerEnergy
     }
 
@@ -197,11 +227,12 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( Model
         [ testCard
-        , testCard
-        , testCard2
         , testCard2
         , testCard3
+        , testCard
         ]
+        []
+        3
         (Dict.fromList
             [ ( Yellow, PlayerEnergy 0 0 (newCooldown 1000) 1 )
             , ( Orange, PlayerEnergy 0 0 (newCooldown 1000) 0.1 )
@@ -218,6 +249,7 @@ init _ =
 type Msg
     = Tick Float
     | ClickedCard Int Card
+    | ClickedDrawCard
 
 
 update : Msg -> Model -> Model
@@ -232,10 +264,14 @@ update msg model =
             if canAffordCost card.cost model.playerEnergy then
                 model
                     |> applyCard card
-                    |> removeCard index
+                    |> discardCard index card
 
             else
                 model
+
+        ClickedDrawCard ->
+            model
+                |> drawCard
 
 
 
@@ -341,11 +377,21 @@ viewCooldownProgress ( cd, maxCd ) =
         []
 
 
+viewDeckControls : Model -> Html Msg
+viewDeckControls model =
+    Html.div [ Html.Attributes.class "hand-controls" ]
+        [ Html.button [ Html.Events.onClick ClickedDrawCard ] [ Html.text "Draw card" ]
+        , Html.p [] [ Html.text ("deck: " ++ String.fromInt (List.length model.deck)) ]
+        , Html.p [] [ Html.text ("hand: " ++ String.fromInt (List.length model.hand) ++ "/" ++ String.fromInt model.maxHandSize) ]
+        ]
+
+
 view : Model -> Html Msg
 view model =
     main_ [ Html.Attributes.id "app" ]
         [ viewPlayerEnergy model.playerEnergy
-        , Html.div [ Html.Attributes.class "cards" ] (List.indexedMap (viewCard model.playerEnergy) model.cards)
+        , viewDeckControls model
+        , Html.div [ Html.Attributes.class "hand" ] (List.indexedMap (viewCard model.playerEnergy) model.hand)
         ]
 
 
