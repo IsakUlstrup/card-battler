@@ -163,6 +163,20 @@ tickEnergyCooldowns dt model =
     }
 
 
+tickDrawCooldown : Float -> Model -> Model
+tickDrawCooldown dt model =
+    { model | drawCooldown = tickCooldown dt model.drawCooldown }
+
+
+drawIfReady : Model -> Model
+drawIfReady model =
+    if isDone model.drawCooldown then
+        drawCard { model | drawCooldown = reset model.drawCooldown }
+
+    else
+        model
+
+
 recoverEnergy : Model -> Model
 recoverEnergy model =
     { model
@@ -219,6 +233,7 @@ type alias Model =
     { deck : List Card
     , hand : List Card
     , maxHandSize : Int
+    , drawCooldown : Cooldown
     , playerEnergy : Dict Energy PlayerEnergy
     }
 
@@ -233,6 +248,7 @@ init _ =
         ]
         []
         3
+        (newCooldown 2000)
         (Dict.fromList
             [ ( Yellow, PlayerEnergy 0 0 (newCooldown 1000) 1 )
             , ( Orange, PlayerEnergy 0 0 (newCooldown 1000) 0.1 )
@@ -249,7 +265,6 @@ init _ =
 type Msg
     = Tick Float
     | ClickedCard Int Card
-    | ClickedDrawCard
 
 
 update : Msg -> Model -> Model
@@ -258,7 +273,9 @@ update msg model =
         Tick dt ->
             model
                 |> tickEnergyCooldowns dt
+                |> tickDrawCooldown dt
                 |> recoverEnergy
+                |> drawIfReady
 
         ClickedCard index card ->
             if canAffordCost card.cost model.playerEnergy then
@@ -268,10 +285,6 @@ update msg model =
 
             else
                 model
-
-        ClickedDrawCard ->
-            model
-                |> drawCard
 
 
 
@@ -380,7 +393,7 @@ viewCooldownProgress ( cd, maxCd ) =
 viewDeckControls : Model -> Html Msg
 viewDeckControls model =
     Html.div [ Html.Attributes.class "hand-controls" ]
-        [ Html.button [ Html.Events.onClick ClickedDrawCard ] [ Html.text "Draw card" ]
+        [ Html.div [] [ Html.text "draw cooldown:", viewCooldownProgress model.drawCooldown ]
         , Html.p [] [ Html.text ("deck: " ++ String.fromInt (List.length model.deck)) ]
         , Html.p [] [ Html.text ("hand: " ++ String.fromInt (List.length model.hand) ++ "/" ++ String.fromInt model.maxHandSize) ]
         ]
