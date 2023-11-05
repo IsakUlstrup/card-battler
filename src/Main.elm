@@ -2,203 +2,211 @@ module Main exposing (Model, Msg, main)
 
 import Browser
 import Browser.Events
-import Grid exposing (Grid, Point)
+import CustomDict as Dict exposing (Dict)
 import Html exposing (Html, main_)
 import Html.Attributes
-import Random exposing (Seed)
-import Render exposing (Config)
-import Svg exposing (Svg)
-import Svg.Attributes
-import Svg.Lazy
+import Html.Events
 
 
-{-| Check if the given position on a tile grid exists
--}
-tileIsOpen : Grid Tile -> Point -> Bool
-tileIsOpen tiles position =
-    case Grid.get position tiles of
-        Just _ ->
-            True
 
-        _ ->
-            False
+-- COOLDOWN
 
 
-{-| Check if the given position on a card grid is empty
--}
-cardIsOpen : Point -> Grid Card -> Bool
-cardIsOpen position cards =
-    case Grid.get position cards of
-        Nothing ->
-            True
-
-        _ ->
-            False
+type alias Cooldown =
+    ( Float, Float )
 
 
-placeCard : Card -> Grid Tile -> Grid Card -> Seed -> ( Seed, Grid Card )
-placeCard card tiles cards seed =
+newCooldown : Float -> Cooldown
+newCooldown duration =
+    ( 0, duration )
+
+
+tickCooldown : Float -> Cooldown -> Cooldown
+tickCooldown dt ( cd, maxCd ) =
+    ( min maxCd (cd + dt), maxCd )
+
+
+isDone : Cooldown -> Bool
+isDone ( cd, maxCd ) =
+    cd >= maxCd
+
+
+reset : Cooldown -> Cooldown
+reset ( _, maxCd ) =
+    ( 0, maxCd )
+
+
+
+-- ENERGY
+
+
+type Energy
+    = Yellow
+    | Orange
+
+
+energyString : Energy -> String
+energyString energyType_ =
+    case energyType_ of
+        Yellow ->
+            "yellow"
+
+        Orange ->
+            "orange"
+
+
+canAffordCost : Dict Energy Int -> Dict Energy PlayerEnergy -> Bool
+canAffordCost cost energy =
     let
-        openTiles =
-            Grid.keys tiles
-                |> List.filter
-                    (tileIsOpen tiles)
-                |> List.filter (\t -> cardIsOpen t cards)
+        canAfford : Energy -> Int -> Bool
+        canAfford e i =
+            case Dict.get e energy of
+                Just playerEnergy ->
+                    playerEnergy.current >= i
 
-        ( randomInt, newSeed ) =
-            Random.step (Random.int 0 (List.length openTiles - 1)) seed
+                Nothing ->
+                    False
     in
-    case openTiles |> List.drop randomInt |> List.head of
-        Just tile ->
-            ( newSeed, Grid.insert tile card cards )
+    cost |> Dict.map canAfford |> Dict.all ((==) True)
+
+
+subtractCost : Dict Energy Int -> Dict Energy PlayerEnergy -> Dict Energy PlayerEnergy
+subtractCost _ energy =
+    energy
+
+
+increaseMaxEnergy : Energy -> Int -> Dict Energy PlayerEnergy -> Dict Energy PlayerEnergy
+increaseMaxEnergy energyType_ amount energy =
+    case Dict.get energyType_ energy of
+        Just e ->
+            Dict.insert energyType_ { e | max = e.max + amount } energy
 
         Nothing ->
-            ( seed, cards )
+            energy
 
 
 
 -- CARD
 
 
+type CardEffect
+    = IncreaseEnergyMax Energy Int
+
+
 type alias Card =
-    { icon : Char
-    , cooldown : ( Float, Float )
-    , power : Int
-    , health : Int
+    { name : String
+    , cost : Dict Energy Int
+    , effect : CardEffect
     }
 
 
-type SkillEffect
-    = Hit Int
+testCard : Card
+testCard =
+    Card "Yellow Energy" (Dict.fromList []) (IncreaseEnergyMax Yellow 1)
 
 
-tickCardCooldown : Float -> Card -> Card
-tickCardCooldown dt card =
-    if card.health > 0 then
-        { card | cooldown = Tuple.mapFirst (\cd -> max 0 (cd - dt)) card.cooldown }
-
-    else
-        card
+testCard2 : Card
+testCard2 =
+    Card "Orange Energy" (Dict.fromList []) (IncreaseEnergyMax Orange 1)
 
 
-resetCooldown : Card -> Card
-resetCooldown card =
-    { card | cooldown = Tuple.mapFirst (always (Tuple.second card.cooldown)) card.cooldown }
-
-
-cooldownIsDone : Card -> Bool
-cooldownIsDone card =
-    Tuple.first card.cooldown == 0
-
-
-isAlive : Card -> Bool
-isAlive card =
-    card.health > 0
-
-
-hit : Int -> Card -> Card
-hit amount target =
-    { target | health = max 0 (target.health - amount) }
-
-
-applySkillEffect : SkillEffect -> Card -> Card
-applySkillEffect effect card =
-    case effect of
-        Hit power ->
-            hit power card
-
-
-hitEffect : Card -> SkillEffect
-hitEffect card =
-    Hit card.power
-
-
-playerDeck : List Card
-playerDeck =
-    [ Card '🐼' ( 4000, 4000 ) 7 5
-    , Card '🐻' ( 6000, 6000 ) 8 7
-    , Card '🦅' ( 2000, 2000 ) 4 3
-    , Card '🦖' ( 2800, 2800 ) 9 8
-    ]
-
-
-enemyDeck : List Card
-enemyDeck =
-    [ Card '🦡' ( 2400, 2400 ) 7 4
-    , Card '🦔' ( 2000, 2000 ) 2 5
-    ]
-
-
-
--- TILE
-
-
-type Tile
-    = PlayerTile
-    | EnemyTile
-
-
-tileToString : Tile -> String
-tileToString tile =
-    case tile of
-        PlayerTile ->
-            "playerTile"
-
-        EnemyTile ->
-            "enemyTile"
-
-
-
--- TURN
-
-
-type TurnState
-    = PlaceEnemyCards (List Card) ( Float, Float )
-    | PlacePlayerCards (List Card) ( Float, Float )
-    | PlayerCardAction ( Point, SkillEffect ) Point Float
-    | EnemyCardAction ( Point, SkillEffect ) Point Float
-    | Idle
+testCard3 : Card
+testCard3 =
+    Card "Expensive card" (Dict.fromList [ ( Yellow, 1 ), ( Orange, 2 ) ]) (IncreaseEnergyMax Yellow 5)
 
 
 
 -- MODEL
 
 
-type alias Model =
-    { playerMap : Grid Tile
-    , playerCards : Grid Card
-    , playerDeck : List Card
-    , enemyMap : Grid Tile
-    , enemyCards : Grid Card
-    , enemyDeck : List Card
-    , turnState : TurnState
-    , config : Config
-    , seed : Seed
+applyCard : Card -> Model -> Model
+applyCard card model =
+    case card.effect of
+        IncreaseEnergyMax energy amount ->
+            { model
+                | playerEnergy =
+                    model.playerEnergy
+                        |> subtractCost card.cost
+                        |> increaseMaxEnergy energy amount
+            }
+
+
+removeCard : Int -> Model -> Model
+removeCard targetIndex model =
+    let
+        removeIndex target index card =
+            if target == index then
+                Nothing
+
+            else
+                Just card
+    in
+    { model | cards = List.indexedMap (removeIndex targetIndex) model.cards |> List.filterMap identity }
+
+
+tickEnergyCooldowns : Float -> Model -> Model
+tickEnergyCooldowns dt model =
+    { model
+        | playerEnergy =
+            model.playerEnergy
+                |> Dict.map
+                    (\_ pe ->
+                        if pe.current < pe.max then
+                            { pe | cooldown = tickCooldown (dt * pe.cooldownrate) pe.cooldown }
+
+                        else
+                            pe
+                    )
     }
 
 
-init : Int -> ( Model, Cmd Msg )
-init timestamp =
-    let
-        ( playerTilesCenter, enemyTilesCenter ) =
-            ( ( -1, -1, 2 ), ( 2, 2, -4 ) )
+recoverEnergy : Model -> Model
+recoverEnergy model =
+    { model
+        | playerEnergy =
+            model.playerEnergy
+                |> Dict.map
+                    (\_ pe ->
+                        if isDone pe.cooldown then
+                            { pe
+                                | current = pe.current + 1
+                                , cooldown = reset pe.cooldown
+                            }
 
-        ( newSeed, playerTiles ) =
-            Grid.randomCircle 2 playerTilesCenter PlayerTile (Random.initialSeed timestamp)
+                        else
+                            pe
+                    )
+    }
 
-        ( newSeed2, enemyTiles ) =
-            Grid.randomCircle 1 enemyTilesCenter EnemyTile newSeed
-    in
+
+type alias PlayerEnergy =
+    { current : Int
+    , max : Int
+    , cooldown : Cooldown
+    , cooldownrate : Float
+    }
+
+
+type alias Model =
+    { cards : List Card
+    , playerEnergy : Dict Energy PlayerEnergy
+    }
+
+
+init : () -> ( Model, Cmd Msg )
+init _ =
     ( Model
-        (Grid.fromList playerTiles)
-        (Grid.fromList [])
-        playerDeck
-        (Grid.fromList enemyTiles)
-        (Grid.fromList [])
-        enemyDeck
-        (PlaceEnemyCards enemyDeck ( 100, 100 ))
-        (Render.initConfig |> Render.withZoom 4)
-        newSeed2
+        [ testCard
+        , testCard
+        , testCard2
+        , testCard2
+        , testCard3
+        ]
+        (Dict.fromList
+            [ ( Yellow, PlayerEnergy 0 0 (newCooldown 1000) 1 )
+            , ( Orange, PlayerEnergy 0 0 (newCooldown 1000) 0.1 )
+            ]
+        )
     , Cmd.none
     )
 
@@ -207,135 +215,9 @@ init timestamp =
 -- UPDATE
 
 
-handleTurnState : Model -> Model
-handleTurnState model =
-    case model.turnState of
-        PlaceEnemyCards [] _ ->
-            { model | turnState = PlacePlayerCards model.playerDeck ( 100, 100 ) }
-
-        PlaceEnemyCards (c :: cs) ( cd, maxCd ) ->
-            if cd == 0 then
-                let
-                    ( newSeed, cards ) =
-                        placeCard c model.enemyMap model.enemyCards model.seed
-                in
-                { model
-                    | turnState = PlaceEnemyCards cs ( maxCd, maxCd )
-                    , enemyCards = cards
-                    , seed = newSeed
-                }
-
-            else
-                model
-
-        PlacePlayerCards [] _ ->
-            { model | turnState = Idle }
-
-        PlacePlayerCards (c :: cs) ( cd, maxCd ) ->
-            if cd == 0 then
-                let
-                    ( newSeed, cards ) =
-                        placeCard c model.playerMap model.playerCards model.seed
-                in
-                { model
-                    | turnState = PlacePlayerCards cs ( maxCd, maxCd )
-                    , playerCards = cards
-                    , seed = newSeed
-                }
-
-            else
-                model
-
-        PlayerCardAction ( pos, effect ) t cd ->
-            if cd == 0 then
-                { model
-                    | playerCards = Grid.update resetCooldown pos model.playerCards
-                    , enemyCards = Grid.update (applySkillEffect effect) t model.enemyCards
-                }
-                    |> setCardActionState
-
-            else
-                model
-
-        EnemyCardAction ( pos, effect ) t cd ->
-            if cd == 0 then
-                { model
-                    | enemyCards = Grid.update resetCooldown pos model.enemyCards
-                    , playerCards = Grid.update (applySkillEffect effect) t model.playerCards
-                }
-                    |> setCardActionState
-
-            else
-                model
-
-        Idle ->
-            setCardActionState model
-
-
-tickTurnState : Float -> Model -> Model
-tickTurnState dt model =
-    case model.turnState of
-        PlaceEnemyCards cards ( cd, maxCd ) ->
-            { model | turnState = PlaceEnemyCards cards ( max 0 (cd - dt), maxCd ) }
-
-        PlacePlayerCards cards ( cd, maxCd ) ->
-            { model | turnState = PlacePlayerCards cards ( max 0 (cd - dt), maxCd ) }
-
-        PlayerCardAction action t cd ->
-            { model | turnState = PlayerCardAction action t (max 0 (cd - dt)) }
-
-        EnemyCardAction action t cd ->
-            { model | turnState = EnemyCardAction action t (max 0 (cd - dt)) }
-
-        _ ->
-            model
-
-
-setCardActionState : Model -> Model
-setCardActionState model =
-    let
-        getDone cards =
-            cards |> Grid.toList |> List.filter (\( _, c ) -> cooldownIsDone c) |> List.head
-
-        getTarget cards =
-            cards |> Grid.toList |> List.filter (Tuple.second >> isAlive) |> List.head
-    in
-    case ( getDone model.playerCards, getTarget model.enemyCards ) of
-        ( Just c, Just t ) ->
-            { model | turnState = PlayerCardAction ( Tuple.first c, hitEffect (Tuple.second c) ) (Tuple.first t) 1000 }
-
-        _ ->
-            case ( getDone model.enemyCards, getTarget model.playerCards ) of
-                ( Just c, Just t ) ->
-                    { model | turnState = EnemyCardAction ( Tuple.first c, hitEffect (Tuple.second c) ) (Tuple.first t) 1000 }
-
-                _ ->
-                    { model | turnState = Idle }
-
-
-tickCardCooldowns : Float -> Model -> Model
-tickCardCooldowns dt model =
-    case model.turnState of
-        Idle ->
-            { model
-                | playerCards = Grid.map (\_ c -> tickCardCooldown dt c) model.playerCards
-                , enemyCards = Grid.map (\_ c -> tickCardCooldown dt c) model.enemyCards
-            }
-
-        _ ->
-            model
-
-
-removeDead : Model -> Model
-removeDead model =
-    { model
-        | playerCards = Grid.filter (\_ card -> isAlive card) model.playerCards
-        , enemyCards = Grid.filter (\_ card -> isAlive card) model.enemyCards
-    }
-
-
 type Msg
     = Tick Float
+    | ClickedCard Int Card
 
 
 update : Msg -> Model -> Model
@@ -343,95 +225,119 @@ update msg model =
     case msg of
         Tick dt ->
             model
-                |> tickTurnState dt
-                |> handleTurnState
-                |> tickCardCooldowns dt
-                |> removeDead
+                |> tickEnergyCooldowns dt
+                |> recoverEnergy
+
+        ClickedCard index card ->
+            if canAffordCost card.cost model.playerEnergy then
+                model
+                    |> applyCard card
+                    |> removeCard index
+
+            else
+                model
 
 
 
 -- VIEW
 
 
-activeCard : TurnState -> Maybe ( Point, Point )
-activeCard turn =
-    case turn of
-        PlayerCardAction ( position, _ ) target _ ->
-            Just ( position, target )
+viewCardCost : Dict Energy PlayerEnergy -> Dict Energy Int -> Html msg
+viewCardCost playerEnergy cost =
+    let
+        playerHasEnergy e c =
+            case Dict.get e playerEnergy of
+                Just elementEnergy ->
+                    elementEnergy.current >= c
 
-        EnemyCardAction ( position, _ ) target _ ->
-            Just ( position, target )
+                Nothing ->
+                    False
 
-        _ ->
-            Nothing
+        viewCost : Energy -> Int -> Maybe (Html msg)
+        viewCost e c =
+            let
+                viewHelper s =
+                    Html.li
+                        [ Html.Attributes.classList
+                            [ ( "has-energy", playerHasEnergy e c )
+                            , ( "insufficient-energy", playerHasEnergy e c |> not )
+                            ]
+                        ]
+                        [ Html.text s ]
+            in
+            case c of
+                0 ->
+                    Nothing
+
+                1 ->
+                    Just
+                        (viewHelper (energyString e))
+
+                _ ->
+                    Just
+                        (viewHelper (energyString e ++ " " ++ String.fromInt c))
+    in
+    Html.ul [ Html.Attributes.class "energy-cost" ]
+        ((cost
+            |> Dict.map viewCost
+            |> Dict.toList
+            |> List.map Tuple.second
+         )
+            |> List.filterMap identity
+        )
+
+
+viewCard : Dict Energy PlayerEnergy -> Int -> Card -> Html Msg
+viewCard playerEnergy index card =
+    Html.div
+        [ Html.Attributes.class "card"
+        , Html.Attributes.classList
+            [ ( "card", True )
+            , ( "can-afford", canAffordCost card.cost playerEnergy )
+            ]
+        , Html.Events.onClick (ClickedCard index card)
+        ]
+        [ Html.h1 [] [ Html.text card.name ]
+        , viewCardCost playerEnergy card.cost
+        , Html.p [] [ Html.text (Debug.toString card.effect) ]
+        ]
+
+
+viewEnergyMeter : Energy -> PlayerEnergy -> Html msg
+viewEnergyMeter energyType_ energy =
+    Html.li []
+        [ Html.text (energyString energyType_ ++ " " ++ String.fromInt energy.current ++ "/" ++ String.fromInt energy.max)
+        , viewCooldownProgress energy.cooldown
+        ]
+
+
+viewPlayerEnergy : Dict Energy PlayerEnergy -> Html Msg
+viewPlayerEnergy energy =
+    Html.div []
+        [ Html.p [] [ Html.text "Player Energy" ]
+        , Html.ul [ Html.Attributes.class "energy-meters" ]
+            (energy
+                |> Dict.map viewEnergyMeter
+                |> Dict.toList
+                |> List.map Tuple.second
+            )
+        ]
+
+
+viewCooldownProgress : Cooldown -> Html msg
+viewCooldownProgress ( cd, maxCd ) =
+    Html.progress
+        [ Html.Attributes.max (String.fromFloat maxCd)
+        , Html.Attributes.value (String.fromFloat cd)
+        ]
+        []
 
 
 view : Model -> Html Msg
 view model =
     main_ [ Html.Attributes.id "app" ]
-        [ Render.customSvg model.config
-            [ Svg.Lazy.lazy2 Render.viewGrid viewHex model.playerMap
-            , Svg.Lazy.lazy2 Render.viewGrid viewHex model.enemyMap
-            , Render.viewGrid (viewCard (activeCard model.turnState)) model.playerCards
-            , Render.viewGrid (viewCard (activeCard model.turnState)) model.enemyCards
-            ]
-        ]
-
-
-viewHex : ( Point, Tile ) -> Svg msg
-viewHex ( position, tile ) =
-    Svg.g []
-        [ Render.renderHex
-            [ Svg.Attributes.class (tileToString tile)
-            , Svg.Attributes.class "hex"
-            ]
-        ]
-
-
-viewCard : Maybe ( Point, Point ) -> ( Point, Card ) -> Svg msg
-viewCard selected ( position, card ) =
-    let
-        isSelected =
-            case selected of
-                Just ( selectedPosition, _ ) ->
-                    selectedPosition == position
-
-                Nothing ->
-                    False
-
-        isTargeted =
-            case selected of
-                Just ( _, target ) ->
-                    target == position
-
-                Nothing ->
-                    False
-    in
-    Svg.g
-        [ Svg.Attributes.class "card"
-        , Render.classList
-            [ ( "ready", cooldownIsDone card )
-            , ( "selected", isSelected )
-            , ( "targeted", isTargeted )
-            ]
-        ]
-        [ Render.renderHex
-            [ Svg.Attributes.class "cooldown-indicator"
-            , Svg.Attributes.style ("transform: scale(" ++ (1 - (Tuple.first card.cooldown / Tuple.second card.cooldown) |> String.fromFloat) ++ ")")
-            ]
-        , Svg.text_
-            [ Svg.Attributes.textAnchor "middle"
-            , Svg.Attributes.fontSize "4.5rem"
-            , Svg.Attributes.y "10px"
-            , Svg.Attributes.class "icon"
-            ]
-            [ Svg.text (String.fromChar card.icon) ]
-        , Svg.text_
-            [ Svg.Attributes.textAnchor "middle"
-            , Svg.Attributes.y "25px"
-            , Svg.Attributes.class "stats"
-            ]
-            [ Svg.text ("❊" ++ String.fromInt card.power ++ " ♥︎" ++ String.fromInt card.health) ]
+        [ viewPlayerEnergy model.playerEnergy
+        , Html.div [ Html.Attributes.class "cards" ] (List.indexedMap (viewCard model.playerEnergy) model.cards)
         ]
 
 
@@ -441,14 +347,14 @@ viewCard selected ( position, card ) =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Browser.Events.onAnimationFrameDelta (min 2000 >> Tick)
+    Browser.Events.onAnimationFrameDelta (min 1000 >> Tick)
 
 
 
 -- MAIN
 
 
-main : Program Int Model Msg
+main : Program () Model Msg
 main =
     Browser.element
         { init = init
