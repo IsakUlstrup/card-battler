@@ -37,7 +37,17 @@ ul
     gap: $spacing-medium
     overflow-y: auto
 
+@keyframes fade-in
+    0%
+        transform: scale(0)
+        opacity: 0
+
+    100%
+        transform: scale(1)
+        opacity: 1
+
 .card
+    animation: fade-in 500ms
     display: flex
     flex-direction: column
     gap: $spacing-medium
