@@ -6,6 +6,7 @@ import CustomDict as Dict exposing (Dict)
 import Html exposing (Html, main_)
 import Html.Attributes
 import Html.Events
+import Html.Keyed
 
 
 
@@ -113,6 +114,11 @@ testCard2 =
 testCard3 : Card
 testCard3 =
     Card "Expensive card" (Dict.fromList [ ( Yellow, 1 ), ( Orange, 2 ) ]) (IncreaseEnergyMax Yellow 5)
+
+
+testCard4 : Card
+testCard4 =
+    Card "Expensive card2" (Dict.fromList [ ( Yellow, 4 ), ( Orange, 2 ) ]) (IncreaseEnergyMax Yellow 5)
 
 
 
@@ -244,7 +250,7 @@ init _ =
         [ testCard
         , testCard2
         , testCard3
-        , testCard
+        , testCard4
         ]
         []
         3
@@ -360,6 +366,11 @@ viewCard playerEnergy index card =
         ]
 
 
+viewKeyedCard : Dict Energy PlayerEnergy -> Int -> Card -> ( String, Html Msg )
+viewKeyedCard playerEnergy index card =
+    ( card.name, viewCard playerEnergy index card )
+
+
 viewEnergyMeter : Energy -> PlayerEnergy -> Html msg
 viewEnergyMeter energyType_ energy =
     Html.li []
@@ -404,7 +415,7 @@ view model =
     main_ [ Html.Attributes.id "app" ]
         [ viewPlayerEnergy model.playerEnergy
         , viewDeckControls model
-        , Html.div [ Html.Attributes.class "hand" ] (List.indexedMap (viewCard model.playerEnergy) model.hand)
+        , Html.Keyed.node "div" [ Html.Attributes.class "hand" ] (List.indexedMap (viewKeyedCard model.playerEnergy) model.hand)
         ]
 
 
