@@ -14,36 +14,49 @@ import Html.Keyed
 
 
 type alias Deck =
-    { prev : List ( Bool, Card )
-    , next : List ( Bool, Card )
+    { draw : List ( Int, Bool, Card )
+    , hand : List ( Int, Bool, Card )
+    , handSize : Int
     }
 
 
-deckFromList : List Card -> Deck
-deckFromList cards =
-    Deck (List.map (\c -> ( False, c )) cards) []
+deckFromList : Int -> List Card -> Deck
+deckFromList handSize cards =
+    Deck (List.indexedMap (\i c -> ( i, False, c )) cards) [] handSize
 
 
 deckNext : Deck -> Deck
 deckNext deck =
-    case deck.prev of
+    case deck.draw of
         [] ->
-            if List.isEmpty deck.next then
-                deck
+            if List.isEmpty deck.draw then
+                { deck
+                    | draw = List.map (\( id, _, card ) -> ( id, False, card )) deck.hand
+                    , hand = []
+                }
 
             else
-                deckNext { deck | prev = deck.next }
+                deck
 
         card :: rest ->
             { deck
-                | next = card :: deck.next
-                , prev = rest
+                | hand = card :: deck.hand |> List.take (deck.handSize + 1)
+                , draw =
+                    rest
+                        ++ (card
+                                :: deck.hand
+                                |> List.drop (deck.handSize + 1)
+                                |> List.map (\( id, _, c ) -> ( id, False, c ))
+                           )
             }
 
 
-deckTake : Int -> Deck -> List ( Bool, Card )
-deckTake n deck =
-    List.take n deck.next ++ List.take (n - List.length deck.next |> max 0) deck.prev
+mapPlayed : (Int -> Bool -> Bool) -> Deck -> Deck
+mapPlayed f deck =
+    { deck
+        | draw = List.map (\( id, played, card ) -> ( id, f id played, card )) deck.draw
+        , hand = List.map (\( id, played, card ) -> ( id, f id played, card )) deck.hand
+    }
 
 
 
@@ -174,20 +187,20 @@ applyCard card model =
             }
 
 
+discardCard : Int -> Card -> Model -> Model
+discardCard targetIndex _ model =
+    let
+        helper : Int -> Bool -> Bool
+        helper id played =
+            if id == targetIndex then
+                not played
 
--- discardCard : Int -> Card -> Model -> Model
--- discardCard targetIndex card model =
---     let
---         removeIndex target index c =
---             if target == index then
---                 Nothing
---             else
---                 Just c
---     in
---     { model
---         | hand = List.indexedMap (removeIndex targetIndex) model.hand |> List.filterMap identity
---         , deck = model.deck ++ [ card ]
---     }
+            else
+                played
+    in
+    { model
+        | deck = mapPlayed helper model.deck
+    }
 
 
 tickEnergyCooldowns : Float -> Model -> Model
@@ -254,7 +267,6 @@ type alias PlayerEnergy =
 
 type alias Model =
     { deck : Deck
-    , maxHandSize : Int
     , drawCooldown : Cooldown
     , playerEnergy : Dict Energy PlayerEnergy
     }
@@ -264,13 +276,25 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( Model
         (deckFromList
+            5
             [ testCard
+            , testCard2
+            , testCard3
+            , testCard4
+            , testCard2
+            , testCard3
+            , testCard4
+            , testCard2
+            , testCard3
+            , testCard4
+            , testCard2
+            , testCard3
+            , testCard4
             , testCard2
             , testCard3
             , testCard4
             ]
         )
-        3
         (newCooldown 2000)
         (Dict.fromList
             [ ( Yellow, PlayerEnergy 0 0 (newCooldown 1000) 1 )
@@ -300,11 +324,12 @@ update msg model =
                 |> recoverEnergy
                 |> drawIfReady
 
+        -- |> discardIfOverflow
         ClickedCard index card ->
             if canAffordCost card.cost model.playerEnergy then
                 model
                     |> applyCard card
-                -- |> discardCard index card
+                    |> discardCard index card
 
             else
                 model
@@ -367,8 +392,8 @@ viewCardEffect cardEffect =
             Html.p [ Html.Attributes.class (energyString energyType) ] [ Html.text ("+" ++ String.fromInt amount ++ " max " ++ energyString energyType) ]
 
 
-viewCard : Dict Energy PlayerEnergy -> Int -> ( Bool, Card ) -> Html Msg
-viewCard playerEnergy index ( played, card ) =
+viewCard : Dict Energy PlayerEnergy -> ( Int, Bool, Card ) -> Html Msg
+viewCard playerEnergy ( id, played, card ) =
     Html.div
         [ Html.Attributes.class "card"
         , Html.Attributes.classList
@@ -376,18 +401,19 @@ viewCard playerEnergy index ( played, card ) =
             , ( "can-afford", canAffordCost card.cost playerEnergy )
             , ( "played", played )
             ]
-        , Html.Events.onClick (ClickedCard index card)
+        , Html.Events.onClick (ClickedCard id card)
         ]
         [ Html.h1 [] [ Html.text card.name ]
+        , Html.p [] [ Html.text ("id" ++ String.fromInt id) ]
         , viewCardCost playerEnergy card.cost
         , viewCardEffect card.effect
         ]
 
 
-viewKeyedCard : Dict Energy PlayerEnergy -> Int -> ( Bool, Card ) -> ( String, Html Msg )
-viewKeyedCard playerEnergy index card =
-    ( Tuple.second card |> .name
-    , viewCard playerEnergy index card
+viewKeyedCard : Dict Energy PlayerEnergy -> ( Int, Bool, Card ) -> ( String, Html Msg )
+viewKeyedCard playerEnergy ( id, played, card ) =
+    ( String.fromInt id
+    , viewCard playerEnergy ( id, played, card )
     )
 
 
@@ -425,9 +451,8 @@ viewDeckControls : Model -> Html Msg
 viewDeckControls model =
     Html.div [ Html.Attributes.class "hand-controls" ]
         [ Html.div [] [ Html.text "draw cooldown:", viewCooldownProgress model.drawCooldown ]
-
-        -- , Html.p [] [ Html.text ("deck: " ++ String.fromInt (List.length model.deck)) ]
-        , Html.p [] [ Html.text ("hand size: " ++ String.fromInt model.maxHandSize) ]
+        , Html.p [] [ Html.text ("deck: " ++ String.fromInt (List.length model.deck.draw)) ]
+        , Html.p [] [ Html.text ("hand size: " ++ String.fromInt model.deck.handSize) ]
         ]
 
 
@@ -438,7 +463,7 @@ view model =
         , viewDeckControls model
         , Html.Keyed.node "div"
             [ Html.Attributes.class "hand" ]
-            (List.indexedMap (viewKeyedCard model.playerEnergy) (deckTake model.maxHandSize model.deck))
+            (List.map (viewKeyedCard model.playerEnergy) model.deck.hand)
         ]
 
 

@@ -43,16 +43,27 @@ ul
     0%
         transform: scale(0)
         opacity: 0
-        // flex-basis: 0.001rem
+        flex-basis: 0.001rem
 
     100%
         transform: scale(1)
         opacity: 1
-        // flex-basis: 15rem
+        flex-basis: 15rem
+
+@keyframes fade-out
+    0%
+        transform: scale(1)
+        opacity: 1
+        flex-basis: 15rem
+
+    100%
+        transform: scale(0)
+        opacity: 0
+        flex-basis: 0rem
 
 .card
     overflow: hidden
-    animation: fade-in 1000ms
+    animation: fade-in 2000ms
     display: flex
     flex-direction: column
     gap: $spacing-medium
@@ -73,8 +84,12 @@ ul
         opacity: 1
 
     &.played
-        opacity: 0.4
+        border-color: #878787
         pointer-events: none
+        // animation: fade-out 500ms forwards
+
+    &:nth-child(6)
+        animation: fade-out 2000ms forwards
 
 .energy-cost
     display: flex
