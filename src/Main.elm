@@ -2,6 +2,7 @@ module Main exposing (Model, Msg, main)
 
 import Browser
 import Browser.Events
+import Cooldown exposing (Cooldown)
 import CustomDict as Dict exposing (Dict)
 import Html exposing (Html, main_)
 import Html.Attributes
@@ -61,33 +62,6 @@ mapPlayed f deck =
 
 
 -- COOLDOWN
-
-
-type alias Cooldown =
-    ( Float, Float )
-
-
-newCooldown : Float -> Cooldown
-newCooldown duration =
-    ( 0, duration )
-
-
-tickCooldown : Float -> Cooldown -> Cooldown
-tickCooldown dt ( cd, maxCd ) =
-    ( min maxCd (cd + dt), maxCd )
-
-
-isDone : Cooldown -> Bool
-isDone ( cd, maxCd ) =
-    cd >= maxCd
-
-
-reset : Cooldown -> Cooldown
-reset ( _, maxCd ) =
-    ( 0, maxCd )
-
-
-
 -- ENERGY
 
 
@@ -211,7 +185,7 @@ tickEnergyCooldowns dt model =
                 |> Dict.map
                     (\_ pe ->
                         if pe.current < pe.max then
-                            { pe | cooldown = tickCooldown (dt * pe.cooldownrate) pe.cooldown }
+                            { pe | cooldown = Cooldown.tick (dt * pe.cooldownrate) pe.cooldown }
 
                         else
                             pe
@@ -221,13 +195,13 @@ tickEnergyCooldowns dt model =
 
 tickDrawCooldown : Float -> Model -> Model
 tickDrawCooldown dt model =
-    { model | drawCooldown = tickCooldown dt model.drawCooldown }
+    { model | drawCooldown = Cooldown.tick dt model.drawCooldown }
 
 
 drawIfReady : Model -> Model
 drawIfReady model =
-    if isDone model.drawCooldown then
-        drawCard { model | drawCooldown = reset model.drawCooldown }
+    if Cooldown.isDone model.drawCooldown then
+        drawCard { model | drawCooldown = Cooldown.reset model.drawCooldown }
 
     else
         model
@@ -240,10 +214,10 @@ recoverEnergy model =
             model.playerEnergy
                 |> Dict.map
                     (\_ pe ->
-                        if isDone pe.cooldown then
+                        if Cooldown.isDone pe.cooldown then
                             { pe
                                 | current = pe.current + 1
-                                , cooldown = reset pe.cooldown
+                                , cooldown = Cooldown.reset pe.cooldown
                             }
 
                         else
@@ -295,10 +269,10 @@ init _ =
             , testCard4
             ]
         )
-        (newCooldown 2000)
+        (Cooldown.new 2000)
         (Dict.fromList
-            [ ( Yellow, PlayerEnergy 0 0 (newCooldown 1000) 1 )
-            , ( Orange, PlayerEnergy 0 0 (newCooldown 1000) 0.1 )
+            [ ( Yellow, PlayerEnergy 0 0 (Cooldown.new 1000) 1 )
+            , ( Orange, PlayerEnergy 0 0 (Cooldown.new 1000) 0.1 )
             ]
         )
     , Cmd.none
