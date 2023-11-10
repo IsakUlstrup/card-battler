@@ -83,21 +83,21 @@ advanceCharacterState character =
             case state of
                 Idle cd ->
                     if Cooldown.isDone cd then
-                        Attacking character.attack (Cooldown.new 500)
+                        Attacking character.attack (Cooldown.new 1000)
 
                     else
                         state
 
                 Attacking _ cd ->
                     if Cooldown.isDone cd then
-                        Idle (Cooldown.new 1000)
+                        Idle (Cooldown.new 2000)
 
                     else
                         state
 
                 Hit _ cd ->
                     if Cooldown.isDone cd then
-                        Idle (Cooldown.new 1000)
+                        Idle (Cooldown.new 2000)
 
                     else
                         state
@@ -140,17 +140,35 @@ init _ =
 
 tickCharacterCooldowns : Float -> Model -> Model
 tickCharacterCooldowns dt model =
+    let
+        helper target character =
+            case target.state of
+                Idle _ ->
+                    tickCharacter dt character
+
+                _ ->
+                    character
+    in
     { model
-        | player = tickCharacter dt model.player
-        , enemy = tickCharacter dt model.enemy
+        | player = helper model.enemy model.player
+        , enemy = helper model.player model.enemy
     }
 
 
 advanceCharacters : Model -> Model
 advanceCharacters model =
+    let
+        helper target character =
+            case target.state of
+                Idle _ ->
+                    advanceCharacterState character
+
+                _ ->
+                    character
+    in
     { model
-        | player = advanceCharacterState model.player
-        , enemy = advanceCharacterState model.enemy
+        | player = helper model.enemy model.player
+        , enemy = helper model.player model.enemy
     }
 
 
