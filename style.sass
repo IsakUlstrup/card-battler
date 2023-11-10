@@ -27,78 +27,17 @@ ul
     gap: $spacing-medium
     padding: $spacing-medium
 
-.hand-controls
+.characters
     display: flex
-    gap: $spacing-medium
+    justify-content: space-between
 
-.hand
-    display: flex
-    justify-content: center
-    align-items: center
-    flex-wrap: wrap
-    gap: $spacing-medium
-    overflow-y: auto
-
-@keyframes fade-in
-    0%
-        transform: scale(0)
-        opacity: 0
-        flex-basis: 0.001rem
-
-    100%
-        transform: scale(1)
-        opacity: 1
-        flex-basis: 15rem
-
-@keyframes fade-out
-    0%
-        transform: scale(1)
-        opacity: 1
-        flex-basis: 15rem
-
-    100%
-        transform: scale(0)
-        opacity: 0
-        flex-basis: 0rem
-
-.card
-    overflow: hidden
-    animation: fade-in 2000ms
-    display: flex
-    flex-direction: column
-    gap: $spacing-medium
-    justify-content: center
-    align-items: center
-    user-select: none
-    text-align: center
-    flex: 0 0 15rem
-    height: 15rem
-    background: brown
+.character
     padding: $spacing-medium
-    border: 0.5rem solid brown
-    border-radius: 1rem
-    opacity: 0.85
+    border: 1px solid beige
+    transition: transform 300ms, background-color 300ms
 
-    &.can-afford
-        border-color: beige
-        opacity: 1
+    &.attacking
+        transform: scale(1.2)
 
-    &.played
-        border-color: #878787
-        pointer-events: none
-        // animation: fade-out 500ms forwards
-
-    &:nth-child(6)
-        animation: fade-out 2000ms forwards
-
-.energy-cost
-    display: flex
-    gap: $spacing-small
-
-    .insufficient-energy
-        opacity: 0.6
-
-.yellow
-    color: yellow
-.orange
-    color: orange
+    &.hit
+        background-color: white
