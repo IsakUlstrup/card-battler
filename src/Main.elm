@@ -12,7 +12,7 @@ import Html.Attributes
 
 
 type CharacterState
-    = Idle Cooldown
+    = Idle
     | Attacking Int Cooldown
     | Hit Int Cooldown
 
@@ -20,8 +20,8 @@ type CharacterState
 tickState : Float -> CharacterState -> CharacterState
 tickState dt state =
     case state of
-        Idle cd ->
-            Idle (Cooldown.tick dt cd)
+        Idle ->
+            Idle
 
         Attacking attack cd ->
             Attacking attack (Cooldown.tick dt cd)
@@ -33,7 +33,7 @@ tickState dt state =
 stateString : CharacterState -> String
 stateString state =
     case state of
-        Idle _ ->
+        Idle ->
             "idle"
 
         Attacking _ _ ->
@@ -48,12 +48,15 @@ type alias Character =
     , speed : Int
     , health : ( Int, Int )
     , state : CharacterState
+    , cooldown : Cooldown
+
+    -- TODO: move idle cooldown to cooldown tp prevent stun locking
     }
 
 
 newCharacter : Float -> Int -> Int -> Int -> Character
 newCharacter cooldown attack speed health =
-    Character attack speed ( health, health ) (Idle (Cooldown.new cooldown))
+    Character attack speed ( health, health ) Idle (Cooldown.new cooldown)
 
 
 playerCharacter : Character
@@ -66,10 +69,23 @@ enemyCharacter =
     newCharacter 1000 2 1 20
 
 
-tickCharacter : Float -> Character -> Character
-tickCharacter dt character =
+tickCharacterState : Float -> Character -> Character
+tickCharacterState dt character =
     if characterIsAlive character then
-        { character | state = tickState (dt * toFloat character.speed) character.state }
+        { character
+            | state = tickState dt character.state
+        }
+
+    else
+        character
+
+
+tickCharacterCooldown : Float -> Character -> Character
+tickCharacterCooldown dt character =
+    if characterIsAlive character then
+        { character
+            | cooldown = Cooldown.tick (dt * toFloat character.speed) character.cooldown
+        }
 
     else
         character
@@ -81,8 +97,8 @@ advanceCharacterState character =
         advanceState : CharacterState -> CharacterState
         advanceState state =
             case state of
-                Idle cd ->
-                    if Cooldown.isDone cd then
+                Idle ->
+                    if Cooldown.isDone character.cooldown then
                         Attacking character.attack (Cooldown.new 1000)
 
                     else
@@ -90,14 +106,14 @@ advanceCharacterState character =
 
                 Attacking _ cd ->
                     if Cooldown.isDone cd then
-                        Idle (Cooldown.new 2000)
+                        Idle
 
                     else
                         state
 
                 Hit _ cd ->
                     if Cooldown.isDone cd then
-                        Idle (Cooldown.new 2000)
+                        Idle
 
                     else
                         state
@@ -143,11 +159,14 @@ tickCharacterCooldowns dt model =
     let
         helper target character =
             case target.state of
-                Idle _ ->
-                    tickCharacter dt character
+                Idle ->
+                    character
+                        |> tickCharacterState dt
+                        |> tickCharacterCooldown dt
 
                 _ ->
                     character
+                        |> tickCharacterState dt
     in
     { model
         | player = helper model.enemy model.player
@@ -157,18 +176,9 @@ tickCharacterCooldowns dt model =
 
 advanceCharacters : Model -> Model
 advanceCharacters model =
-    let
-        helper target character =
-            case target.state of
-                Idle _ ->
-                    advanceCharacterState character
-
-                _ ->
-                    character
-    in
     { model
-        | player = helper model.enemy model.player
-        , enemy = helper model.player model.enemy
+        | player = advanceCharacterState model.player
+        , enemy = advanceCharacterState model.enemy
     }
 
 
@@ -191,15 +201,6 @@ update msg model =
 
 viewCharacter : Character -> Html msg
 viewCharacter character =
-    let
-        ( cooldown, maxCooldown ) =
-            case character.state of
-                Idle cd ->
-                    cd
-
-                _ ->
-                    ( 0, 1000 )
-    in
     Html.div
         [ Html.Attributes.class "character"
         , Html.Attributes.class (stateString character.state)
@@ -216,8 +217,8 @@ viewCharacter character =
             ]
         , Html.p [] [ Html.text ("stt: " ++ Debug.toString character.state) ]
         , Html.progress
-            [ Html.Attributes.value (String.fromFloat cooldown)
-            , Html.Attributes.max (String.fromFloat maxCooldown)
+            [ Html.Attributes.value (String.fromFloat (Tuple.first character.cooldown))
+            , Html.Attributes.max (String.fromFloat (Tuple.second character.cooldown))
             ]
             []
         ]
