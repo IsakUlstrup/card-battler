@@ -91,34 +91,45 @@ tickCharacterCooldown dt character =
         character
 
 
+isIdle : Character -> Bool
+isIdle character =
+    case character.state of
+        Idle ->
+            True
+
+        _ ->
+            False
+
+
 advanceCharacterState : Character -> Character
 advanceCharacterState character =
-    let
-        advanceState : CharacterState -> CharacterState
-        advanceState state =
-            case state of
-                Idle ->
-                    if Cooldown.isDone character.cooldown then
-                        Attacking character.attack (Cooldown.new 1000)
+    case character.state of
+        Idle ->
+            if Cooldown.isDone character.cooldown then
+                { character | state = Attacking character.attack (Cooldown.new 1000) }
 
-                    else
-                        state
+            else
+                character
 
-                Attacking _ cd ->
-                    if Cooldown.isDone cd then
-                        Idle
+        Attacking _ cd ->
+            if Cooldown.isDone cd then
+                { character
+                    | state = Idle
+                    , cooldown = Cooldown.reset character.cooldown
+                }
 
-                    else
-                        state
+            else
+                character
 
-                Hit _ cd ->
-                    if Cooldown.isDone cd then
-                        Idle
+        Hit _ cd ->
+            if Cooldown.isDone cd then
+                { character
+                    | state = Idle
+                    , cooldown = Cooldown.reset character.cooldown
+                }
 
-                    else
-                        state
-    in
-    { character | state = advanceState character.state }
+            else
+                character
 
 
 characterHit : Int -> Character -> Character
@@ -176,10 +187,11 @@ tickCharacterCooldowns dt model =
 
 advanceCharacters : Model -> Model
 advanceCharacters model =
-    { model
-        | player = advanceCharacterState model.player
-        , enemy = advanceCharacterState model.enemy
-    }
+    if isIdle model.enemy && Cooldown.isDone model.player.cooldown then
+        { model | player = advanceCharacterState model.player }
+
+    else
+        { model | enemy = advanceCharacterState model.enemy }
 
 
 type Msg
