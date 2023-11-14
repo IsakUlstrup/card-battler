@@ -93,7 +93,6 @@ playerCombat model =
             if Character.isReady model.player then
                 { model
                     | turnState = PlayerAttacking (Cooldown.new 500)
-                    , player = model.player |> Character.resetCooldown
                 }
 
             else
@@ -110,7 +109,6 @@ enemyCombat model =
             if Character.isReady model.enemy then
                 { model
                     | turnState = EnemyAttacking (Cooldown.new 500)
-                    , enemy = model.enemy |> Character.resetCooldown
                 }
 
             else
@@ -141,14 +139,20 @@ advanceTurnState model =
 
         PlayerAttacking cooldown ->
             if Cooldown.isDone cooldown then
-                { model | turnState = Recovering }
+                { model
+                    | turnState = Recovering
+                    , player = Character.resetCooldown model.player
+                }
 
             else
                 model
 
         EnemyAttacking cooldown ->
             if Cooldown.isDone cooldown then
-                { model | turnState = Recovering }
+                { model
+                    | turnState = Recovering
+                    , enemy = Character.resetCooldown model.enemy
+                }
 
             else
                 model
