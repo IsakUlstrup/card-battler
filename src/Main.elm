@@ -43,6 +43,19 @@ stateString state =
             "hit"
 
 
+stateIcon : CharacterState -> String
+stateIcon state =
+    case state of
+        Idle ->
+            "😴"
+
+        Attacking _ _ ->
+            "🗡️"
+
+        Hit _ _ ->
+            "🤕"
+
+
 type alias Character =
     { attack : Int
     , speed : Int
@@ -227,7 +240,7 @@ viewCharacter character =
                     ++ String.fromInt (Tuple.second character.health)
                 )
             ]
-        , Html.p [] [ Html.text ("stt: " ++ Debug.toString character.state) ]
+        , Html.p [] [ Html.text ("stt: " ++ stateIcon character.state) ]
         , Html.progress
             [ Html.Attributes.value (String.fromFloat (Tuple.first character.cooldown))
             , Html.Attributes.max (String.fromFloat (Tuple.second character.cooldown))
