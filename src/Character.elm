@@ -1,4 +1,18 @@
-module Character exposing (Character, CharacterState, advanceState, isIdle, new, stateIcon, stateString, tickCooldown, tickState)
+module Character exposing
+    ( Character
+    , CharacterState
+    , advanceState
+    , getAttack
+    , isAlive
+    , isIdle
+    , new
+    , resolveAttack
+    , resolveHit
+    , stateIcon
+    , stateString
+    , tickCooldown
+    , tickState
+    )
 
 import Cooldown exposing (Cooldown)
 
@@ -92,13 +106,9 @@ new cooldown attack speed health =
 -}
 tickState : Float -> Character -> Character
 tickState dt character =
-    if isAlive character then
-        { character
-            | state = tickCharacterState dt character.state
-        }
-
-    else
-        character
+    { character
+        | state = tickCharacterState dt character.state
+    }
 
 
 {-| tick character cooldown by given delta time.
@@ -148,6 +158,44 @@ advanceState character =
 
             else
                 character
+
+
+{-| Get character attack, returns Just if character state is attacking and cooldown is done
+-}
+getAttack : Character -> Maybe Int
+getAttack character =
+    case character.state of
+        Attacking atk cooldown ->
+            if Cooldown.isDone cooldown then
+                let
+                    _ =
+                        Debug.log "atk" ()
+                in
+                Just atk
+
+            else
+                Nothing
+
+        _ ->
+            Nothing
+
+
+subtractHp : Int -> Character -> Character
+subtractHp amount character =
+    { character | health = Tuple.mapFirst (\hp -> max 0 (hp - amount)) character.health }
+
+
+resolveHit : Int -> Character -> Character
+resolveHit hitPower character =
+    { character | state = Hit hitPower (Cooldown.new 500) } |> subtractHp hitPower
+
+
+resolveAttack : Character -> Character
+resolveAttack character =
+    { character
+        | cooldown = Cooldown.reset character.cooldown
+        , state = Idle
+    }
 
 
 

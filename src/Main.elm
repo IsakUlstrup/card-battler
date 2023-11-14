@@ -49,7 +49,7 @@ tickCharacterCooldowns : Float -> Model -> Model
 tickCharacterCooldowns dt model =
     let
         helper target character =
-            if Character.isIdle target then
+            if Character.isIdle target && Character.isAlive target then
                 character
                     |> Character.tickState dt
                     |> Character.tickCooldown dt
@@ -73,6 +73,27 @@ advanceCharacters model =
         { model | enemy = Character.advanceState model.enemy }
 
 
+resolveCombat : Model -> Model
+resolveCombat model =
+    case Character.getAttack model.player of
+        Just atk ->
+            { model
+                | player = model.player |> Character.resolveAttack
+                , enemy = model.enemy |> Character.resolveHit atk
+            }
+
+        Nothing ->
+            case Character.getAttack model.enemy of
+                Just atk ->
+                    { model
+                        | enemy = model.enemy |> Character.resolveAttack
+                        , player = model.player |> Character.resolveHit atk
+                    }
+
+                Nothing ->
+                    model
+
+
 type Msg
     = Tick Float
 
@@ -82,6 +103,7 @@ update msg model =
     case msg of
         Tick dt ->
             model
+                |> resolveCombat
                 |> tickCharacterCooldowns dt
                 |> advanceCharacters
 
