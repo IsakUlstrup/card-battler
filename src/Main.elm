@@ -56,7 +56,7 @@ tickCharacterCooldowns dt model =
 
             else
                 character
-                    |> Character.tickCooldown dt
+                    |> Character.tickState dt
     in
     { model
         | player = helper model.enemy model.player
