@@ -23,12 +23,23 @@ enemyCharacter =
 
 
 
+-- TURN STATE
+
+
+type TurnState
+    = Recovering
+    | PlayerAttacking Cooldown.Cooldown
+    | EnemyAttacking Cooldown.Cooldown
+
+
+
 -- MODEL
 
 
 type alias Model =
     { player : Character
     , enemy : Character
+    , turnState : TurnState
     }
 
 
@@ -37,61 +48,13 @@ init _ =
     ( Model
         playerCharacter
         enemyCharacter
+        Recovering
     , Cmd.none
     )
 
 
 
 -- UPDATE
-
-
-tickCharacterCooldowns : Float -> Model -> Model
-tickCharacterCooldowns dt model =
-    let
-        helper target character =
-            if Character.isIdle target && Character.isAlive target then
-                character
-                    |> Character.tickState dt
-                    |> Character.tickCooldown dt
-
-            else
-                character
-                    |> Character.tickState dt
-    in
-    { model
-        | player = helper model.enemy model.player
-        , enemy = helper model.player model.enemy
-    }
-
-
-advanceCharacters : Model -> Model
-advanceCharacters model =
-    if Character.isIdle model.enemy && Cooldown.isDone model.player.cooldown then
-        { model | player = Character.advanceState model.player }
-
-    else
-        { model | enemy = Character.advanceState model.enemy }
-
-
-resolveCombat : Model -> Model
-resolveCombat model =
-    case Character.getAttack model.player of
-        Just atk ->
-            { model
-                | player = model.player |> Character.resolveAttack
-                , enemy = model.enemy |> Character.resolveHit atk
-            }
-
-        Nothing ->
-            case Character.getAttack model.enemy of
-                Just atk ->
-                    { model
-                        | enemy = model.enemy |> Character.resolveAttack
-                        , player = model.player |> Character.resolveHit atk
-                    }
-
-                Nothing ->
-                    model
 
 
 type Msg
@@ -103,9 +66,92 @@ update msg model =
     case msg of
         Tick dt ->
             model
-                |> resolveCombat
                 |> tickCharacterCooldowns dt
-                |> advanceCharacters
+                |> playerCombat
+                |> enemyCombat
+                |> tickTurnState dt
+                |> advanceTurnState
+
+
+tickCharacterCooldowns : Float -> Model -> Model
+tickCharacterCooldowns dt model =
+    case model.turnState of
+        Recovering ->
+            { model
+                | player = model.player |> Character.tickCooldown dt
+                , enemy = model.enemy |> Character.tickCooldown dt
+            }
+
+        _ ->
+            model
+
+
+playerCombat : Model -> Model
+playerCombat model =
+    case model.turnState of
+        Recovering ->
+            if Character.isReady model.player then
+                { model
+                    | turnState = PlayerAttacking (Cooldown.new 500)
+                    , player = model.player |> Character.resetCooldown
+                }
+
+            else
+                model
+
+        _ ->
+            model
+
+
+enemyCombat : Model -> Model
+enemyCombat model =
+    case model.turnState of
+        Recovering ->
+            if Character.isReady model.enemy then
+                { model
+                    | turnState = EnemyAttacking (Cooldown.new 500)
+                    , enemy = model.enemy |> Character.resetCooldown
+                }
+
+            else
+                model
+
+        _ ->
+            model
+
+
+tickTurnState : Float -> Model -> Model
+tickTurnState dt model =
+    case model.turnState of
+        Recovering ->
+            model
+
+        PlayerAttacking cooldown ->
+            { model | turnState = PlayerAttacking (Cooldown.tick dt cooldown) }
+
+        EnemyAttacking cooldown ->
+            { model | turnState = EnemyAttacking (Cooldown.tick dt cooldown) }
+
+
+advanceTurnState : Model -> Model
+advanceTurnState model =
+    case model.turnState of
+        Recovering ->
+            model
+
+        PlayerAttacking cooldown ->
+            if Cooldown.isDone cooldown then
+                { model | turnState = Recovering }
+
+            else
+                model
+
+        EnemyAttacking cooldown ->
+            if Cooldown.isDone cooldown then
+                { model | turnState = Recovering }
+
+            else
+                model
 
 
 
@@ -116,7 +162,6 @@ viewCharacter : Character -> Html msg
 viewCharacter character =
     Html.div
         [ Html.Attributes.class "character"
-        , Html.Attributes.class (Character.stateString character.state)
         ]
         [ Html.p [] [ Html.text ("atk: " ++ String.fromInt character.attack) ]
         , Html.p [] [ Html.text ("spd: " ++ String.fromInt character.speed) ]
@@ -128,7 +173,6 @@ viewCharacter character =
                     ++ String.fromInt (Tuple.second character.health)
                 )
             ]
-        , Html.p [] [ Html.text ("stt: " ++ Character.stateIcon character.state) ]
         , Html.progress
             [ Html.Attributes.value (String.fromFloat (Tuple.first character.cooldown))
             , Html.Attributes.max (String.fromFloat (Tuple.second character.cooldown))
@@ -143,6 +187,9 @@ view model =
         [ Html.div [ Html.Attributes.class "characters" ]
             [ viewCharacter model.player
             , viewCharacter model.enemy
+            ]
+        , Html.div []
+            [ Html.p [] [ Html.text (Debug.toString model.turnState) ]
             ]
         ]
 
