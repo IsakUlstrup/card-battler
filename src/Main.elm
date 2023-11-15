@@ -3,7 +3,7 @@ module Main exposing (Model, Msg, main)
 import Browser
 import Browser.Events
 import Character exposing (Character)
-import Cooldown
+import Cooldown exposing (Cooldown)
 import CustomDict as Dict exposing (Dict)
 import Html exposing (Html, main_)
 import Html.Attributes
@@ -15,12 +15,12 @@ import Html.Attributes
 
 playerCharacter : Character
 playerCharacter =
-    Character.new 1000 3 2 100
+    Character.new 2000 3 1 100
 
 
 enemyCharacter : Character
 enemyCharacter =
-    Character.new 1000 2 1 20
+    Character.new 2500 2 1 20
 
 
 
@@ -30,6 +30,16 @@ enemyCharacter =
 type CharacterType
     = Player
     | Enemy
+
+
+notCharacterType : CharacterType -> CharacterType
+notCharacterType type_ =
+    case type_ of
+        Player ->
+            Enemy
+
+        Enemy ->
+            Player
 
 
 characterTypeString : CharacterType -> String
@@ -44,7 +54,8 @@ characterTypeString type_ =
 
 type TurnState
     = Recovering
-    | Attacking CharacterType Cooldown.Cooldown
+    | Attacking CharacterType Cooldown
+    | Hit CharacterType Cooldown
 
 
 
@@ -107,6 +118,9 @@ tickTurnState dt model =
         Attacking character cooldown ->
             { model | turnState = Attacking character (Cooldown.tick dt cooldown) }
 
+        Hit character cooldown ->
+            { model | turnState = Hit character (Cooldown.tick dt cooldown) }
+
 
 advanceTurnState : Model -> Model
 advanceTurnState model =
@@ -122,7 +136,7 @@ advanceTurnState model =
             case getReady of
                 Just ( characterType, _ ) ->
                     { model
-                        | turnState = Attacking characterType (Cooldown.new 500)
+                        | turnState = Attacking characterType (Cooldown.new 200)
                     }
 
                 _ ->
@@ -131,8 +145,17 @@ advanceTurnState model =
         Attacking character cooldown ->
             if Cooldown.isDone cooldown then
                 { model
-                    | turnState = Recovering
+                    | turnState = Hit (notCharacterType character) (Cooldown.new 200)
                     , characters = Dict.update character Character.resetCooldown model.characters
+                }
+
+            else
+                model
+
+        Hit _ cooldown ->
+            if Cooldown.isDone cooldown then
+                { model
+                    | turnState = Recovering
                 }
 
             else
@@ -154,6 +177,13 @@ viewCharacter turnState ( type_, character ) =
                 Attacking characterType _ ->
                     if characterType == type_ then
                         "attacking"
+
+                    else
+                        "idle"
+
+                Hit characterType _ ->
+                    if characterType == type_ then
+                        "hit"
 
                     else
                         "idle"
