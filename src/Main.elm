@@ -7,6 +7,7 @@ import Cooldown exposing (Cooldown)
 import CustomDict as Dict exposing (Dict)
 import Html exposing (Html, main_)
 import Html.Attributes
+import Html.Events
 
 
 
@@ -68,6 +69,22 @@ type TurnState
     | Done CharacterType
 
 
+turnStateString : TurnState -> String
+turnStateString turnState =
+    case turnState of
+        Recovering ->
+            "recovering"
+
+        Attacking _ _ _ ->
+            "attacking"
+
+        Hit _ _ _ ->
+            "hit"
+
+        Done _ ->
+            "done"
+
+
 
 -- MODEL
 
@@ -97,6 +114,7 @@ init _ =
 
 type Msg
     = Tick Float
+    | ClickedResetEnemy
 
 
 update : Msg -> Model -> Model
@@ -107,6 +125,12 @@ update msg model =
                 |> tickCharacterCooldowns dt
                 |> tickTurnState dt
                 |> advanceTurnState
+
+        ClickedResetEnemy ->
+            { model
+                | characters = model.characters |> Dict.update Enemy (always enemyCharacter)
+                , turnState = Recovering
+            }
 
 
 tickCharacterCooldowns : Float -> Model -> Model
@@ -261,6 +285,14 @@ viewCharacter turnState ( type_, character ) =
         )
 
 
+viewTurnState : TurnState -> Html Msg
+viewTurnState turnState =
+    Html.div [ Html.Attributes.class "turn-state" ]
+        [ Html.p [] [ Html.text (turnStateString turnState) ]
+        , Html.button [ Html.Events.onClick ClickedResetEnemy ] [ Html.text "reset enemy" ]
+        ]
+
+
 view : Model -> Html Msg
 view model =
     main_ [ Html.Attributes.id "app" ]
@@ -269,9 +301,7 @@ view model =
                 |> Dict.toList
                 |> List.map (viewCharacter model.turnState)
             )
-        , Html.div []
-            [ Html.p [] [ Html.text (Debug.toString model.turnState) ]
-            ]
+        , viewTurnState model.turnState
         ]
 
 
