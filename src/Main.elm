@@ -1,4 +1,4 @@
-module Main exposing (Model, Msg, main)
+module Main exposing (CharacterType, Model, Msg, TurnState, main)
 
 import Browser
 import Browser.Events
@@ -239,6 +239,7 @@ viewBuff buff =
 viewCharacter : TurnState -> ( CharacterType, Character ) -> Html msg
 viewCharacter turnState ( type_, character ) =
     let
+        stateString : String
         stateString =
             case turnState of
                 Recovering ->
@@ -265,6 +266,7 @@ viewCharacter turnState ( type_, character ) =
                     else
                         "dead"
 
+        combatEffect : Maybe String
         combatEffect =
             case turnState of
                 Hit characterType hit _ ->
@@ -319,6 +321,7 @@ viewTurnState turnState =
 viewBuffPresets : Html Msg
 viewBuffPresets =
     let
+        viewBuffPreset : String -> CharacterType -> Buff -> Html Msg
         viewBuffPreset label character buff =
             Html.button [ Html.Events.onClick (ClickedAddBuff character buff) ] [ Html.text label ]
     in

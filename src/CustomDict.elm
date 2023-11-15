@@ -4,7 +4,6 @@ module CustomDict exposing
     , filter
     , fromList
     , get
-    , insert
     , map
     , toList
     , update
@@ -39,15 +38,6 @@ get key (Dict dict) =
                 get key (Dict rest)
 
 
-insert : k -> v -> Dict k v -> Dict k v
-insert key value (Dict dict) =
-    let
-        removeKey ( k, v ) =
-            k /= key
-    in
-    Dict (dict |> List.filter removeKey |> (::) ( key, value ))
-
-
 filter : (k -> v -> Bool) -> Dict k v -> Dict k v
 filter pred (Dict dict) =
     Dict (List.filter (\( k, v ) -> pred k v) dict)
@@ -66,6 +56,7 @@ all pred (Dict dict) =
 update : k -> (v -> v) -> Dict k v -> Dict k v
 update key f (Dict dict) =
     let
+        updateHelper : ( k, v ) -> ( k, v )
         updateHelper ( itemKey, itemValue ) =
             if itemKey == key then
                 ( itemKey, f itemValue )

@@ -1,4 +1,4 @@
-module Cooldown exposing (Cooldown, isDone, isStart, new, reset, tick)
+module Cooldown exposing (Cooldown, isDone, new, reset, tick)
 
 
 type alias Cooldown =
@@ -18,11 +18,6 @@ tick dt ( cd, maxCd ) =
 isDone : Cooldown -> Bool
 isDone ( cd, maxCd ) =
     cd == maxCd
-
-
-isStart : Cooldown -> Bool
-isStart ( cd, _ ) =
-    cd == 0
 
 
 reset : Cooldown -> Cooldown
