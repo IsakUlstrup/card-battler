@@ -12,6 +12,7 @@ module Character exposing
     , newBuff
     , resetCooldown
     , statString
+    , tickBuffs
     , tickCooldown
     )
 
@@ -40,9 +41,9 @@ new baseStats cooldown health =
         []
 
 
-{-| tick character cooldown and buff durations by given delta time.
+{-| tick character cooldown by given delta time.
 
-Note: cooldown delta time will be multiplied by character speed, buff durations will not
+Note: delta time will be multiplied by character speed
 
 -}
 tickCooldown : Float -> Character -> Character
@@ -58,6 +59,18 @@ tickCooldown dt character =
 
     else
         character
+
+
+{-| Tick buff durations and remove any that are done
+-}
+tickBuffs : Float -> Character -> Character
+tickBuffs dt character =
+    { character
+        | buffs =
+            character.buffs
+                |> List.map (tickBuff dt)
+                |> List.filter buffNotDone
+    }
 
 
 {-| Reset character cooldown

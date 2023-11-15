@@ -123,7 +123,7 @@ update msg model =
     case msg of
         Tick dt ->
             model
-                |> tickCharacterCooldowns dt
+                |> tickCharacters dt
                 |> tickTurnState dt
                 |> advanceTurnState
 
@@ -137,11 +137,16 @@ update msg model =
             { model | characters = Dict.update character (Character.addBuff buff) model.characters }
 
 
-tickCharacterCooldowns : Float -> Model -> Model
-tickCharacterCooldowns dt model =
+tickCharacters : Float -> Model -> Model
+tickCharacters dt model =
     case ( model.turnState, Dict.all Character.isAlive model.characters ) of
         ( Recovering, True ) ->
-            { model | characters = model.characters |> Dict.map (\_ character -> Character.tickCooldown dt character) }
+            { model
+                | characters =
+                    model.characters
+                        |> Dict.map (\_ character -> Character.tickCooldown dt character)
+                        |> Dict.map (\_ character -> Character.tickBuffs dt character)
+            }
 
         _ ->
             model
