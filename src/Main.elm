@@ -218,12 +218,6 @@ viewCharacter turnState ( type_, character ) =
 
         combatEffect =
             case turnState of
-                Recovering ->
-                    Nothing
-
-                Attacking _ _ _ ->
-                    Nothing
-
                 Hit characterType hit _ ->
                     if characterType == type_ then
                         Just ("-" ++ String.fromInt hit)
@@ -231,7 +225,7 @@ viewCharacter turnState ( type_, character ) =
                     else
                         Nothing
 
-                Done _ ->
+                _ ->
                     Nothing
     in
     Html.div
