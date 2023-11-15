@@ -227,6 +227,11 @@ viewCharacter turnState ( type_, character ) =
                     ++ String.fromInt (Tuple.second character.health)
                 )
             ]
+         , Html.meter
+            [ Html.Attributes.value (String.fromInt (Tuple.first character.health))
+            , Html.Attributes.max (String.fromInt (Tuple.second character.health))
+            ]
+            []
          , Html.progress
             [ Html.Attributes.value (String.fromFloat (Tuple.first character.cooldown))
             , Html.Attributes.max (String.fromFloat (Tuple.second character.cooldown))
