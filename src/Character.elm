@@ -1,5 +1,7 @@
 module Character exposing
     ( Character
+    , deriveAttack
+    , deriveSpeed
     , hit
     , isAlive
     , isReady
@@ -37,7 +39,7 @@ tickCooldown : Float -> Character -> Character
 tickCooldown dt character =
     if isAlive character then
         { character
-            | cooldown = Cooldown.tick (dt * character.speed) character.cooldown
+            | cooldown = Cooldown.tick (dt * deriveSpeed character) character.cooldown
         }
 
     else
@@ -68,3 +70,17 @@ isAlive character =
 isReady : Character -> Bool
 isReady character =
     Cooldown.isDone character.cooldown
+
+
+
+-- STATS
+
+
+deriveSpeed : Character -> Float
+deriveSpeed character =
+    character.speed
+
+
+deriveAttack : Character -> Float
+deriveAttack character =
+    character.attack

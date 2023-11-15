@@ -174,7 +174,7 @@ advanceTurnState model =
             case ( getHead (Character.isAlive >> not) model, getHead Character.isReady model ) of
                 ( Nothing, Just ( characterType, character ) ) ->
                     { model
-                        | turnState = Attacking characterType (round character.attack) (Cooldown.new characterAnimationDuration)
+                        | turnState = Attacking characterType (round (Character.deriveAttack character)) (Cooldown.new characterAnimationDuration)
                     }
 
                 ( Just ( charType, _ ), _ ) ->
