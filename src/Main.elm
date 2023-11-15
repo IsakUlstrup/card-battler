@@ -4,6 +4,7 @@ import Browser
 import Browser.Events
 import Character exposing (Character)
 import Cooldown
+import CustomDict as Dict exposing (Dict)
 import Html exposing (Html, main_)
 import Html.Attributes
 
@@ -26,10 +27,14 @@ enemyCharacter =
 -- TURN STATE
 
 
+type CharacterType
+    = Player
+    | Enemy
+
+
 type TurnState
     = Recovering
-    | PlayerAttacking Cooldown.Cooldown
-    | EnemyAttacking Cooldown.Cooldown
+    | Attacking CharacterType Cooldown.Cooldown
 
 
 
@@ -37,8 +42,7 @@ type TurnState
 
 
 type alias Model =
-    { player : Character
-    , enemy : Character
+    { characters : Dict CharacterType Character
     , turnState : TurnState
     }
 
@@ -46,8 +50,11 @@ type alias Model =
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( Model
-        playerCharacter
-        enemyCharacter
+        (Dict.fromList
+            [ ( Player, playerCharacter )
+            , ( Enemy, enemyCharacter )
+            ]
+        )
         Recovering
     , Cmd.none
     )
@@ -67,8 +74,8 @@ update msg model =
         Tick dt ->
             model
                 |> tickCharacterCooldowns dt
-                |> playerCombat
-                |> enemyCombat
+                -- |> playerCombat
+                -- |> enemyCombat
                 |> tickTurnState dt
                 |> advanceTurnState
 
@@ -77,45 +84,25 @@ tickCharacterCooldowns : Float -> Model -> Model
 tickCharacterCooldowns dt model =
     case model.turnState of
         Recovering ->
-            { model
-                | player = model.player |> Character.tickCooldown dt
-                , enemy = model.enemy |> Character.tickCooldown dt
-            }
+            { model | characters = model.characters |> Dict.map (\_ character -> Character.tickCooldown dt character) }
 
         _ ->
             model
 
 
-playerCombat : Model -> Model
-playerCombat model =
-    case model.turnState of
-        Recovering ->
-            if Character.isReady model.player then
-                { model
-                    | turnState = PlayerAttacking (Cooldown.new 500)
-                }
 
-            else
-                model
-
-        _ ->
-            model
-
-
-enemyCombat : Model -> Model
-enemyCombat model =
-    case model.turnState of
-        Recovering ->
-            if Character.isReady model.enemy then
-                { model
-                    | turnState = EnemyAttacking (Cooldown.new 500)
-                }
-
-            else
-                model
-
-        _ ->
-            model
+-- playerCombat : Model -> Model
+-- playerCombat model =
+--     case model.turnState of
+--         Recovering ->
+--             if Character.isReady model.player then
+--                 { model
+--                     | turnState = PlayerAttacking (Cooldown.new 500)
+--                 }
+--             else
+--                 model
+--         _ ->
+--             model
 
 
 tickTurnState : Float -> Model -> Model
@@ -124,11 +111,8 @@ tickTurnState dt model =
         Recovering ->
             model
 
-        PlayerAttacking cooldown ->
-            { model | turnState = PlayerAttacking (Cooldown.tick dt cooldown) }
-
-        EnemyAttacking cooldown ->
-            { model | turnState = EnemyAttacking (Cooldown.tick dt cooldown) }
+        Attacking character cooldown ->
+            { model | turnState = Attacking character (Cooldown.tick dt cooldown) }
 
 
 advanceTurnState : Model -> Model
@@ -137,21 +121,11 @@ advanceTurnState model =
         Recovering ->
             model
 
-        PlayerAttacking cooldown ->
+        Attacking character cooldown ->
             if Cooldown.isDone cooldown then
                 { model
                     | turnState = Recovering
-                    , player = Character.resetCooldown model.player
-                }
-
-            else
-                model
-
-        EnemyAttacking cooldown ->
-            if Cooldown.isDone cooldown then
-                { model
-                    | turnState = Recovering
-                    , enemy = Character.resetCooldown model.enemy
+                    , characters = Dict.update character Character.resetCooldown model.characters
                 }
 
             else
@@ -189,9 +163,7 @@ view : Model -> Html Msg
 view model =
     main_ [ Html.Attributes.id "app" ]
         [ Html.div [ Html.Attributes.class "characters" ]
-            [ viewCharacter model.player
-            , viewCharacter model.enemy
-            ]
+            (Dict.toList model.characters |> List.map Tuple.second |> List.map viewCharacter)
         , Html.div []
             [ Html.p [] [ Html.text (Debug.toString model.turnState) ]
             ]
