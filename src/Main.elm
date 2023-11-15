@@ -33,11 +33,6 @@ enemyCharacter =
     Character.new [] 2500 20
 
 
-speedBuff : Buff
-speedBuff =
-    Character.newBuff 3000 ( Character.Speed, 2 )
-
-
 
 -- TURN STATE
 
@@ -104,7 +99,7 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( Model
         (Dict.fromList
-            [ ( Player, playerCharacter |> Character.addBuff speedBuff |> Character.addBuff speedBuff )
+            [ ( Player, playerCharacter )
             , ( Enemy, enemyCharacter )
             ]
         )
@@ -120,6 +115,7 @@ init _ =
 type Msg
     = Tick Float
     | ClickedResetEnemy
+    | ClickedAddBuff CharacterType Buff
 
 
 update : Msg -> Model -> Model
@@ -136,6 +132,9 @@ update msg model =
                 | characters = model.characters |> Dict.update Enemy (always enemyCharacter)
                 , turnState = Recovering
             }
+
+        ClickedAddBuff character buff ->
+            { model | characters = Dict.update character (Character.addBuff buff) model.characters }
 
 
 tickCharacterCooldowns : Float -> Model -> Model
@@ -316,6 +315,18 @@ viewTurnState turnState =
         ]
 
 
+viewBuffPresets : Html Msg
+viewBuffPresets =
+    let
+        viewBuffPreset label character buff =
+            Html.button [ Html.Events.onClick (ClickedAddBuff character buff) ] [ Html.text label ]
+    in
+    Html.div [ Html.Attributes.class "buff-presets" ]
+        [ viewBuffPreset "Buff player speed" Player (Character.newBuff 1000 ( Character.Speed, 2 ))
+        , viewBuffPreset "Debuff enemy speed" Enemy (Character.newBuff 1000 ( Character.Speed, 0.2 ))
+        ]
+
+
 view : Model -> Html Msg
 view model =
     main_ [ Html.Attributes.id "app" ]
@@ -325,6 +336,7 @@ view model =
                 |> List.map (viewCharacter model.turnState)
             )
         , viewTurnState model.turnState
+        , viewBuffPresets
         ]
 
 
