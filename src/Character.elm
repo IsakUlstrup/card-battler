@@ -99,10 +99,10 @@ statString : Stat -> String
 statString stat =
     case stat of
         Attack ->
-            "attack"
+            "🗡️"
 
         Speed ->
-            "speed"
+            "⚡"
 
 
 deriveStat : Stat -> Character -> Float
