@@ -1,6 +1,7 @@
 module CustomDict exposing
     ( Dict
     , all
+    , filter
     , fromList
     , get
     , insert
@@ -45,6 +46,11 @@ insert key value (Dict dict) =
             k /= key
     in
     Dict (dict |> List.filter removeKey |> (::) ( key, value ))
+
+
+filter : (k -> v -> Bool) -> Dict k v -> Dict k v
+filter pred (Dict dict) =
+    Dict (List.filter (\( k, v ) -> pred k v) dict)
 
 
 map : (k -> v -> b) -> Dict k v -> Dict k b

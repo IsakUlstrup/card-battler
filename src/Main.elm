@@ -74,8 +74,6 @@ update msg model =
         Tick dt ->
             model
                 |> tickCharacterCooldowns dt
-                -- |> playerCombat
-                -- |> enemyCombat
                 |> tickTurnState dt
                 |> advanceTurnState
 
@@ -88,21 +86,6 @@ tickCharacterCooldowns dt model =
 
         _ ->
             model
-
-
-
--- playerCombat : Model -> Model
--- playerCombat model =
---     case model.turnState of
---         Recovering ->
---             if Character.isReady model.player then
---                 { model
---                     | turnState = PlayerAttacking (Cooldown.new 500)
---                 }
---             else
---                 model
---         _ ->
---             model
 
 
 tickTurnState : Float -> Model -> Model
@@ -119,7 +102,21 @@ advanceTurnState : Model -> Model
 advanceTurnState model =
     case model.turnState of
         Recovering ->
-            model
+            let
+                getReady =
+                    model.characters
+                        |> Dict.filter (\_ character -> Character.isReady character)
+                        |> Dict.toList
+                        |> List.head
+            in
+            case getReady of
+                Just ( characterType, _ ) ->
+                    { model
+                        | turnState = Attacking characterType (Cooldown.new 500)
+                    }
+
+                _ ->
+                    model
 
         Attacking character cooldown ->
             if Cooldown.isDone cooldown then
