@@ -21,6 +21,19 @@ $spacing-large: 2rem
         opacity: 0
         transform: translateY(-4rem)
 
+@keyframes dance
+    0%
+        transform: rotate(0deg) translate(0rem, 0rem)
+
+    30%
+        transform: rotate(-4deg) translate(-1rem, -1rem)
+
+    80%
+        transform: rotate(4deg) translate(1rem, -1rem)
+
+    100%
+        transform: rotate(0deg) translate(0rem, 0rem)
+
 // MAIN
 
 body
@@ -66,6 +79,12 @@ ul
 
     &.hit
         transform: translateX(-0.5rem)
+
+    &.winner
+        animation: dance 1000ms infinite ease-out
+
+    &.dead
+        animation: fade-up 1000ms forwards
 
 .combat-status
     position: absolute

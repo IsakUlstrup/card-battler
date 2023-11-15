@@ -1,5 +1,6 @@
 module Character exposing
     ( Character
+    , hit
     , isAlive
     , isReady
     , new
@@ -46,6 +47,11 @@ tickCooldown dt character =
 resetCooldown : Character -> Character
 resetCooldown character =
     { character | cooldown = Cooldown.reset character.cooldown }
+
+
+hit : Int -> Character -> Character
+hit power character =
+    { character | health = character.health |> Tuple.mapFirst (\h -> max 0 (h - power)) }
 
 
 

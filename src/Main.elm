@@ -65,6 +65,7 @@ type TurnState
     = Recovering
     | Attacking CharacterType Int Cooldown
     | Hit CharacterType Int Cooldown
+    | Done CharacterType
 
 
 
@@ -110,8 +111,8 @@ update msg model =
 
 tickCharacterCooldowns : Float -> Model -> Model
 tickCharacterCooldowns dt model =
-    case model.turnState of
-        Recovering ->
+    case ( model.turnState, Dict.all Character.isAlive model.characters ) of
+        ( Recovering, True ) ->
             { model | characters = model.characters |> Dict.map (\_ character -> Character.tickCooldown dt character) }
 
         _ ->
@@ -130,23 +131,30 @@ tickTurnState dt model =
         Hit character hit cooldown ->
             { model | turnState = Hit character hit (Cooldown.tick dt cooldown) }
 
+        Done _ ->
+            model
+
+
+getHead : (Character -> Bool) -> Model -> Maybe ( CharacterType, Character )
+getHead f model =
+    model.characters
+        |> Dict.filter (\_ character -> f character)
+        |> Dict.toList
+        |> List.head
+
 
 advanceTurnState : Model -> Model
 advanceTurnState model =
     case model.turnState of
         Recovering ->
-            let
-                getReady =
-                    model.characters
-                        |> Dict.filter (\_ character -> Character.isReady character)
-                        |> Dict.toList
-                        |> List.head
-            in
-            case getReady of
-                Just ( characterType, character ) ->
+            case ( getHead (Character.isAlive >> not) model, getHead Character.isReady model ) of
+                ( Nothing, Just ( characterType, character ) ) ->
                     { model
                         | turnState = Attacking characterType character.attack (Cooldown.new characterAnimationDuration)
                     }
+
+                ( Just ( charType, _ ), _ ) ->
+                    { model | turnState = Done (notCharacterType charType) }
 
                 _ ->
                     model
@@ -161,14 +169,18 @@ advanceTurnState model =
             else
                 model
 
-        Hit _ _ cooldown ->
+        Hit character hit cooldown ->
             if Cooldown.isDone cooldown then
                 { model
                     | turnState = Recovering
+                    , characters = Dict.update character (Character.hit hit) model.characters
                 }
 
             else
                 model
+
+        Done _ ->
+            model
 
 
 
@@ -197,6 +209,13 @@ viewCharacter turnState ( type_, character ) =
                     else
                         "idle"
 
+                Done characterType ->
+                    if characterType == type_ then
+                        "winner"
+
+                    else
+                        "dead"
+
         combatEffect =
             case turnState of
                 Recovering ->
@@ -211,6 +230,9 @@ viewCharacter turnState ( type_, character ) =
 
                     else
                         Nothing
+
+                Done _ ->
+                    Nothing
     in
     Html.div
         [ Html.Attributes.class "character"
