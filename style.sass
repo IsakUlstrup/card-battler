@@ -61,26 +61,30 @@ ul
     padding: $spacing-medium
     flex: 0 0 8rem
     border: 1px solid beige
-    transition: transform 200ms ease-in, background-color 200ms
+    .icon
+        text-align: center
+        font-size: 3rem
+        transition: transform 200ms ease-in, background-color 200ms
 
     progress, meter
         width: 100%
 
     &.enemy
         border-style: dotted
-        &.attacking
+        &.attacking .icon
             transform: translateX(-1rem)
-        &.hit
+        &.hit .icon
             transform: translateX(0.5rem)
 
     &.attacking
-        transform: translateX(1rem)
         box-shadow: 0 0 1rem beige
+        .icon
+            transform: translateX(1rem)
 
-    &.hit
+    &.hit .icon
         transform: translateX(-0.5rem)
 
-    &.winner
+    &.winner .icon
         animation: dance 1000ms infinite ease-out
 
     &.dead

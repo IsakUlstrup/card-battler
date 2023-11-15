@@ -282,7 +282,8 @@ viewCharacter turnState ( type_, character ) =
         , Html.Attributes.class (characterTypeString type_)
         , Html.Attributes.class stateString
         ]
-        ([ Html.p [] [ Html.text ("atk: " ++ String.fromFloat (Character.deriveAttack character)) ]
+        ([ Html.h1 [ Html.Attributes.class "icon" ] [ Html.text "🐼" ]
+         , Html.p [] [ Html.text ("atk: " ++ String.fromFloat (Character.deriveAttack character)) ]
          , Html.p [] [ Html.text ("spd: " ++ String.fromFloat (Character.deriveSpeed character)) ]
          , Html.p []
             [ Html.text
