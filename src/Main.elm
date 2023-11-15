@@ -143,11 +143,25 @@ advanceTurnState model =
 -- VIEW
 
 
-viewCharacter : ( CharacterType, Character ) -> Html msg
-viewCharacter ( type_, character ) =
+viewCharacter : TurnState -> ( CharacterType, Character ) -> Html msg
+viewCharacter turnState ( type_, character ) =
+    let
+        stateString =
+            case turnState of
+                Recovering ->
+                    "idle"
+
+                Attacking characterType _ ->
+                    if characterType == type_ then
+                        "attacking"
+
+                    else
+                        "idle"
+    in
     Html.div
         [ Html.Attributes.class "character"
         , Html.Attributes.class (characterTypeString type_)
+        , Html.Attributes.class stateString
         ]
         [ Html.p [] [ Html.text ("atk: " ++ String.fromInt character.attack) ]
         , Html.p [] [ Html.text ("spd: " ++ String.fromInt character.speed) ]
@@ -173,7 +187,7 @@ view model =
         [ Html.div [ Html.Attributes.class "characters" ]
             (model.characters
                 |> Dict.toList
-                |> List.map viewCharacter
+                |> List.map (viewCharacter model.turnState)
             )
         , Html.div []
             [ Html.p [] [ Html.text (Debug.toString model.turnState) ]

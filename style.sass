@@ -42,9 +42,12 @@ ul
 
     &.enemy
         border-style: dotted
+        &.attacking
+            transform: translateX(-1rem)
 
     &.attacking
-        transform: scale(1.08)
+        transform: translateX(1rem)
+        box-shadow: 0 0 1rem beige
 
     &.hit
-        background-color: grey
+        background-color: magenta
