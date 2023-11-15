@@ -54,8 +54,8 @@ characterTypeString type_ =
 
 type TurnState
     = Recovering
-    | Attacking CharacterType Cooldown
-    | Hit CharacterType Cooldown
+    | Attacking CharacterType Int Cooldown
+    | Hit CharacterType Int Cooldown
 
 
 
@@ -115,11 +115,11 @@ tickTurnState dt model =
         Recovering ->
             model
 
-        Attacking character cooldown ->
-            { model | turnState = Attacking character (Cooldown.tick dt cooldown) }
+        Attacking character power cooldown ->
+            { model | turnState = Attacking character power (Cooldown.tick dt cooldown) }
 
-        Hit character cooldown ->
-            { model | turnState = Hit character (Cooldown.tick dt cooldown) }
+        Hit character hit cooldown ->
+            { model | turnState = Hit character hit (Cooldown.tick dt cooldown) }
 
 
 advanceTurnState : Model -> Model
@@ -134,25 +134,25 @@ advanceTurnState model =
                         |> List.head
             in
             case getReady of
-                Just ( characterType, _ ) ->
+                Just ( characterType, character ) ->
                     { model
-                        | turnState = Attacking characterType (Cooldown.new 200)
+                        | turnState = Attacking characterType character.attack (Cooldown.new 500)
                     }
 
                 _ ->
                     model
 
-        Attacking character cooldown ->
+        Attacking character power cooldown ->
             if Cooldown.isDone cooldown then
                 { model
-                    | turnState = Hit (notCharacterType character) (Cooldown.new 200)
+                    | turnState = Hit (notCharacterType character) power (Cooldown.new 500)
                     , characters = Dict.update character Character.resetCooldown model.characters
                 }
 
             else
                 model
 
-        Hit _ cooldown ->
+        Hit _ _ cooldown ->
             if Cooldown.isDone cooldown then
                 { model
                     | turnState = Recovering
@@ -174,28 +174,43 @@ viewCharacter turnState ( type_, character ) =
                 Recovering ->
                     "idle"
 
-                Attacking characterType _ ->
+                Attacking characterType _ _ ->
                     if characterType == type_ then
                         "attacking"
 
                     else
                         "idle"
 
-                Hit characterType _ ->
+                Hit characterType _ _ ->
                     if characterType == type_ then
                         "hit"
 
                     else
                         "idle"
+
+        combatEffect =
+            case turnState of
+                Recovering ->
+                    Nothing
+
+                Attacking _ _ _ ->
+                    Nothing
+
+                Hit characterType hit _ ->
+                    if characterType == type_ then
+                        Just ("-" ++ String.fromInt hit)
+
+                    else
+                        Nothing
     in
     Html.div
         [ Html.Attributes.class "character"
         , Html.Attributes.class (characterTypeString type_)
         , Html.Attributes.class stateString
         ]
-        [ Html.p [] [ Html.text ("atk: " ++ String.fromInt character.attack) ]
-        , Html.p [] [ Html.text ("spd: " ++ String.fromInt character.speed) ]
-        , Html.p []
+        ([ Html.p [] [ Html.text ("atk: " ++ String.fromInt character.attack) ]
+         , Html.p [] [ Html.text ("spd: " ++ String.fromInt character.speed) ]
+         , Html.p []
             [ Html.text
                 ("hlt: "
                     ++ String.fromInt (Tuple.first character.health)
@@ -203,12 +218,17 @@ viewCharacter turnState ( type_, character ) =
                     ++ String.fromInt (Tuple.second character.health)
                 )
             ]
-        , Html.progress
+         , Html.progress
             [ Html.Attributes.value (String.fromFloat (Tuple.first character.cooldown))
             , Html.Attributes.max (String.fromFloat (Tuple.second character.cooldown))
             ]
             []
-        ]
+         ]
+            ++ ([ combatEffect ]
+                    |> List.filterMap identity
+                    |> List.map (\t -> Html.div [ Html.Attributes.class "combat-status" ] [ Html.p [] [ Html.text t ] ])
+               )
+        )
 
 
 view : Model -> Html Msg

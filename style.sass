@@ -9,6 +9,18 @@ $spacing-large: 2rem
     margin: 0
     box-sizing: border-box
 
+// ANIMATION
+@keyframes fade-up
+    0%
+        opacity: 1
+        transform: translateY(0rem)
+
+    50%
+        opacity: 1
+    100%
+        opacity: 0
+        transform: translateY(-4rem)
+
 // MAIN
 
 body
@@ -32,10 +44,11 @@ ul
     justify-content: space-between
 
 .character
+    position: relative
     padding: $spacing-medium
     flex: 0 0 8rem
     border: 1px solid beige
-    transition: transform 200ms ease-in, background-color 200ms ease-in
+    transition: transform 200ms ease-in, background-color 200ms
 
     progress
         width: 100%
@@ -44,10 +57,24 @@ ul
         border-style: dotted
         &.attacking
             transform: translateX(-1rem)
+        &.hit
+            transform: translateX(0.5rem)
 
     &.attacking
         transform: translateX(1rem)
         box-shadow: 0 0 1rem beige
 
     &.hit
-        background-color: magenta
+        transform: translateX(-0.5rem)
+
+.combat-status
+    position: absolute
+    left: 50%
+    top: 50%
+    color: red
+    padding: $spacing-medium
+    background: rgba(255, 244, 202, 0.7)
+    border-radius: 9999rem
+    font-size: 0.8rem
+    line-height: 0.8rem
+    animation: fade-up 1000ms
