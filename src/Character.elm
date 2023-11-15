@@ -119,8 +119,13 @@ deriveStat stat character =
                         else
                             Nothing
                     )
-                |> List.sum
-                |> max 1
+                |> (\buffs ->
+                        if not (List.isEmpty buffs) then
+                            List.sum buffs
+
+                        else
+                            1
+                   )
     in
     character.baseStats
         |> Dict.get stat
