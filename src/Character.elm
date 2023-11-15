@@ -40,9 +40,9 @@ new baseStats cooldown health =
         []
 
 
-{-| tick character cooldown by given delta time.
+{-| tick character cooldown and buff durations by given delta time.
 
-Note: delta time will be multiplied by character speed
+Note: cooldown delta time will be multiplied by character speed, buff durations will not
 
 -}
 tickCooldown : Float -> Character -> Character
