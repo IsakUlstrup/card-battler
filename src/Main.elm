@@ -25,12 +25,12 @@ characterAnimationDuration =
 
 playerCharacter : Character
 playerCharacter =
-    Character.new [ ( Character.Attack, 5 ) ] 2000 100
+    Character.new [ ( Character.Attack, 5 ) ] 5000 100
 
 
 enemyCharacter : Character
 enemyCharacter =
-    Character.new [] 2500 20
+    Character.new [] 7500 20
 
 
 
