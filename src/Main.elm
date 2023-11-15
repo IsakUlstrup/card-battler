@@ -10,6 +10,15 @@ import Html.Attributes
 
 
 
+-- CONSTANTS
+
+
+characterAnimationDuration : Float
+characterAnimationDuration =
+    300
+
+
+
 -- CONTENT
 
 
@@ -136,7 +145,7 @@ advanceTurnState model =
             case getReady of
                 Just ( characterType, character ) ->
                     { model
-                        | turnState = Attacking characterType character.attack (Cooldown.new 500)
+                        | turnState = Attacking characterType character.attack (Cooldown.new characterAnimationDuration)
                     }
 
                 _ ->
@@ -145,7 +154,7 @@ advanceTurnState model =
         Attacking character power cooldown ->
             if Cooldown.isDone cooldown then
                 { model
-                    | turnState = Hit (notCharacterType character) power (Cooldown.new 500)
+                    | turnState = Hit (notCharacterType character) power (Cooldown.new characterAnimationDuration)
                     , characters = Dict.update character Character.resetCooldown model.characters
                 }
 
