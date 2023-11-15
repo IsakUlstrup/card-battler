@@ -14,8 +14,8 @@ import Cooldown exposing (Cooldown)
 {-| Main Character type
 -}
 type alias Character =
-    { attack : Int
-    , speed : Int
+    { attack : Float
+    , speed : Float
     , health : ( Int, Int )
     , cooldown : Cooldown
     }
@@ -23,7 +23,7 @@ type alias Character =
 
 {-| Character constructor
 -}
-new : Float -> Int -> Int -> Int -> Character
+new : Float -> Float -> Float -> Int -> Character
 new cooldown attack speed health =
     Character attack speed ( health, health ) (Cooldown.new cooldown)
 
@@ -37,7 +37,7 @@ tickCooldown : Float -> Character -> Character
 tickCooldown dt character =
     if isAlive character then
         { character
-            | cooldown = Cooldown.tick (dt * toFloat character.speed) character.cooldown
+            | cooldown = Cooldown.tick (dt * character.speed) character.cooldown
         }
 
     else

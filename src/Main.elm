@@ -174,7 +174,7 @@ advanceTurnState model =
             case ( getHead (Character.isAlive >> not) model, getHead Character.isReady model ) of
                 ( Nothing, Just ( characterType, character ) ) ->
                     { model
-                        | turnState = Attacking characterType character.attack (Cooldown.new characterAnimationDuration)
+                        | turnState = Attacking characterType (round character.attack) (Cooldown.new characterAnimationDuration)
                     }
 
                 ( Just ( charType, _ ), _ ) ->
@@ -257,8 +257,8 @@ viewCharacter turnState ( type_, character ) =
         , Html.Attributes.class (characterTypeString type_)
         , Html.Attributes.class stateString
         ]
-        ([ Html.p [] [ Html.text ("atk: " ++ String.fromInt character.attack) ]
-         , Html.p [] [ Html.text ("spd: " ++ String.fromInt character.speed) ]
+        ([ Html.p [] [ Html.text ("atk: " ++ String.fromFloat character.attack) ]
+         , Html.p [] [ Html.text ("spd: " ++ String.fromFloat character.speed) ]
          , Html.p []
             [ Html.text
                 ("hlt: "
