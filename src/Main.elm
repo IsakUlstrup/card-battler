@@ -32,6 +32,16 @@ type CharacterType
     | Enemy
 
 
+characterTypeString : CharacterType -> String
+characterTypeString type_ =
+    case type_ of
+        Player ->
+            "player"
+
+        Enemy ->
+            "enemy"
+
+
 type TurnState
     = Recovering
     | Attacking CharacterType Cooldown.Cooldown
@@ -133,10 +143,11 @@ advanceTurnState model =
 -- VIEW
 
 
-viewCharacter : Character -> Html msg
-viewCharacter character =
+viewCharacter : ( CharacterType, Character ) -> Html msg
+viewCharacter ( type_, character ) =
     Html.div
         [ Html.Attributes.class "character"
+        , Html.Attributes.class (characterTypeString type_)
         ]
         [ Html.p [] [ Html.text ("atk: " ++ String.fromInt character.attack) ]
         , Html.p [] [ Html.text ("spd: " ++ String.fromInt character.speed) ]
@@ -160,7 +171,10 @@ view : Model -> Html Msg
 view model =
     main_ [ Html.Attributes.id "app" ]
         [ Html.div [ Html.Attributes.class "characters" ]
-            (Dict.toList model.characters |> List.map Tuple.second |> List.map viewCharacter)
+            (model.characters
+                |> Dict.toList
+                |> List.map viewCharacter
+            )
         , Html.div []
             [ Html.p [] [ Html.text (Debug.toString model.turnState) ]
             ]
