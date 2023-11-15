@@ -2,7 +2,7 @@ module Main exposing (Model, Msg, main)
 
 import Browser
 import Browser.Events
-import Character exposing (Character)
+import Character exposing (Buff, Character)
 import Cooldown exposing (Cooldown)
 import CustomDict as Dict exposing (Dict)
 import Html exposing (Html, main_)
@@ -31,6 +31,11 @@ playerCharacter =
 enemyCharacter : Character
 enemyCharacter =
     Character.new [] 2500 20
+
+
+speedBuff : Buff
+speedBuff =
+    Character.newBuff 3000 ( Character.Speed, 2 )
 
 
 
@@ -99,7 +104,7 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( Model
         (Dict.fromList
-            [ ( Player, playerCharacter )
+            [ ( Player, playerCharacter |> Character.addBuff speedBuff |> Character.addBuff speedBuff )
             , ( Enemy, enemyCharacter )
             ]
         )
@@ -211,6 +216,27 @@ advanceTurnState model =
 -- VIEW
 
 
+viewCooldown : Cooldown -> Html msg
+viewCooldown ( cd, maxCd ) =
+    Html.progress
+        [ Html.Attributes.value (String.fromFloat cd)
+        , Html.Attributes.max (String.fromFloat maxCd)
+        ]
+        []
+
+
+viewBuff : Buff -> Html msg
+viewBuff buff =
+    Html.li [ Html.Attributes.class "buff" ]
+        [ Html.text
+            (Character.statString (Tuple.first buff.statModifier)
+                ++ " x"
+                ++ String.fromFloat (Tuple.second buff.statModifier)
+            )
+        , viewCooldown buff.duration
+        ]
+
+
 viewCharacter : TurnState -> ( CharacterType, Character ) -> Html msg
 viewCharacter turnState ( type_, character ) =
     let
@@ -272,11 +298,8 @@ viewCharacter turnState ( type_, character ) =
             , Html.Attributes.max (String.fromInt (Tuple.second character.health))
             ]
             []
-         , Html.progress
-            [ Html.Attributes.value (String.fromFloat (Tuple.first character.cooldown))
-            , Html.Attributes.max (String.fromFloat (Tuple.second character.cooldown))
-            ]
-            []
+         , viewCooldown character.cooldown
+         , Html.ul [ Html.Attributes.class "buffs" ] (List.map viewBuff character.buffs)
          ]
             ++ ([ combatEffect ]
                     |> List.filterMap identity
