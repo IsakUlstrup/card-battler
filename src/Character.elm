@@ -60,11 +60,15 @@ tickCooldown dt character =
         character
 
 
+{-| Reset character cooldown
+-}
 resetCooldown : Character -> Character
 resetCooldown character =
     { character | cooldown = Cooldown.reset character.cooldown }
 
 
+{-| Apply hit to character
+-}
 hit : Int -> Character -> Character
 hit power character =
     { character | health = character.health |> Tuple.mapFirst (\h -> max 0 (h - power)) }
@@ -81,6 +85,8 @@ isAlive character =
     Tuple.first character.health > 0
 
 
+{-| Is character cooldown done
+-}
 isReady : Character -> Bool
 isReady character =
     Cooldown.isDone character.cooldown
@@ -90,11 +96,15 @@ isReady character =
 -- STATS
 
 
+{-| Holds all stat types
+-}
 type Stat
     = Attack
     | Speed
 
 
+{-| stat to string
+-}
 statString : Stat -> String
 statString stat =
     case stat of
@@ -105,6 +115,11 @@ statString stat =
             "⚡"
 
 
+{-| Derive character stat of any type
+
+Calculated using character base stat \* sum of any buffs or 1 if no buffs
+
+-}
 deriveStat : Stat -> Character -> Float
 deriveStat stat character =
     let
@@ -133,11 +148,15 @@ deriveStat stat character =
         |> (\base -> base * statBuffs)
 
 
+{-| Derive character speed stat
+-}
 deriveSpeed : Character -> Float
 deriveSpeed character =
     deriveStat Speed character
 
 
+{-| Derive character attack stat
+-}
 deriveAttack : Character -> Float
 deriveAttack character =
     deriveStat Attack character
@@ -147,27 +166,37 @@ deriveAttack character =
 -- BUFF
 
 
+{-| A buff is a temporary modifier to one stat
+-}
 type alias Buff =
     { duration : Cooldown
     , statModifier : ( Stat, Float )
     }
 
 
+{-| Buff constructor
+-}
 newBuff : Float -> ( Stat, Float ) -> Buff
 newBuff duration statModifier =
     Buff (Cooldown.new duration) statModifier
 
 
+{-| Add buff to character
+-}
 addBuff : Buff -> Character -> Character
 addBuff buff character =
     { character | buffs = buff :: character.buffs }
 
 
+{-| Tick buff duration
+-}
 tickBuff : Float -> Buff -> Buff
 tickBuff dt buff =
     { buff | duration = Cooldown.tick dt buff.duration }
 
 
+{-| True if buff is not done
+-}
 buffNotDone : Buff -> Bool
 buffNotDone buff =
     Cooldown.isDone buff.duration |> not
