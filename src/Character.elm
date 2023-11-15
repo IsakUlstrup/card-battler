@@ -1,5 +1,6 @@
 module Character exposing
     ( Character
+    , Stat(..)
     , deriveAttack
     , deriveSpeed
     , hit
@@ -11,23 +12,31 @@ module Character exposing
     )
 
 import Cooldown exposing (Cooldown)
+import CustomDict as Dict exposing (Dict)
+
+
+type Stat
+    = Attack
+    | Speed
 
 
 {-| Main Character type
 -}
 type alias Character =
-    { attack : Float
-    , speed : Float
-    , health : ( Int, Int )
+    { health : ( Int, Int )
     , cooldown : Cooldown
+    , baseStats : Dict Stat Float
     }
 
 
 {-| Character constructor
 -}
-new : Float -> Float -> Float -> Int -> Character
-new cooldown attack speed health =
-    Character attack speed ( health, health ) (Cooldown.new cooldown)
+new : List ( Stat, Float ) -> Float -> Int -> Character
+new baseStats cooldown health =
+    Character
+        ( health, health )
+        (Cooldown.new cooldown)
+        (Dict.fromList baseStats)
 
 
 {-| tick character cooldown by given delta time.
@@ -78,9 +87,13 @@ isReady character =
 
 deriveSpeed : Character -> Float
 deriveSpeed character =
-    character.speed
+    character.baseStats
+        |> Dict.get Speed
+        |> Maybe.withDefault 1
 
 
 deriveAttack : Character -> Float
 deriveAttack character =
-    character.attack
+    character.baseStats
+        |> Dict.get Attack
+        |> Maybe.withDefault 1

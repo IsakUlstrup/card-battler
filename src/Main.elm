@@ -25,12 +25,12 @@ characterAnimationDuration =
 
 playerCharacter : Character
 playerCharacter =
-    Character.new 2000 3 1 100
+    Character.new [ ( Character.Attack, 5 ) ] 2000 100
 
 
 enemyCharacter : Character
 enemyCharacter =
-    Character.new 2500 2 1 20
+    Character.new [] 2500 20
 
 
 
@@ -257,8 +257,8 @@ viewCharacter turnState ( type_, character ) =
         , Html.Attributes.class (characterTypeString type_)
         , Html.Attributes.class stateString
         ]
-        ([ Html.p [] [ Html.text ("atk: " ++ String.fromFloat character.attack) ]
-         , Html.p [] [ Html.text ("spd: " ++ String.fromFloat character.speed) ]
+        ([ Html.p [] [ Html.text ("atk: " ++ String.fromFloat (Character.deriveAttack character)) ]
+         , Html.p [] [ Html.text ("spd: " ++ String.fromFloat (Character.deriveSpeed character)) ]
          , Html.p []
             [ Html.text
                 ("hlt: "
