@@ -5,6 +5,7 @@ module Character exposing
     , addBuff
     , deriveAttack
     , deriveSpeed
+    , deriveStats
     , hit
     , isAlive
     , isReady
@@ -159,6 +160,14 @@ deriveStat stat character =
         |> Dict.get stat
         |> Maybe.withDefault 1
         |> (\base -> base * statBuffs)
+
+
+deriveStats : Character -> List ( Stat, Float )
+deriveStats character =
+    [ Attack
+    , Speed
+    ]
+        |> List.map (\stat -> ( stat, deriveStat stat character ))
 
 
 {-| Derive character speed stat

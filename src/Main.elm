@@ -316,7 +316,11 @@ viewCharacter turnState ( type_, character ) =
             []
         , viewCooldown character.cooldown
         , Html.details []
-            (Html.summary [] [ Html.text "Base Stats" ] :: (Dict.toList character.baseStats |> List.map viewStat))
+            (Html.summary [] [ Html.text "Stats" ]
+                :: (Character.deriveStats character
+                        |> List.map viewStat
+                   )
+            )
         , Html.ul [ Html.Attributes.class "buffs" ] (List.map viewBuff character.buffs)
         ]
 
