@@ -294,8 +294,14 @@ viewCharacter turnState ( type_, character ) =
         , Html.Attributes.class (characterTypeString type_)
         , Html.Attributes.class stateString
         ]
-        ([ Html.h1 [ Html.Attributes.class "icon" ] [ Html.text "🐼" ]
-         , Html.p []
+        [ Html.h1 [ Html.Attributes.class "icon" ]
+            (Html.text "🐼"
+                :: ([ combatEffect ]
+                        |> List.filterMap identity
+                        |> List.map (\t -> Html.div [ Html.Attributes.class "combat-status" ] [ Html.p [] [ Html.text t ] ])
+                   )
+            )
+        , Html.p []
             [ Html.text
                 ("hlt: "
                     ++ String.fromInt (Tuple.first character.health)
@@ -303,21 +309,16 @@ viewCharacter turnState ( type_, character ) =
                     ++ String.fromInt (Tuple.second character.health)
                 )
             ]
-         , Html.meter
+        , Html.meter
             [ Html.Attributes.value (String.fromInt (Tuple.first character.health))
             , Html.Attributes.max (String.fromInt (Tuple.second character.health))
             ]
             []
-         , viewCooldown character.cooldown
-         , Html.details []
+        , viewCooldown character.cooldown
+        , Html.details []
             (Html.summary [] [ Html.text "Base Stats" ] :: (Dict.toList character.baseStats |> List.map viewStat))
-         , Html.ul [ Html.Attributes.class "buffs" ] (List.map viewBuff character.buffs)
-         ]
-            ++ ([ combatEffect ]
-                    |> List.filterMap identity
-                    |> List.map (\t -> Html.div [ Html.Attributes.class "combat-status" ] [ Html.p [] [ Html.text t ] ])
-               )
-        )
+        , Html.ul [ Html.Attributes.class "buffs" ] (List.map viewBuff character.buffs)
+        ]
 
 
 viewTurnState : TurnState -> Html Msg
