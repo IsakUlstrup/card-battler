@@ -58,6 +58,10 @@ body
     padding: $spacing-medium
     flex: 0 0 8rem
     border: 1px solid beige
+    display: flex
+    flex-direction: column
+    gap: $spacing-medium
+
     .icon
         text-align: center
         font-size: 3rem
@@ -101,8 +105,9 @@ body
 
 .buffs
     display: flex
-    flex-wrap: wrap
-    height: 5rem
+    flex-direction: column
+    gap: $spacing-small
+    height: 7rem
     overflow-y: auto
 
 .buff
