@@ -2,7 +2,7 @@ module Main exposing (CharacterType, Model, Msg, TurnState, main)
 
 import Browser
 import Browser.Events
-import Character exposing (Buff, Character)
+import Character exposing (Buff, Character, Stat)
 import Cooldown exposing (Cooldown)
 import CustomDict as Dict exposing (Dict)
 import Html exposing (Html, main_)
@@ -241,6 +241,11 @@ viewBuff buff =
         ]
 
 
+viewStat : ( Stat, Float ) -> Html msg
+viewStat ( statType, statValue ) =
+    Html.p [ Html.Attributes.class "stat" ] [ Html.text (Character.statString statType ++ ": " ++ String.fromFloat statValue) ]
+
+
 viewCharacter : TurnState -> ( CharacterType, Character ) -> Html msg
 viewCharacter turnState ( type_, character ) =
     let
@@ -290,8 +295,6 @@ viewCharacter turnState ( type_, character ) =
         , Html.Attributes.class stateString
         ]
         ([ Html.h1 [ Html.Attributes.class "icon" ] [ Html.text "🐼" ]
-         , Html.p [] [ Html.text ("atk: " ++ String.fromFloat (Character.deriveAttack character)) ]
-         , Html.p [] [ Html.text ("spd: " ++ String.fromFloat (Character.deriveSpeed character)) ]
          , Html.p []
             [ Html.text
                 ("hlt: "
@@ -306,6 +309,8 @@ viewCharacter turnState ( type_, character ) =
             ]
             []
          , viewCooldown character.cooldown
+         , Html.details []
+            (Html.summary [] [ Html.text "Base Stats" ] :: (Dict.toList character.baseStats |> List.map viewStat))
          , Html.ul [ Html.Attributes.class "buffs" ] (List.map viewBuff character.buffs)
          ]
             ++ ([ combatEffect ]
