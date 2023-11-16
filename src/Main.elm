@@ -16,7 +16,7 @@ import Html.Events
 
 characterAnimationDuration : Float
 characterAnimationDuration =
-    500
+    300
 
 
 
