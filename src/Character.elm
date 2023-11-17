@@ -163,7 +163,7 @@ deriveStat stat character =
     in
     character.baseStats
         |> Dict.get stat
-        |> Maybe.withDefault 1
+        |> Maybe.withDefault 0
         |> (\base -> base * statBuffs)
 
 

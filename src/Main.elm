@@ -30,7 +30,7 @@ playerCharacter =
 
 enemyCharacter : Character
 enemyCharacter =
-    Character.new [ ( Character.Attack, 10 ) ] 7500 20
+    Character.new [ ( Character.Attack, 10 ), ( Character.Speed, 0.8 ) ] 7500 20
 
 
 
