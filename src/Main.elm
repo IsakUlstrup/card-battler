@@ -254,37 +254,51 @@ viewHealthHistoryItem delta =
 viewCharacter : TurnState -> ( CharacterType, Character ) -> Html msg
 viewCharacter turnState ( type_, character ) =
     let
-        stateString : String
-        stateString =
+        isAttacking : Bool
+        isAttacking =
             case turnState of
-                Recovering ->
-                    "idle"
-
                 Attacking characterType _ _ ->
-                    if characterType == type_ then
-                        "attacking"
+                    characterType == type_
 
-                    else
-                        "idle"
+                _ ->
+                    False
 
+        isHit : Bool
+        isHit =
+            case turnState of
                 Hit characterType _ _ ->
-                    if characterType == type_ then
-                        "hit"
+                    characterType == type_
 
-                    else
-                        "idle"
+                _ ->
+                    False
 
+        isDead : Bool
+        isDead =
+            case turnState of
                 Done characterType ->
-                    if characterType == type_ then
-                        "winner"
+                    characterType /= type_
 
-                    else
-                        "dead"
+                _ ->
+                    False
+
+        isWinner : Bool
+        isWinner =
+            case turnState of
+                Done characterType ->
+                    characterType == type_
+
+                _ ->
+                    False
     in
     Html.div
         [ Html.Attributes.class "character"
         , Html.Attributes.class (characterTypeString type_)
-        , Html.Attributes.class stateString
+        , Html.Attributes.classList
+            [ ( "attacking", isAttacking )
+            , ( "hit", isHit )
+            , ( "dead", isDead )
+            , ( "winner", isWinner )
+            ]
         ]
         [ Html.h1 [ Html.Attributes.class "icon" ] [ Html.text "🐼" ]
         , Html.p []
