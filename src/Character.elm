@@ -169,9 +169,9 @@ deriveStat stat character =
 
 deriveStats : Character -> List ( Stat, Float )
 deriveStats character =
-    [ Attack
-    , Speed
-    ]
+    character.baseStats
+        |> Dict.toList
+        |> List.map Tuple.first
         |> List.map (\stat -> ( stat, deriveStat stat character ))
 
 
