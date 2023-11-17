@@ -25,12 +25,12 @@ characterAnimationDuration =
 
 playerCharacter : Character
 playerCharacter =
-    Character.new [ ( Character.Speed, 2 ) ] 5000 100
+    Character.new [ ( Character.Attack, 10 ), ( Character.Speed, 1.3 ) ] 5000 100
 
 
 enemyCharacter : Character
 enemyCharacter =
-    Character.new [] 7500 20
+    Character.new [ ( Character.Attack, 10 ) ] 7500 20
 
 
 
@@ -224,6 +224,22 @@ advanceTurnState model =
 -- VIEW
 
 
+viewCustomMeter : Int -> Int -> Html msg
+viewCustomMeter max value =
+    Html.div [ Html.Attributes.class "custom-meter" ]
+        [ Html.div
+            [ Html.Attributes.class "trail"
+            , Html.Attributes.style "width" (String.fromFloat (toFloat value / toFloat max * 100) ++ "%")
+            ]
+            []
+        , Html.div
+            [ Html.Attributes.class "value"
+            , Html.Attributes.style "width" (String.fromFloat (toFloat value / toFloat max * 100) ++ "%")
+            ]
+            []
+        ]
+
+
 viewCooldown : Cooldown -> Html msg
 viewCooldown ( cd, maxCd ) =
     Html.progress
@@ -314,11 +330,7 @@ viewCharacter turnState ( isPlayer, character ) =
                 )
             ]
         , Html.div [ Html.Attributes.class "health-history" ] (List.map viewHealthHistoryItem character.healthHistory)
-        , Html.meter
-            [ Html.Attributes.value (String.fromInt (Tuple.first character.health))
-            , Html.Attributes.max (String.fromInt (Tuple.second character.health))
-            ]
-            []
+        , viewCustomMeter (Tuple.second character.health) (Tuple.first character.health)
         , viewCooldown character.cooldown
         , Html.details []
             (Html.summary [] [ Html.text "Stats" ]
