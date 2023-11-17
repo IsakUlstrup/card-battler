@@ -1,4 +1,4 @@
-module Main exposing (CharacterType, Model, Msg, TurnState, main)
+module Main exposing (Model, Msg, TurnState, main)
 
 import Browser
 import Browser.Events
@@ -37,36 +37,20 @@ enemyCharacter =
 -- TURN STATE
 
 
-type CharacterType
-    = Player
-    | Enemy
+characterTypeString : Bool -> String
+characterTypeString isPlayer =
+    if isPlayer then
+        "player"
 
-
-notCharacterType : CharacterType -> CharacterType
-notCharacterType type_ =
-    case type_ of
-        Player ->
-            Enemy
-
-        Enemy ->
-            Player
-
-
-characterTypeString : CharacterType -> String
-characterTypeString type_ =
-    case type_ of
-        Player ->
-            "player"
-
-        Enemy ->
-            "enemy"
+    else
+        "enemy"
 
 
 type TurnState
     = Recovering
-    | Attacking CharacterType Int Cooldown
-    | Hit CharacterType Int Cooldown
-    | Done CharacterType
+    | Attacking Bool Int Cooldown
+    | Hit Bool Int Cooldown
+    | Done Bool
 
 
 turnStateString : TurnState -> String
@@ -90,7 +74,7 @@ turnStateString turnState =
 
 
 type alias Model =
-    { characters : Dict CharacterType Character
+    { characters : Dict Bool Character
     , turnState : TurnState
     }
 
@@ -99,8 +83,8 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( Model
         (Dict.fromList
-            [ ( Player, playerCharacter )
-            , ( Enemy, enemyCharacter )
+            [ ( True, playerCharacter )
+            , ( False, enemyCharacter )
             ]
         )
         Recovering
@@ -115,7 +99,7 @@ init _ =
 type Msg
     = Tick Float
     | ClickedResetEnemy
-    | ClickedAddBuff CharacterType Buff
+    | ClickedAddBuff Bool Buff
 
 
 update : Msg -> Model -> Model
@@ -129,7 +113,7 @@ update msg model =
 
         ClickedResetEnemy ->
             { model
-                | characters = model.characters |> Dict.update Enemy (always enemyCharacter)
+                | characters = model.characters |> Dict.update False (always enemyCharacter)
                 , turnState = Recovering
             }
 
@@ -158,17 +142,17 @@ tickTurnState dt model =
         Recovering ->
             model
 
-        Attacking character power cooldown ->
-            { model | turnState = Attacking character power (Cooldown.tick dt cooldown) }
+        Attacking isPlayer power cooldown ->
+            { model | turnState = Attacking isPlayer power (Cooldown.tick dt cooldown) }
 
-        Hit character hit cooldown ->
-            { model | turnState = Hit character hit (Cooldown.tick dt cooldown) }
+        Hit isPlayer hit cooldown ->
+            { model | turnState = Hit isPlayer hit (Cooldown.tick dt cooldown) }
 
         Done _ ->
             model
 
 
-getHead : (Character -> Bool) -> Model -> Maybe ( CharacterType, Character )
+getHead : (Character -> Bool) -> Model -> Maybe ( Bool, Character )
 getHead f model =
     model.characters
         |> Dict.filter (\_ character -> f character)
@@ -181,22 +165,22 @@ advanceTurnState model =
     case model.turnState of
         Recovering ->
             case ( getHead (Character.isAlive >> not) model, getHead Character.isReady model ) of
-                ( Nothing, Just ( characterType, character ) ) ->
+                ( Nothing, Just ( isPlayer, character ) ) ->
                     { model
-                        | turnState = Attacking characterType (round (Character.deriveAttack character)) (Cooldown.new characterAnimationDuration)
+                        | turnState = Attacking isPlayer (round (Character.deriveAttack character)) (Cooldown.new characterAnimationDuration)
                     }
 
                 ( Just ( charType, _ ), _ ) ->
-                    { model | turnState = Done (notCharacterType charType) }
+                    { model | turnState = Done (not charType) }
 
                 _ ->
                     model
 
-        Attacking character power cooldown ->
+        Attacking isPlayer power cooldown ->
             if Cooldown.isDone cooldown then
                 { model
-                    | turnState = Hit (notCharacterType character) power (Cooldown.new characterAnimationDuration)
-                    , characters = Dict.update character Character.resetCooldown model.characters
+                    | turnState = Hit (not isPlayer) power (Cooldown.new characterAnimationDuration)
+                    , characters = Dict.update isPlayer Character.resetCooldown model.characters
                 }
 
             else
@@ -251,14 +235,14 @@ viewHealthHistoryItem delta =
     Html.p [] [ Html.text ("-" ++ String.fromInt delta) ]
 
 
-viewCharacter : TurnState -> ( CharacterType, Character ) -> Html msg
-viewCharacter turnState ( type_, character ) =
+viewCharacter : TurnState -> ( Bool, Character ) -> Html msg
+viewCharacter turnState ( isPlayer, character ) =
     let
         isAttacking : Bool
         isAttacking =
             case turnState of
                 Attacking characterType _ _ ->
-                    characterType == type_
+                    characterType == isPlayer
 
                 _ ->
                     False
@@ -267,7 +251,7 @@ viewCharacter turnState ( type_, character ) =
         isHit =
             case turnState of
                 Hit characterType _ _ ->
-                    characterType == type_
+                    characterType == isPlayer
 
                 _ ->
                     False
@@ -276,7 +260,7 @@ viewCharacter turnState ( type_, character ) =
         isDead =
             case turnState of
                 Done characterType ->
-                    characterType /= type_
+                    characterType /= isPlayer
 
                 _ ->
                     False
@@ -285,14 +269,14 @@ viewCharacter turnState ( type_, character ) =
         isWinner =
             case turnState of
                 Done characterType ->
-                    characterType == type_
+                    characterType == isPlayer
 
                 _ ->
                     False
     in
     Html.div
         [ Html.Attributes.class "character"
-        , Html.Attributes.class (characterTypeString type_)
+        , Html.Attributes.class (characterTypeString isPlayer)
         , Html.Attributes.classList
             [ ( "attacking", isAttacking )
             , ( "hit", isHit )
@@ -337,13 +321,13 @@ viewTurnState turnState =
 viewBuffPresets : Html Msg
 viewBuffPresets =
     let
-        viewBuffPreset : String -> CharacterType -> Buff -> Html Msg
-        viewBuffPreset label character buff =
-            Html.button [ Html.Events.onClick (ClickedAddBuff character buff) ] [ Html.text label ]
+        viewBuffPreset : String -> Bool -> Buff -> Html Msg
+        viewBuffPreset label isPlayer buff =
+            Html.button [ Html.Events.onClick (ClickedAddBuff isPlayer buff) ] [ Html.text label ]
     in
     Html.div [ Html.Attributes.class "buff-presets" ]
-        [ viewBuffPreset "Buff player speed" Player (Character.newBuff 1000 ( Character.Speed, 2 ))
-        , viewBuffPreset "Debuff enemy speed" Enemy (Character.newBuff 1000 ( Character.Speed, 0.2 ))
+        [ viewBuffPreset "Buff player speed" True (Character.newBuff 1000 ( Character.Speed, 2 ))
+        , viewBuffPreset "Debuff enemy speed" False (Character.newBuff 1000 ( Character.Speed, 0.2 ))
         ]
 
 
