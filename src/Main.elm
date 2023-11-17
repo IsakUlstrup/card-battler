@@ -49,7 +49,7 @@ characterTypeString isPlayer =
 type TurnState
     = Recovering
     | Attacking Bool Int Cooldown
-    | Hit Bool Int Cooldown
+    | Hit Bool Cooldown
     | Done Bool
 
 
@@ -62,7 +62,7 @@ turnStateString turnState =
         Attacking _ _ _ ->
             "attacking"
 
-        Hit _ _ _ ->
+        Hit _ _ ->
             "hit"
 
         Done _ ->
@@ -145,8 +145,8 @@ tickTurnState dt model =
         Attacking isPlayer power cooldown ->
             { model | turnState = Attacking isPlayer power (Cooldown.tick dt cooldown) }
 
-        Hit isPlayer hit cooldown ->
-            { model | turnState = Hit isPlayer hit (Cooldown.tick dt cooldown) }
+        Hit isPlayer cooldown ->
+            { model | turnState = Hit isPlayer (Cooldown.tick dt cooldown) }
 
         Done _ ->
             model
@@ -160,38 +160,58 @@ getHead f model =
         |> List.head
 
 
+setAttackingState : Bool -> Character -> Model -> Model
+setAttackingState isPlayer character model =
+    { model
+        | turnState = Attacking isPlayer (round (Character.deriveAttack character)) (Cooldown.new characterAnimationDuration)
+    }
+
+
+setHitState : Bool -> Int -> Model -> Model
+setHitState isPlayer power model =
+    { model
+        | turnState = Hit (not isPlayer) (Cooldown.new characterAnimationDuration)
+        , characters =
+            model.characters
+                |> Dict.update isPlayer Character.resetCooldown
+                |> Dict.update (not isPlayer) (Character.hit power)
+    }
+
+
+setRecoveringState : Model -> Model
+setRecoveringState model =
+    { model | turnState = Recovering }
+
+
+setDoneState : Bool -> Model -> Model
+setDoneState isPlayer model =
+    { model | turnState = Done (not isPlayer) }
+
+
 advanceTurnState : Model -> Model
 advanceTurnState model =
     case model.turnState of
         Recovering ->
             case ( getHead (Character.isAlive >> not) model, getHead Character.isReady model ) of
                 ( Nothing, Just ( isPlayer, character ) ) ->
-                    { model
-                        | turnState = Attacking isPlayer (round (Character.deriveAttack character)) (Cooldown.new characterAnimationDuration)
-                    }
+                    setAttackingState isPlayer character model
 
-                ( Just ( charType, _ ), _ ) ->
-                    { model | turnState = Done (not charType) }
+                ( Just ( isPlayer, _ ), _ ) ->
+                    setDoneState isPlayer model
 
                 _ ->
                     model
 
         Attacking isPlayer power cooldown ->
             if Cooldown.isDone cooldown then
-                { model
-                    | turnState = Hit (not isPlayer) power (Cooldown.new characterAnimationDuration)
-                    , characters = Dict.update isPlayer Character.resetCooldown model.characters
-                }
+                setHitState isPlayer power model
 
             else
                 model
 
-        Hit character hit cooldown ->
+        Hit _ cooldown ->
             if Cooldown.isDone cooldown then
-                { model
-                    | turnState = Recovering
-                    , characters = Dict.update character (Character.hit hit) model.characters
-                }
+                setRecoveringState model
 
             else
                 model
@@ -250,7 +270,7 @@ viewCharacter turnState ( isPlayer, character ) =
         isHit : Bool
         isHit =
             case turnState of
-                Hit characterType _ _ ->
+                Hit characterType _ ->
                     characterType == isPlayer
 
                 _ ->
