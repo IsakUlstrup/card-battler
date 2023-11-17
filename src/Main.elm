@@ -25,7 +25,7 @@ characterAnimationDuration =
 
 playerCharacter : Character
 playerCharacter =
-    Character.new [ ( Character.Attack, 5 ) ] 5000 100
+    Character.new [ ( Character.Speed, 2 ) ] 5000 100
 
 
 enemyCharacter : Character
@@ -246,6 +246,11 @@ viewStat ( statType, statValue ) =
     Html.p [ Html.Attributes.class "stat" ] [ Html.text (Character.statString statType ++ ": " ++ String.fromFloat statValue) ]
 
 
+viewHealthHistoryItem : Int -> Html msg
+viewHealthHistoryItem delta =
+    Html.p [] [ Html.text ("-" ++ String.fromInt delta) ]
+
+
 viewCharacter : TurnState -> ( CharacterType, Character ) -> Html msg
 viewCharacter turnState ( type_, character ) =
     let
@@ -275,32 +280,13 @@ viewCharacter turnState ( type_, character ) =
 
                     else
                         "dead"
-
-        combatEffect : Maybe String
-        combatEffect =
-            case turnState of
-                Hit characterType hit _ ->
-                    if characterType == type_ then
-                        Just ("-" ++ String.fromInt hit)
-
-                    else
-                        Nothing
-
-                _ ->
-                    Nothing
     in
     Html.div
         [ Html.Attributes.class "character"
         , Html.Attributes.class (characterTypeString type_)
         , Html.Attributes.class stateString
         ]
-        [ Html.h1 [ Html.Attributes.class "icon" ]
-            (Html.text "🐼"
-                :: ([ combatEffect ]
-                        |> List.filterMap identity
-                        |> List.map (\t -> Html.div [ Html.Attributes.class "combat-status" ] [ Html.p [] [ Html.text t ] ])
-                   )
-            )
+        [ Html.h1 [ Html.Attributes.class "icon" ] [ Html.text "🐼" ]
         , Html.p []
             [ Html.text
                 ("hlt: "
@@ -309,6 +295,7 @@ viewCharacter turnState ( type_, character ) =
                     ++ String.fromInt (Tuple.second character.health)
                 )
             ]
+        , Html.div [ Html.Attributes.class "health-history" ] (List.map viewHealthHistoryItem character.healthHistory)
         , Html.meter
             [ Html.Attributes.value (String.fromInt (Tuple.first character.health))
             , Html.Attributes.max (String.fromInt (Tuple.second character.health))

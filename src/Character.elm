@@ -25,6 +25,7 @@ import CustomDict as Dict exposing (Dict)
 -}
 type alias Character =
     { health : ( Int, Int )
+    , healthHistory : List Int
     , cooldown : Cooldown
     , baseStats : Dict Stat Float
     , buffs : List Buff
@@ -37,6 +38,7 @@ new : List ( Stat, Float ) -> Float -> Int -> Character
 new baseStats cooldown health =
     Character
         ( health, health )
+        []
         (Cooldown.new cooldown)
         (Dict.fromList baseStats)
         []
@@ -85,7 +87,10 @@ resetCooldown character =
 -}
 hit : Int -> Character -> Character
 hit power character =
-    { character | health = character.health |> Tuple.mapFirst (\h -> max 0 (h - power)) }
+    { character
+        | health = character.health |> Tuple.mapFirst (\h -> max 0 (h - power))
+        , healthHistory = power :: character.healthHistory
+    }
 
 
 
