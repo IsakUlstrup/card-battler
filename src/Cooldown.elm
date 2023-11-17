@@ -7,12 +7,12 @@ type alias Cooldown =
 
 new : Float -> Cooldown
 new duration =
-    ( 0, duration )
+    ( 0, max 0 duration )
 
 
 tick : Float -> Cooldown -> Cooldown
 tick dt ( cd, maxCd ) =
-    ( min maxCd (cd + dt), maxCd )
+    ( clamp 0 maxCd (cd + dt), maxCd )
 
 
 isDone : Cooldown -> Bool
