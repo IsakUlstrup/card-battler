@@ -59,7 +59,7 @@ tick dt character =
                     |> List.filter buffNotDone
             , energy =
                 character.energy
-                    |> Dict.map (tickEnergy dt)
+                    |> Dict.map (tickEnergy character dt)
                     |> Dict.map addEnergy
         }
 
@@ -96,6 +96,9 @@ isAlive character =
 -}
 type Stat
     = Attack
+    | CyanRegenModifier
+    | MagentaRegenModifier
+    | YellowRegenModifier
 
 
 {-| stat to string
@@ -104,7 +107,16 @@ statString : Stat -> String
 statString stat =
     case stat of
         Attack ->
-            "🗡️"
+            "attack"
+
+        CyanRegenModifier ->
+            "cyanRegen"
+
+        MagentaRegenModifier ->
+            "magentaRegen"
+
+        YellowRegenModifier ->
+            "yellowRegen"
 
 
 {-| Derive character stat of any type
@@ -223,10 +235,18 @@ defaultEnergyCap =
     10
 
 
-tickEnergy : Float -> Energy -> ( Cooldown, ( Int, Int ) ) -> ( Cooldown, ( Int, Int ) )
-tickEnergy dt _ ( cooldown, ( amount, cap ) ) =
+tickEnergy : Character -> Float -> Energy -> ( Cooldown, ( Int, Int ) ) -> ( Cooldown, ( Int, Int ) )
+tickEnergy character dt energy ( cooldown, ( amount, cap ) ) =
     if amount /= cap then
-        ( Cooldown.tick dt cooldown, ( amount, cap ) )
+        case energy of
+            Cyan ->
+                ( Cooldown.tick (dt * deriveStat CyanRegenModifier character) cooldown, ( amount, cap ) )
+
+            Magenta ->
+                ( Cooldown.tick (dt * deriveStat MagentaRegenModifier character) cooldown, ( amount, cap ) )
+
+            Yellow ->
+                ( Cooldown.tick (dt * deriveStat YellowRegenModifier character) cooldown, ( amount, cap ) )
 
     else
         ( cooldown, ( amount, cap ) )

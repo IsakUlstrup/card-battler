@@ -25,12 +25,21 @@ characterAnimationDuration =
 
 playerCharacter : Character
 playerCharacter =
-    Character.new [ ( Character.Attack, 10 ) ] 100
+    Character.new
+        [ ( Character.Attack, 10 )
+        , ( Character.CyanRegenModifier, 2 )
+        , ( Character.YellowRegenModifier, 0.7 )
+        ]
+        100
 
 
 enemyCharacter : Character
 enemyCharacter =
-    Character.new [ ( Character.Attack, 10 ) ] 20
+    Character.new
+        [ ( Character.Attack, 10 )
+        , ( Character.CyanRegenModifier, 1 )
+        ]
+        20
 
 
 
@@ -270,12 +279,18 @@ viewHealthHistoryItem delta =
     Html.p [] [ Html.text (String.fromInt delta) ]
 
 
-viewEnergy : ( Energy, ( Cooldown, ( Int, Int ) ) ) -> Html msg
+viewEnergy : ( Energy, ( Cooldown, ( Int, Int ) ) ) -> Maybe (Html msg)
 viewEnergy ( energy, ( cooldown, ( amount, cap ) ) ) =
-    Html.div [ Html.Attributes.class (Character.energyToString energy) ]
-        [ Html.p [] [ Html.text (Debug.toString energy ++ ": " ++ String.fromInt amount ++ "/" ++ String.fromInt cap) ]
-        , viewCooldown cooldown
-        ]
+    if amount > 0 then
+        Just
+            (Html.div [ Html.Attributes.class (Character.energyToString energy) ]
+                [ Html.p [] [ Html.text (Debug.toString energy ++ ": " ++ String.fromInt amount ++ "/" ++ String.fromInt cap) ]
+                , viewCooldown cooldown
+                ]
+            )
+
+    else
+        Nothing
 
 
 viewCharacter : TurnState -> ( Bool, Character ) -> Html msg
@@ -340,7 +355,7 @@ viewCharacter turnState ( isPlayer, character ) =
         , viewCustomMeter (Tuple.second character.health) (Tuple.first character.health)
 
         -- , viewCooldown character.cooldown
-        , Html.div [] (Dict.toList character.energy |> List.map viewEnergy)
+        , Html.div [] (Dict.toList character.energy |> List.filterMap viewEnergy)
         , Html.details []
             (Html.summary [] [ Html.text "Stats" ]
                 :: (Character.deriveStats character
