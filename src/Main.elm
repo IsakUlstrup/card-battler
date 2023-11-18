@@ -25,12 +25,12 @@ characterAnimationDuration =
 
 playerCharacter : Character
 playerCharacter =
-    Character.new [ ( Character.Attack, 10 ), ( Character.Speed, 1.3 ) ] 100
+    Character.new [ ( Character.Attack, 10 ) ] 100
 
 
 enemyCharacter : Character
 enemyCharacter =
-    Character.new [ ( Character.Attack, 10 ), ( Character.Speed, 0.8 ) ] 20
+    Character.new [ ( Character.Attack, 10 ) ] 20
 
 
 
@@ -364,8 +364,7 @@ viewBuffPresets =
             Html.button [ Html.Events.onClick (ClickedAddBuff isPlayer buff) ] [ Html.text label ]
     in
     Html.div [ Html.Attributes.class "buff-presets" ]
-        [ viewBuffPreset "Buff player speed" True (Character.newBuff 1000 ( Character.Speed, 2 ))
-        , viewBuffPreset "Debuff enemy speed" False (Character.newBuff 1000 ( Character.Speed, 0.2 ))
+        [ viewBuffPreset "Buff player Attack" True (Character.newBuff 1000 ( Character.Attack, 2 ))
         ]
 
 

@@ -5,7 +5,6 @@ module Character exposing
     , Stat(..)
     , addBuff
     , deriveAttack
-    , deriveSpeed
     , deriveStats
     , hit
     , isAlive
@@ -96,7 +95,6 @@ isAlive character =
 -}
 type Stat
     = Attack
-    | Speed
 
 
 {-| stat to string
@@ -106,9 +104,6 @@ statString stat =
     case stat of
         Attack ->
             "🗡️"
-
-        Speed ->
-            "⚡"
 
 
 {-| Derive character stat of any type
@@ -150,13 +145,6 @@ deriveStats character =
         |> Dict.toList
         |> List.map Tuple.first
         |> List.map (\stat -> ( stat, deriveStat stat character ))
-
-
-{-| Derive character speed stat
--}
-deriveSpeed : Character -> Float
-deriveSpeed character =
-    deriveStat Speed character
 
 
 {-| Derive character attack stat
