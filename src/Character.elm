@@ -210,8 +210,12 @@ defaultEnergyCap =
 
 
 tickEnergy : Float -> Energy -> ( Cooldown, ( Int, Int ) ) -> ( Cooldown, ( Int, Int ) )
-tickEnergy dt _ ( cooldown, amount ) =
-    ( Cooldown.tick dt cooldown, amount )
+tickEnergy dt _ ( cooldown, ( amount, cap ) ) =
+    if amount /= cap then
+        ( Cooldown.tick dt cooldown, ( amount, cap ) )
+
+    else
+        ( cooldown, ( amount, cap ) )
 
 
 addEnergy : Energy -> ( Cooldown, ( Int, Int ) ) -> ( Cooldown, ( Int, Int ) )
