@@ -89,7 +89,7 @@ hit : Int -> Character -> Character
 hit power character =
     { character
         | health = character.health |> Tuple.mapFirst (\h -> max 0 (h - power))
-        , healthHistory = power :: character.healthHistory
+        , healthHistory = -power :: character.healthHistory
     }
 
 

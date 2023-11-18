@@ -268,7 +268,7 @@ viewStat ( statType, statValue ) =
 
 viewHealthHistoryItem : Int -> Html msg
 viewHealthHistoryItem delta =
-    Html.p [] [ Html.text ("-" ++ String.fromInt delta) ]
+    Html.p [] [ Html.text (String.fromInt delta) ]
 
 
 viewCharacter : TurnState -> ( Bool, Character ) -> Html msg
