@@ -271,8 +271,11 @@ viewHealthHistoryItem delta =
 
 
 viewEnergy : ( Energy, ( Cooldown, ( Int, Int ) ) ) -> Html msg
-viewEnergy ( energy, ( _, ( amount, cap ) ) ) =
-    Html.p [] [ Html.text (Debug.toString energy ++ ": " ++ String.fromInt amount ++ "/" ++ String.fromInt cap) ]
+viewEnergy ( energy, ( cooldown, ( amount, cap ) ) ) =
+    Html.div []
+        [ Html.p [] [ Html.text (Debug.toString energy ++ ": " ++ String.fromInt amount ++ "/" ++ String.fromInt cap) ]
+        , viewCooldown cooldown
+        ]
 
 
 viewCharacter : TurnState -> ( Bool, Character ) -> Html msg
