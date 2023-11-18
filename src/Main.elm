@@ -302,7 +302,7 @@ viewEnergy ( energy, ( cooldown, ( amount, cap ) ) ) =
     if amount > 0 then
         Just
             (Html.div [ Html.Attributes.class (Character.energyToString energy) ]
-                [ Html.p [] [ Html.text (Debug.toString energy ++ ": " ++ String.fromInt amount ++ "/" ++ String.fromInt cap) ]
+                [ Html.p [] [ Html.text (Character.energyToString energy ++ ": " ++ String.fromInt amount ++ "/" ++ String.fromInt cap) ]
                 , viewCooldown cooldown
                 ]
             )
@@ -395,7 +395,8 @@ viewAttack attack =
     Html.button [ Html.Events.onClick (ClickedSetPlayerAttack attack) ]
         [ Html.p [] [ Html.text attack.name ]
         , Html.p [] [ Html.text ("power: " ++ String.fromInt attack.power) ]
-        , Html.p [] [ Html.text ("cost: " ++ Debug.toString attack.cost) ]
+
+        -- , Html.p [] [ Html.text ("cost: " ++ Debug.toString attack.cost) ]
         ]
 
 
