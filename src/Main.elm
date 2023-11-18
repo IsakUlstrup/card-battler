@@ -2,7 +2,7 @@ module Main exposing (Model, Msg, TurnState, main)
 
 import Browser
 import Browser.Events
-import Character exposing (Buff, Character, Stat)
+import Character exposing (Buff, Character, Energy, Stat)
 import Cooldown exposing (Cooldown)
 import CustomDict as Dict exposing (Dict)
 import Html exposing (Html, main_)
@@ -25,12 +25,12 @@ characterAnimationDuration =
 
 playerCharacter : Character
 playerCharacter =
-    Character.new [ ( Character.Attack, 10 ), ( Character.Speed, 1.3 ) ] 7500 100
+    Character.new [ ( Character.Attack, 10 ), ( Character.Speed, 1.3 ) ] 100
 
 
 enemyCharacter : Character
 enemyCharacter =
-    Character.new [ ( Character.Attack, 10 ), ( Character.Speed, 0.8 ) ] 7500 20
+    Character.new [ ( Character.Attack, 10 ), ( Character.Speed, 0.8 ) ] 20
 
 
 
@@ -128,8 +128,9 @@ tickCharacters dt model =
             { model
                 | characters =
                     model.characters
-                        |> Dict.map (\_ character -> Character.tickCooldown dt character)
-                        |> Dict.map (\_ character -> Character.tickBuffs dt character)
+                        |> Dict.map (\_ character -> Character.tick dt character)
+
+                -- |> Dict.map (\_ character -> Character.tickBuffs dt character)
             }
 
         _ ->
@@ -173,7 +174,7 @@ setHitState isPlayer power model =
         | turnState = Hit (not isPlayer) (Cooldown.new characterAnimationDuration)
         , characters =
             model.characters
-                |> Dict.update isPlayer Character.resetCooldown
+                -- |> Dict.update isPlayer Character.resetCooldown
                 |> Dict.update (not isPlayer) (Character.hit power)
     }
 
@@ -192,15 +193,13 @@ advanceTurnState : Model -> Model
 advanceTurnState model =
     case model.turnState of
         Recovering ->
-            case ( getHead (Character.isAlive >> not) model, getHead Character.isReady model ) of
-                ( Nothing, Just ( isPlayer, character ) ) ->
-                    setAttackingState isPlayer character model
-
-                ( Just ( isPlayer, _ ), _ ) ->
-                    setDoneState isPlayer model
-
-                _ ->
-                    model
+            -- case ( getHead (Character.isAlive >> not) model, getHead Character.isReady model ) of
+            --     ( Nothing, Just ( isPlayer, character ) ) ->
+            --         setAttackingState isPlayer character model
+            --     ( Just ( isPlayer, _ ), _ ) ->
+            --         setDoneState isPlayer model
+            --     _ ->
+            model
 
         Attacking isPlayer power cooldown ->
             if Cooldown.isDone cooldown then
@@ -271,6 +270,11 @@ viewHealthHistoryItem delta =
     Html.p [] [ Html.text (String.fromInt delta) ]
 
 
+viewEnergy : ( Energy, ( Cooldown, ( Int, Int ) ) ) -> Html msg
+viewEnergy ( energy, ( _, ( amount, cap ) ) ) =
+    Html.p [] [ Html.text (Debug.toString energy ++ ": " ++ String.fromInt amount ++ "/" ++ String.fromInt cap) ]
+
+
 viewCharacter : TurnState -> ( Bool, Character ) -> Html msg
 viewCharacter turnState ( isPlayer, character ) =
     let
@@ -331,7 +335,9 @@ viewCharacter turnState ( isPlayer, character ) =
             ]
         , Html.div [ Html.Attributes.class "health-history" ] (List.map viewHealthHistoryItem character.healthHistory)
         , viewCustomMeter (Tuple.second character.health) (Tuple.first character.health)
-        , viewCooldown character.cooldown
+
+        -- , viewCooldown character.cooldown
+        , Html.div [] (Dict.toList character.energy |> List.map viewEnergy)
         , Html.details []
             (Html.summary [] [ Html.text "Stats" ]
                 :: (Character.deriveStats character

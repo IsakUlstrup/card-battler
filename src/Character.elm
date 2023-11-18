@@ -1,6 +1,7 @@
 module Character exposing
     ( Buff
     , Character
+    , Energy(..)
     , Stat(..)
     , addBuff
     , deriveAttack
@@ -8,13 +9,10 @@ module Character exposing
     , deriveStats
     , hit
     , isAlive
-    , isReady
     , new
     , newBuff
-    , resetCooldown
     , statString
-    , tickBuffs
-    , tickCooldown
+    , tick
     )
 
 import Cooldown exposing (Cooldown)
@@ -26,61 +24,47 @@ import CustomDict as Dict exposing (Dict)
 type alias Character =
     { health : ( Int, Int )
     , healthHistory : List Int
-    , cooldown : Cooldown
     , baseStats : Dict Stat Float
     , buffs : List Buff
+    , energy : Dict Energy ( Cooldown, ( Int, Int ) )
     }
 
 
 {-| Character constructor
 -}
-new : List ( Stat, Float ) -> Float -> Int -> Character
-new baseStats cooldown health =
+new : List ( Stat, Float ) -> Int -> Character
+new baseStats health =
     Character
         ( health, health )
         []
-        (Cooldown.new cooldown)
         (Dict.fromList baseStats)
         []
+        (Dict.fromList
+            [ ( Cyan, ( Cooldown.new 1000, ( 0, defaultEnergyCap ) ) )
+            , ( Magenta, ( Cooldown.new 1000, ( 0, defaultEnergyCap ) ) )
+            , ( Yellow, ( Cooldown.new 1000, ( 0, defaultEnergyCap ) ) )
+            ]
+        )
 
 
-{-| tick character cooldown by given delta time.
-
-Note: delta time will be multiplied by character speed
-
+{-| tick character buff durations & energy regen.
 -}
-tickCooldown : Float -> Character -> Character
-tickCooldown dt character =
+tick : Float -> Character -> Character
+tick dt character =
     if isAlive character then
         { character
-            | cooldown = Cooldown.tick (dt * deriveSpeed character) character.cooldown
-            , buffs =
+            | buffs =
                 character.buffs
                     |> List.map (tickBuff dt)
                     |> List.filter buffNotDone
+            , energy =
+                character.energy
+                    |> Dict.map (tickEnergy dt)
+                    |> Dict.map addEnergy
         }
 
     else
         character
-
-
-{-| Tick buff durations and remove any that are done
--}
-tickBuffs : Float -> Character -> Character
-tickBuffs dt character =
-    { character
-        | buffs =
-            character.buffs
-                |> List.map (tickBuff dt)
-                |> List.filter buffNotDone
-    }
-
-
-{-| Reset character cooldown
--}
-resetCooldown : Character -> Character
-resetCooldown character =
-    { character | cooldown = Cooldown.reset character.cooldown }
 
 
 {-| Apply hit to character
@@ -102,13 +86,6 @@ hit power character =
 isAlive : Character -> Bool
 isAlive character =
     Tuple.first character.health > 0
-
-
-{-| Is character cooldown done
--}
-isReady : Character -> Bool
-isReady character =
-    Cooldown.isDone character.cooldown
 
 
 
@@ -227,3 +204,32 @@ tickBuff dt buff =
 buffNotDone : Buff -> Bool
 buffNotDone buff =
     Cooldown.isDone buff.duration |> not
+
+
+
+-- ENERGY
+
+
+type Energy
+    = Cyan
+    | Magenta
+    | Yellow
+
+
+defaultEnergyCap : Int
+defaultEnergyCap =
+    10
+
+
+tickEnergy : Float -> Energy -> ( Cooldown, ( Int, Int ) ) -> ( Cooldown, ( Int, Int ) )
+tickEnergy dt _ ( cooldown, amount ) =
+    ( Cooldown.tick dt cooldown, amount )
+
+
+addEnergy : Energy -> ( Cooldown, ( Int, Int ) ) -> ( Cooldown, ( Int, Int ) )
+addEnergy _ ( cooldown, ( amount, cap ) ) =
+    if Cooldown.isDone cooldown then
+        ( Cooldown.reset cooldown, ( min cap (amount + 1), cap ) )
+
+    else
+        ( cooldown, ( amount, cap ) )
