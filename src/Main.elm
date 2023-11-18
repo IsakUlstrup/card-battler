@@ -343,6 +343,7 @@ viewCharacter turnState ( isPlayer, character ) =
             ]
         ]
         [ Html.h1 [ Html.Attributes.class "icon" ] [ Html.text "🐼" ]
+        , Html.div [ Html.Attributes.class "health-history" ] (List.map viewHealthHistoryItem character.healthHistory)
         , Html.p []
             [ Html.text
                 ("hlt: "
@@ -351,10 +352,7 @@ viewCharacter turnState ( isPlayer, character ) =
                     ++ String.fromInt (Tuple.second character.health)
                 )
             ]
-        , Html.div [ Html.Attributes.class "health-history" ] (List.map viewHealthHistoryItem character.healthHistory)
         , viewCustomMeter (Tuple.second character.health) (Tuple.first character.health)
-
-        -- , viewCooldown character.cooldown
         , Html.div [] (Dict.toList character.energy |> List.filterMap viewEnergy)
         , Html.details []
             (Html.summary [] [ Html.text "Stats" ]
