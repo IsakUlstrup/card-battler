@@ -20,6 +20,17 @@ characterAnimationDuration =
 
 
 
+-- ATTACK
+
+
+type alias Attack =
+    { name : String
+    , cost : Dict Energy Int
+    , power : Int
+    }
+
+
+
 -- CONTENT
 
 
@@ -108,7 +119,7 @@ init _ =
 type Msg
     = Tick Float
     | ClickedResetEnemy
-    | ClickedAddBuff Bool Buff
+    | ClickedSetPlayerAttack Attack
 
 
 update : Msg -> Model -> Model
@@ -126,8 +137,15 @@ update msg model =
                 , turnState = Recovering
             }
 
-        ClickedAddBuff character buff ->
-            { model | characters = Dict.update character (Character.addBuff buff) model.characters }
+        ClickedSetPlayerAttack attack ->
+            case model.turnState of
+                Recovering ->
+                    { model
+                        | turnState = Attacking True attack.power (Cooldown.new characterAnimationDuration)
+                    }
+
+                _ ->
+                    model
 
 
 tickCharacters : Float -> Model -> Model
@@ -372,15 +390,12 @@ viewTurnState turnState =
         ]
 
 
-viewBuffPresets : Html Msg
-viewBuffPresets =
-    let
-        viewBuffPreset : String -> Bool -> Buff -> Html Msg
-        viewBuffPreset label isPlayer buff =
-            Html.button [ Html.Events.onClick (ClickedAddBuff isPlayer buff) ] [ Html.text label ]
-    in
-    Html.div [ Html.Attributes.class "buff-presets" ]
-        [ viewBuffPreset "Buff player Attack" True (Character.newBuff 1000 ( Character.Attack, 2 ))
+viewAttack : Attack -> Html Msg
+viewAttack attack =
+    Html.button [ Html.Events.onClick (ClickedSetPlayerAttack attack) ]
+        [ Html.p [] [ Html.text attack.name ]
+        , Html.p [] [ Html.text ("power: " ++ String.fromInt attack.power) ]
+        , Html.p [] [ Html.text ("cost: " ++ Debug.toString attack.cost) ]
         ]
 
 
@@ -393,7 +408,8 @@ view model =
                 |> List.map (viewCharacter model.turnState)
             )
         , viewTurnState model.turnState
-        , viewBuffPresets
+        , Html.div [ Html.Attributes.class "test-cards" ]
+            (List.map viewAttack [ Attack "Basic attack" (Dict.fromList [ ( Character.Cyan, 1 ) ]) 1 ])
         ]
 
 
