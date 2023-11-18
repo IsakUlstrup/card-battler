@@ -6,6 +6,7 @@ module Character exposing
     , addBuff
     , deriveAttack
     , deriveStats
+    , energyToString
     , hit
     , isAlive
     , new
@@ -202,6 +203,19 @@ type Energy
     = Cyan
     | Magenta
     | Yellow
+
+
+energyToString : Energy -> String
+energyToString energy =
+    case energy of
+        Cyan ->
+            "cyan"
+
+        Magenta ->
+            "magenta"
+
+        Yellow ->
+            "yellow"
 
 
 defaultEnergyCap : Int
