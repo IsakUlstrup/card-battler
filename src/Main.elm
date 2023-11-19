@@ -43,6 +43,7 @@ enemyCharacter : Character
 enemyCharacter =
     Character.new
         [ ( Stat.CyanRegenModifier, 1 )
+        , ( Stat.MagentaRegenModifier, 0.2 )
         ]
         20
 
