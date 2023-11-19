@@ -291,7 +291,7 @@ viewBuff buff =
     Html.li [ Html.Attributes.class "buff" ]
         [ Html.text
             (Stat.toString (Tuple.first buff.statModifier)
-                ++ "x"
+                ++ " x"
                 ++ String.fromFloat (Tuple.second buff.statModifier)
             )
         , viewCooldown buff.duration

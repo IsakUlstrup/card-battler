@@ -16,10 +16,10 @@ toString : Stat -> String
 toString stat =
     case stat of
         CyanRegenModifier ->
-            "cyanRegen"
+            "Cyan regen rate"
 
         MagentaRegenModifier ->
-            "magentaRegen"
+            "Magenta regen rate"
 
         YellowRegenModifier ->
-            "yellowRegen"
+            "Yellow regen rate"

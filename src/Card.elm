@@ -3,6 +3,7 @@ module Card exposing (Action(..), Card, actionToIcon, actionToString, new)
 import Buff exposing (Buff)
 import CustomDict as Dict exposing (Dict)
 import Energy exposing (Energy)
+import Stat
 
 
 type Action
@@ -16,8 +17,12 @@ actionToString action =
         Attack power ->
             "Attack " ++ String.fromInt power
 
-        Buff _ ->
+        Buff buff ->
             "Buff "
+                ++ (Stat.toString (Tuple.first buff.statModifier)
+                        ++ " x"
+                        ++ String.fromFloat (Tuple.second buff.statModifier)
+                   )
 
 
 actionToIcon : Action -> String
