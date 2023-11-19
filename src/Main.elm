@@ -418,7 +418,7 @@ viewCard character card =
         , Html.Events.onClick (ClickedPlayerCard card)
         ]
         [ Html.h3 [] [ Html.text card.name ]
-        , Html.div [] (card.cost |> Dict.toList |> List.map viewCardCost)
+        , Html.div [ Html.Attributes.class "cost" ] (card.cost |> Dict.toList |> List.map viewCardCost)
         , Html.p [] [ Html.text (Card.actionToString card.action) ]
         ]
 
