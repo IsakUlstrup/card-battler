@@ -1,7 +1,5 @@
 module Character exposing
-    ( Buff
-    , Character
-    , Stat(..)
+    ( Character
     , addBuff
     , applyAction
     , canAfford
@@ -9,16 +7,16 @@ module Character exposing
     , drawCard
     , isAlive
     , new
-    , newBuff
     , removeEnergy
-    , statString
     , tick
     )
 
+import Buff exposing (Buff)
 import Card exposing (Action(..), Card)
 import Cooldown exposing (Cooldown)
 import CustomDict as Dict exposing (Dict)
 import Energy exposing (Energy(..))
+import Stat exposing (Stat)
 
 
 {-| Main Character type
@@ -64,8 +62,8 @@ tick dt character =
         { character
             | buffs =
                 character.buffs
-                    |> List.map (tickBuff dt)
-                    |> List.filter buffNotDone
+                    |> List.map (Buff.tick dt)
+                    |> List.filter Buff.notDone
             , energy =
                 character.energy
                     |> Dict.map (tickEnergy character dt)
@@ -92,6 +90,9 @@ applyAction action character =
         Card.Attack power ->
             hit power character
 
+        Card.Buff buff ->
+            addBuff buff character
+
 
 
 -- PREDICATES
@@ -106,33 +107,6 @@ isAlive character =
 
 
 -- STATS
-
-
-{-| Holds all stat types
--}
-type Stat
-    = Attack
-    | CyanRegenModifier
-    | MagentaRegenModifier
-    | YellowRegenModifier
-
-
-{-| stat to string
--}
-statString : Stat -> String
-statString stat =
-    case stat of
-        Attack ->
-            "attack"
-
-        CyanRegenModifier ->
-            "cyanRegen"
-
-        MagentaRegenModifier ->
-            "magentaRegen"
-
-        YellowRegenModifier ->
-            "yellowRegen"
 
 
 {-| Derive character stat of any type
@@ -180,40 +154,11 @@ deriveStats character =
 -- BUFF
 
 
-{-| A buff is a temporary modifier to one stat
--}
-type alias Buff =
-    { duration : Cooldown
-    , statModifier : ( Stat, Float )
-    }
-
-
-{-| Buff constructor
--}
-newBuff : Float -> ( Stat, Float ) -> Buff
-newBuff duration statModifier =
-    Buff (Cooldown.new duration) statModifier
-
-
 {-| Add buff to character
 -}
 addBuff : Buff -> Character -> Character
 addBuff buff character =
     { character | buffs = buff :: character.buffs }
-
-
-{-| Tick buff duration
--}
-tickBuff : Float -> Buff -> Buff
-tickBuff dt buff =
-    { buff | duration = Cooldown.tick dt buff.duration }
-
-
-{-| True if buff is not done
--}
-buffNotDone : Buff -> Bool
-buffNotDone buff =
-    Cooldown.isDone buff.duration |> not
 
 
 
@@ -252,13 +197,13 @@ tickEnergy character dt energy ( cooldown, ( amount, cap ) ) =
     if amount /= cap then
         case energy of
             Cyan ->
-                ( Cooldown.tick (dt * deriveStat CyanRegenModifier character) cooldown, ( amount, cap ) )
+                ( Cooldown.tick (dt * deriveStat Stat.CyanRegenModifier character) cooldown, ( amount, cap ) )
 
             Magenta ->
-                ( Cooldown.tick (dt * deriveStat MagentaRegenModifier character) cooldown, ( amount, cap ) )
+                ( Cooldown.tick (dt * deriveStat Stat.MagentaRegenModifier character) cooldown, ( amount, cap ) )
 
             Yellow ->
-                ( Cooldown.tick (dt * deriveStat YellowRegenModifier character) cooldown, ( amount, cap ) )
+                ( Cooldown.tick (dt * deriveStat Stat.YellowRegenModifier character) cooldown, ( amount, cap ) )
 
     else
         ( cooldown, ( amount, cap ) )

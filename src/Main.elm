@@ -2,14 +2,16 @@ module Main exposing (Model, Msg, TurnState, main)
 
 import Browser
 import Browser.Events
+import Buff exposing (Buff)
 import Card exposing (Action, Card)
-import Character exposing (Buff, Character, Stat)
+import Character exposing (Character)
 import Cooldown exposing (Cooldown)
 import CustomDict as Dict exposing (Dict)
 import Energy exposing (Energy)
 import Html exposing (Html, main_)
 import Html.Attributes
 import Html.Events
+import Stat exposing (Stat)
 
 
 
@@ -28,20 +30,21 @@ characterAnimationDuration =
 playerCharacter : Character
 playerCharacter =
     Character.new
-        [ ( Character.Attack, 10 )
-        , ( Character.CyanRegenModifier, 2 )
-        , ( Character.YellowRegenModifier, 0.7 )
+        [ ( Stat.Attack, 10 )
+        , ( Stat.CyanRegenModifier, 2 )
+        , ( Stat.YellowRegenModifier, 0.7 )
         ]
         100
         |> Character.drawCard basicCard
         |> Character.drawCard expensiveCard
+        |> Character.drawCard buffCard
 
 
 enemyCharacter : Character
 enemyCharacter =
     Character.new
-        [ ( Character.Attack, 10 )
-        , ( Character.CyanRegenModifier, 1 )
+        [ ( Stat.Attack, 10 )
+        , ( Stat.CyanRegenModifier, 1 )
         ]
         20
 
@@ -54,6 +57,13 @@ basicCard =
 expensiveCard : Card
 expensiveCard =
     Card.new "Expensive Attack" (Card.Attack 10) [ ( Energy.Cyan, 8 ), ( Energy.Yellow, 7 ) ]
+
+
+buffCard : Card
+buffCard =
+    Card.new "Buff yellow regen"
+        (Card.Buff (Buff.new 3000 ( Stat.YellowRegenModifier, 3 )))
+        [ ( Energy.Yellow, 3 ) ]
 
 
 
@@ -296,7 +306,7 @@ viewBuff : Buff -> Html msg
 viewBuff buff =
     Html.li [ Html.Attributes.class "buff" ]
         [ Html.text
-            (Character.statString (Tuple.first buff.statModifier)
+            (Stat.toString (Tuple.first buff.statModifier)
                 ++ "x"
                 ++ String.fromFloat (Tuple.second buff.statModifier)
             )
@@ -306,7 +316,7 @@ viewBuff buff =
 
 viewStat : ( Stat, Float ) -> Html msg
 viewStat ( statType, statValue ) =
-    Html.p [ Html.Attributes.class "stat" ] [ Html.text (Character.statString statType ++ ": " ++ String.fromFloat statValue) ]
+    Html.p [ Html.Attributes.class "stat" ] [ Html.text (Stat.toString statType ++ ": " ++ String.fromFloat statValue) ]
 
 
 viewHealthHistoryItem : Int -> Html msg
