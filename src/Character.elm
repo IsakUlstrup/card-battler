@@ -5,10 +5,8 @@ module Character exposing
     , addBuff
     , applyAction
     , canAfford
-    , deriveAttack
     , deriveStats
     , drawCard
-    , hit
     , isAlive
     , new
     , newBuff
@@ -178,13 +176,6 @@ deriveStats character =
         |> List.map (\stat -> ( stat, deriveStat stat character ))
 
 
-{-| Derive character attack stat
--}
-deriveAttack : Character -> Float
-deriveAttack character =
-    deriveStat Attack character
-
-
 
 -- BUFF
 
@@ -246,7 +237,7 @@ canAfford character cost =
 
         hasEnergy : Energy -> Int -> Bool
         hasEnergy e c =
-            Dict.get e characterEnergy |> Maybe.andThen (\me -> Just <| me >= c) |> Maybe.withDefault False
+            Dict.get e characterEnergy |> Maybe.map (\me -> me >= c) |> Maybe.withDefault False
     in
     Dict.map hasEnergy cost |> Dict.all identity
 

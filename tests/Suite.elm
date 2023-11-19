@@ -1,7 +1,7 @@
 module Suite exposing (cooldown)
 
 import Cooldown
-import Expect as Expect
+import Expect
 import Fuzz
 import Test exposing (Test, test)
 
