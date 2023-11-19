@@ -16,7 +16,7 @@ actionToString action =
         Attack power ->
             "Attack " ++ String.fromInt power
 
-        Buff buff ->
+        Buff _ ->
             "Buff "
 
 
@@ -26,7 +26,7 @@ actionToIcon action =
         Attack power ->
             "🗡️" ++ String.fromInt power
 
-        Buff buff ->
+        Buff _ ->
             "buff"
 
 

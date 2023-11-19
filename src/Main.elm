@@ -247,12 +247,6 @@ advanceTurnState : Model -> Model
 advanceTurnState model =
     case model.turnState of
         Recovering ->
-            -- case ( getHead (Character.isAlive >> not) model, getHead Character.isReady model ) of
-            --     ( Nothing, Just ( isPlayer, character ) ) ->
-            --         setAttackingState isPlayer character model
-            --     ( Just ( isPlayer, _ ), _ ) ->
-            --         setDoneState isPlayer model
-            --     _ ->
             model
 
         Attacking isPlayer action cooldown ->

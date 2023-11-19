@@ -1,6 +1,5 @@
 module Character exposing
     ( Character
-    , addBuff
     , applyAction
     , canAfford
     , deriveStats
@@ -12,7 +11,7 @@ module Character exposing
     )
 
 import Buff exposing (Buff)
-import Card exposing (Action(..), Card)
+import Card exposing (Action, Card)
 import Cooldown exposing (Cooldown)
 import CustomDict as Dict exposing (Dict)
 import Energy exposing (Energy(..))
