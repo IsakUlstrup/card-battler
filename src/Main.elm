@@ -255,9 +255,14 @@ advanceTurnState model =
             --     _ ->
             model
 
-        Attacking isPlayer power cooldown ->
+        Attacking isPlayer action cooldown ->
             if Cooldown.isDone cooldown then
-                setHitState isPlayer power model
+                case action of
+                    Card.Attack _ ->
+                        setHitState isPlayer action model
+
+                    Card.Buff _ ->
+                        setHitState (not isPlayer) action model
 
             else
                 model
