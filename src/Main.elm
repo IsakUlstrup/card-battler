@@ -34,6 +34,7 @@ playerCharacter =
         ]
         100
         |> Character.drawCard basicCard
+        |> Character.drawCard expensiveCard
 
 
 enemyCharacter : Character
@@ -48,6 +49,11 @@ enemyCharacter =
 basicCard : Card
 basicCard =
     Card.new "Basic Attack" (Card.Attack 1) [ ( Energy.Cyan, 2 ) ]
+
+
+expensiveCard : Card
+expensiveCard =
+    Card.new "Expensive Attack" (Card.Attack 10) [ ( Energy.Cyan, 8 ), ( Energy.Yellow, 7 ) ]
 
 
 
@@ -192,15 +198,13 @@ tickTurnState dt model =
             model
 
 
-getHead : (Character -> Bool) -> Model -> Maybe ( Bool, Character )
-getHead f model =
-    model.characters
-        |> Dict.filter (\_ character -> f character)
-        |> Dict.toList
-        |> List.head
 
-
-
+-- getHead : (Character -> Bool) -> Model -> Maybe ( Bool, Character )
+-- getHead f model =
+--     model.characters
+--         |> Dict.filter (\_ character -> f character)
+--         |> Dict.toList
+--         |> List.head
 -- setAttackingState : Bool -> Character -> Model -> Model
 -- setAttackingState isPlayer character model =
 --     { model
@@ -435,7 +439,7 @@ viewCard character card =
 
 viewPlayerHand : Character -> Html Msg
 viewPlayerHand character =
-    Html.div [] (List.map (viewCard character) character.hand)
+    Html.div [ Html.Attributes.class "player-hand" ] (List.map (viewCard character) character.hand)
 
 
 view : Model -> Html Msg
@@ -447,7 +451,7 @@ view model =
                 |> List.map (viewCharacter model.turnState)
             )
         , viewTurnState model.turnState
-        , Html.div [ Html.Attributes.class "player-hand" ] ([ Dict.get True model.characters |> Maybe.map viewPlayerHand ] |> List.filterMap identity)
+        , Html.div [] ([ Dict.get True model.characters |> Maybe.map viewPlayerHand ] |> List.filterMap identity)
         ]
 
 
