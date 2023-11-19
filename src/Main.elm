@@ -319,7 +319,7 @@ viewEnergy ( energy, ( cooldown, ( amount, cap ) ) ) =
     if amount > 0 then
         Just
             (Html.div [ Html.Attributes.class (Energy.toString energy) ]
-                [ Html.p [] [ Html.text (Energy.toString energy ++ ": " ++ String.fromInt amount ++ "/" ++ String.fromInt cap) ]
+                [ Html.p [] [ Html.text (String.fromInt amount ++ "/" ++ String.fromInt cap) ]
                 , viewCooldown cooldown
                 ]
             )
@@ -404,7 +404,7 @@ viewCharacter turnState ( isPlayer, character ) =
                 )
             ]
         , viewCustomMeter (Tuple.second character.health) (Tuple.first character.health)
-        , Html.div [] (Dict.toList character.energy |> List.filterMap viewEnergy)
+        , Html.div [ Html.Attributes.class "energy" ] (Dict.toList character.energy |> List.filterMap viewEnergy)
         , Html.div [ Html.Attributes.class "hand" ] (List.map (viewSmallCard character) character.hand)
         , Html.details []
             (Html.summary [] [ Html.text "Stats" ]
