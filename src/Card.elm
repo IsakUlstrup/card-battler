@@ -1,4 +1,4 @@
-module Card exposing (Action(..), Card, actionToString, new)
+module Card exposing (Action(..), Card, actionToIcon, actionToString, new)
 
 import CustomDict as Dict exposing (Dict)
 import Energy exposing (Energy)
@@ -13,6 +13,13 @@ actionToString action =
     case action of
         Attack power ->
             "Attack " ++ String.fromInt power
+
+
+actionToIcon : Action -> String
+actionToIcon action =
+    case action of
+        Attack power ->
+            "🗡️" ++ String.fromInt power
 
 
 type alias Card =

@@ -321,18 +321,17 @@ viewEnergy ( energy, ( cooldown, ( amount, cap ) ) ) =
 
 viewCardCost : ( Energy, Int ) -> Html msg
 viewCardCost ( energy, amount ) =
-    Html.p [ Html.Attributes.class (Energy.toString energy) ] [ Html.text (Energy.toString energy ++ ": " ++ String.fromInt amount) ]
+    Html.p [ Html.Attributes.class (Energy.toString energy) ] [ Html.text (String.fromInt amount) ]
 
 
-viewCard : Character -> Card -> Html msg
-viewCard character card =
+viewSmallCard : Character -> Card -> Html msg
+viewSmallCard character card =
     Html.div
         [ Html.Attributes.class "card"
         , Html.Attributes.classList [ ( "can-afford", Character.canAfford character card.cost ) ]
         ]
-        [ Html.h3 [] [ Html.text card.name ]
-        , Html.div [] (card.cost |> Dict.toList |> List.map viewCardCost)
-        , Html.p [] [ Html.text (Card.actionToString card.action) ]
+        [ Html.div [] (card.cost |> Dict.toList |> List.map viewCardCost)
+        , Html.p [] [ Html.text (Card.actionToIcon card.action) ]
         ]
 
 
@@ -397,7 +396,7 @@ viewCharacter turnState ( isPlayer, character ) =
             ]
         , viewCustomMeter (Tuple.second character.health) (Tuple.first character.health)
         , Html.div [] (Dict.toList character.energy |> List.filterMap viewEnergy)
-        , Html.div [ Html.Attributes.class "hand" ] (List.map (viewCard character) character.hand)
+        , Html.div [ Html.Attributes.class "hand" ] (List.map (viewSmallCard character) character.hand)
         , Html.details []
             (Html.summary [] [ Html.text "Stats" ]
                 :: (Character.deriveStats character
@@ -416,14 +415,21 @@ viewTurnState turnState =
         ]
 
 
-viewAttack : Attack -> Html Msg
-viewAttack attack =
-    Html.button [ Html.Events.onClick (ClickedSetPlayerAttack attack) ]
-        [ Html.p [] [ Html.text attack.name ]
-        , Html.p [] [ Html.text ("power: " ++ String.fromInt attack.power) ]
-
-        -- , Html.p [] [ Html.text ("cost: " ++ Debug.toString attack.cost) ]
+viewCard : Character -> Card -> Html msg
+viewCard character card =
+    Html.div
+        [ Html.Attributes.class "card"
+        , Html.Attributes.classList [ ( "can-afford", Character.canAfford character card.cost ) ]
         ]
+        [ Html.h3 [] [ Html.text card.name ]
+        , Html.div [] (card.cost |> Dict.toList |> List.map viewCardCost)
+        , Html.p [] [ Html.text (Card.actionToString card.action) ]
+        ]
+
+
+viewPlayerHand : Character -> Html Msg
+viewPlayerHand character =
+    Html.div [] (List.map (viewCard character) character.hand)
 
 
 view : Model -> Html Msg
@@ -435,8 +441,7 @@ view model =
                 |> List.map (viewCharacter model.turnState)
             )
         , viewTurnState model.turnState
-        , Html.div [ Html.Attributes.class "test-cards" ]
-            (List.map viewAttack [ Attack "Basic attack" (Dict.fromList [ ( Energy.Cyan, 1 ) ]) 1 ])
+        , Html.div [ Html.Attributes.class "player-hand" ] ([ Dict.get True model.characters |> Maybe.map viewPlayerHand ] |> List.filterMap identity)
         ]
 
 
