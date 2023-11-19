@@ -3,6 +3,7 @@ module Character exposing
     , Character
     , Stat(..)
     , addBuff
+    , canAfford
     , deriveAttack
     , deriveStats
     , drawCard
@@ -213,6 +214,32 @@ tickBuff dt buff =
 buffNotDone : Buff -> Bool
 buffNotDone buff =
     Cooldown.isDone buff.duration |> not
+
+
+
+-- ENERGY
+
+
+{-| Get a dict of current character energy
+-}
+getEnergy : Character -> Dict Energy Int
+getEnergy character =
+    character.energy
+        |> Dict.map (\_ v -> Tuple.second v |> Tuple.first)
+
+
+canAfford : Character -> Dict Energy Int -> Bool
+canAfford character cost =
+    let
+        characterEnergy : Dict Energy Int
+        characterEnergy =
+            getEnergy character
+
+        hasEnergy : Energy -> Int -> Bool
+        hasEnergy e c =
+            Dict.get e characterEnergy |> Maybe.andThen (\me -> Just <| me >= c) |> Maybe.withDefault False
+    in
+    Dict.map hasEnergy cost |> Dict.all identity
 
 
 defaultEnergyCap : Int

@@ -324,9 +324,12 @@ viewCardCost ( energy, amount ) =
     Html.p [ Html.Attributes.class (Energy.toString energy) ] [ Html.text (Energy.toString energy ++ ": " ++ String.fromInt amount) ]
 
 
-viewCard : Card -> Html msg
-viewCard card =
-    Html.div [ Html.Attributes.class "card" ]
+viewCard : Character -> Card -> Html msg
+viewCard character card =
+    Html.div
+        [ Html.Attributes.class "card"
+        , Html.Attributes.classList [ ( "can-afford", Character.canAfford character card.cost ) ]
+        ]
         [ Html.h3 [] [ Html.text card.name ]
         , Html.div [] (card.cost |> Dict.toList |> List.map viewCardCost)
         , Html.p [] [ Html.text (Card.actionToString card.action) ]
@@ -394,7 +397,7 @@ viewCharacter turnState ( isPlayer, character ) =
             ]
         , viewCustomMeter (Tuple.second character.health) (Tuple.first character.health)
         , Html.div [] (Dict.toList character.energy |> List.filterMap viewEnergy)
-        , Html.div [ Html.Attributes.class "hand" ] (List.map viewCard character.hand)
+        , Html.div [ Html.Attributes.class "hand" ] (List.map (viewCard character) character.hand)
         , Html.details []
             (Html.summary [] [ Html.text "Stats" ]
                 :: (Character.deriveStats character
