@@ -2,6 +2,7 @@ module Main exposing (Model, Msg, TurnState, main)
 
 import Browser
 import Browser.Events
+import Card exposing (Card)
 import Character exposing (Buff, Character, Stat)
 import Cooldown exposing (Cooldown)
 import CustomDict as Dict exposing (Dict)
@@ -43,6 +44,7 @@ playerCharacter =
         , ( Character.YellowRegenModifier, 0.7 )
         ]
         100
+        |> Character.drawCard basicCard
 
 
 enemyCharacter : Character
@@ -52,6 +54,11 @@ enemyCharacter =
         , ( Character.CyanRegenModifier, 1 )
         ]
         20
+
+
+basicCard : Card
+basicCard =
+    Card.new "Basic Attack" (Card.Attack 1) [ ( Energy.Cyan, 2 ) ]
 
 
 

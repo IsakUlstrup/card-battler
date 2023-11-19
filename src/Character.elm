@@ -5,6 +5,7 @@ module Character exposing
     , addBuff
     , deriveAttack
     , deriveStats
+    , drawCard
     , hit
     , isAlive
     , new
@@ -13,6 +14,7 @@ module Character exposing
     , tick
     )
 
+import Card exposing (Card)
 import Cooldown exposing (Cooldown)
 import CustomDict as Dict exposing (Dict)
 import Energy exposing (Energy(..))
@@ -26,6 +28,7 @@ type alias Character =
     , baseStats : Dict Stat Float
     , buffs : List Buff
     , energy : Dict Energy ( Cooldown, ( Int, Int ) )
+    , hand : List Card
     }
 
 
@@ -44,6 +47,12 @@ new baseStats health =
             , ( Yellow, ( Cooldown.new 1000, ( 0, defaultEnergyCap ) ) )
             ]
         )
+        []
+
+
+drawCard : Card -> Character -> Character
+drawCard card character =
+    { character | hand = card :: character.hand }
 
 
 {-| tick character buff durations & energy regen.
