@@ -2,7 +2,7 @@ module Main exposing (Model, Msg, TurnState, main)
 
 import Browser
 import Browser.Events
-import Card exposing (Card)
+import Card exposing (Action, Card)
 import Character exposing (Buff, Character, Stat)
 import Cooldown exposing (Cooldown)
 import CustomDict as Dict exposing (Dict)
@@ -19,17 +19,6 @@ import Html.Events
 characterAnimationDuration : Float
 characterAnimationDuration =
     300
-
-
-
--- ATTACK
-
-
-type alias Attack =
-    { name : String
-    , cost : Dict Energy Int
-    , power : Int
-    }
 
 
 
@@ -76,7 +65,7 @@ characterTypeString isPlayer =
 
 type TurnState
     = Recovering
-    | Attacking Bool Int Cooldown
+    | Attacking Bool Action Cooldown
     | Hit Bool Cooldown
     | Done Bool
 
@@ -127,7 +116,7 @@ init _ =
 type Msg
     = Tick Float
     | ClickedResetEnemy
-    | ClickedSetPlayerAttack Attack
+    | ClickedPlayerCard Card
 
 
 update : Msg -> Model -> Model
@@ -145,15 +134,30 @@ update msg model =
                 , turnState = Recovering
             }
 
-        ClickedSetPlayerAttack attack ->
+        ClickedPlayerCard card ->
             case model.turnState of
                 Recovering ->
-                    { model
-                        | turnState = Attacking True attack.power (Cooldown.new characterAnimationDuration)
-                    }
+                    playCard card model
 
                 _ ->
                     model
+
+
+playCard : Card -> Model -> Model
+playCard card model =
+    case Dict.get True model.characters of
+        Just player ->
+            if Character.canAfford player card.cost then
+                { model
+                    | turnState = Attacking True card.action (Cooldown.new characterAnimationDuration)
+                    , characters = Dict.update True (Character.removeEnergy card.cost) model.characters
+                }
+
+            else
+                model
+
+        Nothing ->
+            model
 
 
 tickCharacters : Float -> Model -> Model
@@ -196,21 +200,22 @@ getHead f model =
         |> List.head
 
 
-setAttackingState : Bool -> Character -> Model -> Model
-setAttackingState isPlayer character model =
-    { model
-        | turnState = Attacking isPlayer (round (Character.deriveAttack character)) (Cooldown.new characterAnimationDuration)
-    }
+
+-- setAttackingState : Bool -> Character -> Model -> Model
+-- setAttackingState isPlayer character model =
+--     { model
+--         | turnState = Attacking isPlayer (round (Character.deriveAttack character)) (Cooldown.new characterAnimationDuration)
+--     }
 
 
-setHitState : Bool -> Int -> Model -> Model
-setHitState isPlayer power model =
+setHitState : Bool -> Action -> Model -> Model
+setHitState isPlayer action model =
     { model
         | turnState = Hit (not isPlayer) (Cooldown.new characterAnimationDuration)
         , characters =
             model.characters
                 -- |> Dict.update isPlayer Character.resetCooldown
-                |> Dict.update (not isPlayer) (Character.hit power)
+                |> Dict.update (not isPlayer) (Character.applyAction action)
     }
 
 
@@ -415,11 +420,12 @@ viewTurnState turnState =
         ]
 
 
-viewCard : Character -> Card -> Html msg
+viewCard : Character -> Card -> Html Msg
 viewCard character card =
     Html.div
         [ Html.Attributes.class "card"
         , Html.Attributes.classList [ ( "can-afford", Character.canAfford character card.cost ) ]
+        , Html.Events.onClick (ClickedPlayerCard card)
         ]
         [ Html.h3 [] [ Html.text card.name ]
         , Html.div [] (card.cost |> Dict.toList |> List.map viewCardCost)

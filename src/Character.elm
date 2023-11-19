@@ -3,6 +3,7 @@ module Character exposing
     , Character
     , Stat(..)
     , addBuff
+    , applyAction
     , canAfford
     , deriveAttack
     , deriveStats
@@ -11,11 +12,12 @@ module Character exposing
     , isAlive
     , new
     , newBuff
+    , removeEnergy
     , statString
     , tick
     )
 
-import Card exposing (Card)
+import Card exposing (Action(..), Card)
 import Cooldown exposing (Cooldown)
 import CustomDict as Dict exposing (Dict)
 import Energy exposing (Energy(..))
@@ -84,6 +86,13 @@ hit power character =
         | health = character.health |> Tuple.mapFirst (\h -> max 0 (h - power))
         , healthHistory = -power :: character.healthHistory
     }
+
+
+applyAction : Action -> Character -> Character
+applyAction action character =
+    case action of
+        Card.Attack power ->
+            hit power character
 
 
 
@@ -271,3 +280,18 @@ addEnergy _ ( cooldown, ( amount, cap ) ) =
 
     else
         ( cooldown, ( amount, cap ) )
+
+
+removeEnergy : Dict Energy Int -> Character -> Character
+removeEnergy cost character =
+    let
+        remove : Energy -> ( Cooldown, ( Int, Int ) ) -> ( Cooldown, ( Int, Int ) )
+        remove energyType ( cooldown, energyState ) =
+            case Dict.get energyType cost of
+                Just energyCost ->
+                    ( cooldown, Tuple.mapFirst (\e -> max 0 (e - energyCost)) energyState )
+
+                Nothing ->
+                    ( cooldown, energyState )
+    in
+    { character | energy = character.energy |> Dict.map remove }
