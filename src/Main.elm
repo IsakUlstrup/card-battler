@@ -311,7 +311,7 @@ viewHealthHistoryItem delta =
 
 viewEnergy : ( Energy, ( Cooldown, ( Int, Int ) ) ) -> Maybe (Html msg)
 viewEnergy ( energy, ( cooldown, ( amount, cap ) ) ) =
-    if amount > 0 then
+    if amount > 0 || Tuple.first cooldown > 0 then
         Just
             (Html.div [ Html.Attributes.class (Energy.toString energy) ]
                 [ Html.p [] [ Html.text (String.fromInt amount ++ "/" ++ String.fromInt cap) ]

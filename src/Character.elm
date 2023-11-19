@@ -40,9 +40,9 @@ new baseStats health =
         (Dict.fromList baseStats)
         []
         (Dict.fromList
-            [ ( Cyan, ( Cooldown.new 1000, ( 0, defaultEnergyCap ) ) )
-            , ( Magenta, ( Cooldown.new 1000, ( 0, defaultEnergyCap ) ) )
-            , ( Yellow, ( Cooldown.new 1000, ( 0, defaultEnergyCap ) ) )
+            [ ( Cyan, ( Cooldown.new 3500, ( 0, defaultEnergyCap ) ) )
+            , ( Magenta, ( Cooldown.new 3500, ( 0, defaultEnergyCap ) ) )
+            , ( Yellow, ( Cooldown.new 3500, ( 0, defaultEnergyCap ) ) )
             ]
         )
         []
