@@ -319,6 +319,20 @@ viewEnergy ( energy, ( cooldown, ( amount, cap ) ) ) =
         Nothing
 
 
+viewCardCost : ( Energy, Int ) -> Html msg
+viewCardCost ( energy, amount ) =
+    Html.p [ Html.Attributes.class (Energy.toString energy) ] [ Html.text (Energy.toString energy ++ ": " ++ String.fromInt amount) ]
+
+
+viewCard : Card -> Html msg
+viewCard card =
+    Html.div [ Html.Attributes.class "card" ]
+        [ Html.h3 [] [ Html.text card.name ]
+        , Html.div [] (card.cost |> Dict.toList |> List.map viewCardCost)
+        , Html.p [] [ Html.text (Card.actionToString card.action) ]
+        ]
+
+
 viewCharacter : TurnState -> ( Bool, Character ) -> Html msg
 viewCharacter turnState ( isPlayer, character ) =
     let
@@ -380,6 +394,7 @@ viewCharacter turnState ( isPlayer, character ) =
             ]
         , viewCustomMeter (Tuple.second character.health) (Tuple.first character.health)
         , Html.div [] (Dict.toList character.energy |> List.filterMap viewEnergy)
+        , Html.div [ Html.Attributes.class "hand" ] (List.map viewCard character.hand)
         , Html.details []
             (Html.summary [] [ Html.text "Stats" ]
                 :: (Character.deriveStats character
