@@ -62,8 +62,8 @@ expensiveCard =
 buffCard : Card
 buffCard =
     Card.new "Buff yellow regen"
-        (Card.Buff (Buff.new 3000 ( Stat.YellowRegenModifier, 3 )))
-        [ ( Energy.Yellow, 3 ) ]
+        (Card.Buff (Buff.new 10000 ( Stat.YellowRegenModifier, 3 )))
+        [ ( Energy.Yellow, 2 ) ]
 
 
 
