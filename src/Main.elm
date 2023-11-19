@@ -434,11 +434,14 @@ viewCombatSummary playerVictory =
     if playerVictory then
         Html.div []
             [ Html.p [] [ Html.text "Victory!" ]
-            , Html.button [ Html.Events.onClick ClickedResetEnemy ] [ Html.text "reset enemy" ]
+            , Html.button [ Html.Events.onClick ClickedResetEnemy ] [ Html.text "Next enemy" ]
             ]
 
     else
-        Html.div [] [ Html.text "Defeat :(" ]
+        Html.div []
+            [ Html.p [] [ Html.text "Defeat :(" ]
+            , Html.button [ Html.Events.onClick ClickedResetGame ] [ Html.text "Reset" ]
+            ]
 
 
 view : Model -> Html Msg
