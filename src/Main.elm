@@ -2,9 +2,10 @@ module Main exposing (Model, Msg, TurnState, main)
 
 import Browser
 import Browser.Events
-import Character exposing (Buff, Character, Energy, Stat)
+import Character exposing (Buff, Character, Stat)
 import Cooldown exposing (Cooldown)
 import CustomDict as Dict exposing (Dict)
+import Energy exposing (Energy)
 import Html exposing (Html, main_)
 import Html.Attributes
 import Html.Events
@@ -301,8 +302,8 @@ viewEnergy : ( Energy, ( Cooldown, ( Int, Int ) ) ) -> Maybe (Html msg)
 viewEnergy ( energy, ( cooldown, ( amount, cap ) ) ) =
     if amount > 0 then
         Just
-            (Html.div [ Html.Attributes.class (Character.energyToString energy) ]
-                [ Html.p [] [ Html.text (Character.energyToString energy ++ ": " ++ String.fromInt amount ++ "/" ++ String.fromInt cap) ]
+            (Html.div [ Html.Attributes.class (Energy.toString energy) ]
+                [ Html.p [] [ Html.text (Energy.toString energy ++ ": " ++ String.fromInt amount ++ "/" ++ String.fromInt cap) ]
                 , viewCooldown cooldown
                 ]
             )
@@ -410,7 +411,7 @@ view model =
             )
         , viewTurnState model.turnState
         , Html.div [ Html.Attributes.class "test-cards" ]
-            (List.map viewAttack [ Attack "Basic attack" (Dict.fromList [ ( Character.Cyan, 1 ) ]) 1 ])
+            (List.map viewAttack [ Attack "Basic attack" (Dict.fromList [ ( Energy.Cyan, 1 ) ]) 1 ])
         ]
 
 

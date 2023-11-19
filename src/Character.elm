@@ -1,12 +1,10 @@
 module Character exposing
     ( Buff
     , Character
-    , Energy(..)
     , Stat(..)
     , addBuff
     , deriveAttack
     , deriveStats
-    , energyToString
     , hit
     , isAlive
     , new
@@ -17,6 +15,7 @@ module Character exposing
 
 import Cooldown exposing (Cooldown)
 import CustomDict as Dict exposing (Dict)
+import Energy exposing (Energy(..))
 
 
 {-| Main Character type
@@ -205,29 +204,6 @@ tickBuff dt buff =
 buffNotDone : Buff -> Bool
 buffNotDone buff =
     Cooldown.isDone buff.duration |> not
-
-
-
--- ENERGY
-
-
-type Energy
-    = Cyan
-    | Magenta
-    | Yellow
-
-
-energyToString : Energy -> String
-energyToString energy =
-    case energy of
-        Cyan ->
-            "cyan"
-
-        Magenta ->
-            "magenta"
-
-        Yellow ->
-            "yellow"
 
 
 defaultEnergyCap : Int
