@@ -30,8 +30,7 @@ characterAnimationDuration =
 playerCharacter : Character
 playerCharacter =
     Character.new
-        [ ( Stat.Attack, 10 )
-        , ( Stat.CyanRegenModifier, 2 )
+        [ ( Stat.CyanRegenModifier, 2 )
         , ( Stat.YellowRegenModifier, 0.7 )
         ]
         100
@@ -43,8 +42,7 @@ playerCharacter =
 enemyCharacter : Character
 enemyCharacter =
     Character.new
-        [ ( Stat.Attack, 10 )
-        , ( Stat.CyanRegenModifier, 1 )
+        [ ( Stat.CyanRegenModifier, 1 )
         ]
         20
 

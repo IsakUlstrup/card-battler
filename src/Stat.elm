@@ -5,8 +5,7 @@ module Stat exposing (Stat(..), toString)
 
 
 type Stat
-    = Attack
-    | CyanRegenModifier
+    = CyanRegenModifier
     | MagentaRegenModifier
     | YellowRegenModifier
 
@@ -16,9 +15,6 @@ type Stat
 toString : Stat -> String
 toString stat =
     case stat of
-        Attack ->
-            "attack"
-
         CyanRegenModifier ->
             "cyanRegen"
 
