@@ -22,7 +22,8 @@ import Stat exposing (Stat)
 {-| Main Character type
 -}
 type alias Character =
-    { health : ( Int, Int )
+    { icon : Char
+    , health : ( Int, Int )
     , healthHistory : List Int
     , baseStats : Dict Stat Float
     , buffs : List Buff
@@ -33,9 +34,10 @@ type alias Character =
 
 {-| Character constructor
 -}
-new : List ( Stat, Float ) -> Int -> Character
-new baseStats health =
+new : Char -> List ( Stat, Float ) -> Int -> Character
+new icon baseStats health =
     Character
+        icon
         ( health, health )
         []
         (Dict.fromList baseStats)

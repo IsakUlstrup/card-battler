@@ -30,6 +30,7 @@ characterAnimationDuration =
 playerCharacter : Character
 playerCharacter =
     Character.new
+        '🐼'
         [ ( Stat.CyanRegenModifier, 2 )
         , ( Stat.YellowRegenModifier, 0.7 )
         ]
@@ -42,6 +43,7 @@ playerCharacter =
 enemyCharacter : Character
 enemyCharacter =
     Character.new
+        '🦡'
         [ ( Stat.CyanRegenModifier, 1 )
         , ( Stat.MagentaRegenModifier, 0.2 )
         ]
@@ -404,7 +406,7 @@ viewCharacter turnState ( isPlayer, character ) =
             , ( "winner", isWinner )
             ]
         ]
-        [ Html.h1 [ Html.Attributes.class "icon" ] [ Html.text "🐼" ]
+        [ Html.h1 [ Html.Attributes.class "icon" ] [ Html.text (String.fromChar character.icon) ]
         , Html.div [ Html.Attributes.class "health-history" ] (List.map viewHealthHistoryItem character.healthHistory)
         , Html.p []
             [ Html.text
