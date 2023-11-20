@@ -143,20 +143,20 @@ update msg model =
         ClickedPlayerCard card ->
             case model.turnState of
                 Recovering ->
-                    playCard card model
+                    playCard True card model
 
                 _ ->
                     model
 
 
-playCard : Card -> Model -> Model
-playCard card model =
-    case Dict.get True model.characters of
+playCard : Bool -> Card -> Model -> Model
+playCard isPlayer card model =
+    case Dict.get isPlayer model.characters of
         Just player ->
             if Character.canAfford player card.cost then
                 { model
-                    | turnState = Attacking True card.action (Cooldown.new characterAnimationDuration)
-                    , characters = Dict.update True (Character.removeEnergy card.cost) model.characters
+                    | turnState = Attacking isPlayer card.action (Cooldown.new characterAnimationDuration)
+                    , characters = Dict.update isPlayer (Character.removeEnergy card.cost) model.characters
                 }
 
             else
@@ -235,7 +235,21 @@ advanceTurnState model =
                     setDoneState isPlayer model
 
                 Nothing ->
-                    model
+                    case Dict.get False model.characters of
+                        Just enemy ->
+                            if Character.canPlayFirst enemy then
+                                case List.head enemy.hand of
+                                    Just card ->
+                                        playCard False card model
+
+                                    Nothing ->
+                                        model
+
+                            else
+                                model
+
+                        Nothing ->
+                            model
 
         Attacking isPlayer action cooldown ->
             if Cooldown.isDone cooldown then

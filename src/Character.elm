@@ -2,6 +2,7 @@ module Character exposing
     ( Character
     , applyAction
     , canAfford
+    , canPlayFirst
     , deriveStats
     , drawCard
     , isAlive
@@ -184,6 +185,16 @@ canAfford character cost =
             Dict.get e characterEnergy |> Maybe.map (\me -> me >= c) |> Maybe.withDefault False
     in
     Dict.map hasEnergy cost |> Dict.all identity
+
+
+{-| Can character afford the first card in their hand. Return False if no cards are present
+-}
+canPlayFirst : Character -> Bool
+canPlayFirst character =
+    character.hand
+        |> List.head
+        |> Maybe.map (\card -> canAfford character card.cost)
+        |> Maybe.withDefault False
 
 
 defaultEnergyCap : Int
