@@ -46,6 +46,9 @@ enemyCharacter =
         , ( Stat.MagentaRegenModifier, 0.2 )
         ]
         20
+        |> Character.drawCard basicCard
+        |> Character.drawCard basicCard
+        |> Character.drawCard basicCard
 
 
 basicCard : Card
