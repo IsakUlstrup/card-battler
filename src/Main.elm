@@ -46,6 +46,7 @@ enemyCharacter =
         '🦡'
         [ ( Stat.CyanRegenModifier, 1 )
         , ( Stat.MagentaRegenModifier, 0.2 )
+        , ( Stat.AutoPlayFirst, 1 )
         ]
         20
         |> Character.drawCard basicCard
@@ -239,7 +240,7 @@ advanceTurnState model =
                 Nothing ->
                     case Dict.get False model.characters of
                         Just enemy ->
-                            if Character.canPlayFirst enemy then
+                            if Character.canPlayFirst enemy && Character.deriveStat Stat.AutoPlayFirst enemy > 0 then
                                 case List.head enemy.hand of
                                     Just card ->
                                         playCard False card model

@@ -3,6 +3,7 @@ module Character exposing
     , applyAction
     , canAfford
     , canPlayFirst
+    , deriveStat
     , deriveStats
     , drawCard
     , isAlive

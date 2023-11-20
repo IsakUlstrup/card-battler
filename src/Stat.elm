@@ -8,6 +8,7 @@ type Stat
     = CyanRegenModifier
     | MagentaRegenModifier
     | YellowRegenModifier
+    | AutoPlayFirst
 
 
 {-| stat to string
@@ -23,3 +24,6 @@ toString stat =
 
         YellowRegenModifier ->
             "Yellow regen rate"
+
+        AutoPlayFirst ->
+            "Auto play first"
