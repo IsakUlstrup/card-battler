@@ -60,6 +60,19 @@ drawCard card character =
     { character | hand = card :: character.hand }
 
 
+drawFromPlayed : Character -> Character
+drawFromPlayed character =
+    case List.head character.played of
+        Just card ->
+            { character
+                | hand = card :: character.hand
+                , played = List.drop 1 character.played
+            }
+
+        Nothing ->
+            character
+
+
 {-| Attempt to play card at provided index from character hand.
 
 Returns updated character and card action if card exists and character can afford it
@@ -86,6 +99,7 @@ playCardAtIndex index character =
                     |> removeEnergy card.cost
                     |> removeCard
                     |> addToPlayed card
+                    |> drawFromPlayed
                 , Just card.action
                 )
 
