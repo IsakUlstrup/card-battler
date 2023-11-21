@@ -8,6 +8,7 @@ module Character exposing
     , drawCard
     , isAlive
     , new
+    , playCardAtIndex
     , removeEnergy
     , tick
     )
@@ -30,6 +31,7 @@ type alias Character =
     , buffs : List Buff
     , energy : Dict Energy ( Cooldown, ( Int, Int ) )
     , hand : List Card
+    , played : List Card
     }
 
 
@@ -50,11 +52,48 @@ new icon baseStats health =
             ]
         )
         []
+        []
 
 
 drawCard : Card -> Character -> Character
 drawCard card character =
     { character | hand = card :: character.hand }
+
+
+{-| Attempt to play card at provided index from character hand.
+
+Returns updated character and card action if card exists and character can afford it
+
+-}
+playCardAtIndex : Int -> Character -> ( Character, Maybe Action )
+playCardAtIndex index character =
+    let
+        getCard =
+            character.hand
+                |> List.drop index
+                |> List.head
+
+        removeCard char =
+            { char | hand = List.take index char.hand ++ List.drop (index + 1) char.hand }
+
+        addToPlayed card char =
+            { char | played = card :: char.played }
+    in
+    case getCard of
+        Just card ->
+            if canAfford character card.cost then
+                ( character
+                    |> removeEnergy card.cost
+                    |> removeCard
+                    |> addToPlayed card
+                , Just card.action
+                )
+
+            else
+                ( character, Nothing )
+
+        Nothing ->
+            ( character, Nothing )
 
 
 {-| tick character buff durations & energy regen.

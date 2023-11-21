@@ -122,7 +122,7 @@ type Msg
     = Tick Float
     | ClickedResetEnemy
     | ClickedResetGame
-    | ClickedPlayerCard Card
+    | ClickedPlayerCard Int
 
 
 update : Msg -> Model -> Model
@@ -143,27 +143,28 @@ update msg model =
         ClickedResetGame ->
             init () |> Tuple.first
 
-        ClickedPlayerCard card ->
+        ClickedPlayerCard index ->
             case model.turnState of
                 Recovering ->
-                    playCard True card model
+                    playCard True index model
 
                 _ ->
                     model
 
 
-playCard : Bool -> Card -> Model -> Model
-playCard isPlayer card model =
+playCard : Bool -> Int -> Model -> Model
+playCard isPlayer index model =
     case Dict.get isPlayer model.characters of
         Just player ->
-            if Character.canAfford player card.cost then
-                { model
-                    | turnState = Attacking isPlayer card.action (Cooldown.new characterAnimationDuration)
-                    , characters = Dict.update isPlayer (Character.removeEnergy card.cost) model.characters
-                }
+            case Character.playCardAtIndex index player of
+                ( newCharacter, Just action ) ->
+                    { model
+                        | turnState = Attacking isPlayer action (Cooldown.new characterAnimationDuration)
+                        , characters = Dict.update isPlayer (always newCharacter) model.characters
+                    }
 
-            else
-                model
+                ( _, Nothing ) ->
+                    model
 
         Nothing ->
             model
@@ -240,16 +241,15 @@ advanceTurnState model =
                 Nothing ->
                     case Dict.get False model.characters of
                         Just enemy ->
-                            if Character.canPlayFirst enemy && Character.deriveStat Stat.AutoPlayFirst enemy > 0 then
-                                case List.head enemy.hand of
-                                    Just card ->
-                                        playCard False card model
+                            case Character.playCardAtIndex 0 enemy of
+                                ( newCharacter, Just action ) ->
+                                    { model
+                                        | turnState = Attacking False action (Cooldown.new characterAnimationDuration)
+                                        , characters = Dict.update False (always newCharacter) model.characters
+                                    }
 
-                                    Nothing ->
-                                        model
-
-                            else
-                                model
+                                ( _, Nothing ) ->
+                                    model
 
                         Nothing ->
                             model
@@ -430,12 +430,12 @@ viewCharacter turnState ( isPlayer, character ) =
         ]
 
 
-viewCard : Character -> Card -> Html Msg
-viewCard character card =
+viewCard : Character -> Int -> Card -> Html Msg
+viewCard character index card =
     Html.div
         [ Html.Attributes.class "card"
         , Html.Attributes.classList [ ( "can-afford", Character.canAfford character card.cost ) ]
-        , Html.Events.onClick (ClickedPlayerCard card)
+        , Html.Events.onClick (ClickedPlayerCard index)
         ]
         [ Html.h3 [] [ Html.text card.name ]
         , Html.div [ Html.Attributes.class "cost" ] (card.cost |> Dict.toList |> List.map viewCardCost)
@@ -445,7 +445,7 @@ viewCard character card =
 
 viewPlayerHand : Character -> Html Msg
 viewPlayerHand character =
-    Html.div [ Html.Attributes.class "player-hand" ] (List.map (viewCard character) character.hand)
+    Html.div [ Html.Attributes.class "player-hand" ] (List.indexedMap (viewCard character) character.hand)
 
 
 viewCombatSummary : Bool -> Html Msg
