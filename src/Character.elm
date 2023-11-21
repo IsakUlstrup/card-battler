@@ -5,7 +5,7 @@ module Character exposing
     , canPlayFirst
     , deriveStat
     , deriveStats
-    , drawCard
+    , drawHand
     , isAlive
     , new
     , playCardAtIndex
@@ -30,6 +30,7 @@ type alias Character =
     , baseStats : Dict Stat Float
     , buffs : List Buff
     , energy : Dict Energy ( Cooldown, ( Int, Int ) )
+    , deck : List Card
     , hand : List Card
     , played : List Card
     }
@@ -37,8 +38,8 @@ type alias Character =
 
 {-| Character constructor
 -}
-new : Char -> List ( Stat, Float ) -> Int -> Character
-new icon baseStats health =
+new : Char -> List Card -> List ( Stat, Float ) -> Int -> Character
+new icon deck baseStats health =
     Character
         icon
         ( health, health )
@@ -51,26 +52,35 @@ new icon baseStats health =
             , ( Yellow, ( Cooldown.new 3500, ( 0, defaultEnergyCap ) ) )
             ]
         )
+        deck
         []
         []
 
 
-drawCard : Card -> Character -> Character
-drawCard card character =
-    { character | hand = card :: character.hand }
+drawHand : Int -> Character -> Character
+drawHand size character =
+    { character | hand = character.deck |> List.take size, deck = character.deck |> List.drop size }
 
 
-drawFromPlayed : Character -> Character
-drawFromPlayed character =
-    case List.head character.played of
+drawCard : Character -> Character
+drawCard character =
+    case List.head character.deck of
         Just card ->
             { character
                 | hand = card :: character.hand
-                , played = List.drop 1 character.played
+                , deck = List.drop 1 character.deck
             }
 
         Nothing ->
-            character
+            if List.isEmpty character.played |> not then
+                { character
+                    | deck = character.deck ++ List.reverse character.played
+                    , played = []
+                }
+                    |> drawCard
+
+            else
+                character
 
 
 {-| Attempt to play card at provided index from character hand.
@@ -99,7 +109,7 @@ playCardAtIndex index character =
                     |> removeEnergy card.cost
                     |> removeCard
                     |> addToPlayed card
-                    |> drawFromPlayed
+                    |> drawCard
                 , Just card.action
                 )
 

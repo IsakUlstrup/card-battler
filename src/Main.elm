@@ -31,27 +31,40 @@ playerCharacter : Character
 playerCharacter =
     Character.new
         '🐼'
+        [ basicCard
+        , expensiveCard
+        , basicCard
+        , expensiveCard
+        , basicCard
+        , buffCard
+        , basicCard
+        , buffCard
+        , basicCard
+        , buffCard
+        ]
         [ ( Stat.CyanRegenModifier, 2 )
         , ( Stat.YellowRegenModifier, 0.7 )
         ]
         100
-        |> Character.drawCard basicCard
-        |> Character.drawCard expensiveCard
-        |> Character.drawCard buffCard
+        |> Character.drawHand 3
 
 
 enemyCharacter : Character
 enemyCharacter =
     Character.new
         '🦡'
+        [ basicCard
+        , basicCard
+        , basicCard
+        , basicCard
+        , basicCard
+        ]
         [ ( Stat.CyanRegenModifier, 1 )
         , ( Stat.MagentaRegenModifier, 0.2 )
         , ( Stat.AutoPlayFirst, 1 )
         ]
         20
-        |> Character.drawCard basicCard
-        |> Character.drawCard basicCard
-        |> Character.drawCard basicCard
+        |> Character.drawHand 3
 
 
 basicCard : Card
