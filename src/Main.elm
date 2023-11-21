@@ -46,7 +46,7 @@ playerCharacter =
         , ( Stat.YellowRegenModifier, 0.7 )
         ]
         100
-        |> Character.drawHand 3
+        |> Character.drawHand 5
 
 
 enemyCharacter : Character

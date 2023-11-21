@@ -61,7 +61,7 @@ body
     position: relative
     padding: $spacing-medium
     flex: 0 0 8rem
-    border: 1px solid beige
+    // border: 1px solid beige
     display: flex
     flex-direction: column
     gap: $spacing-medium
@@ -74,11 +74,16 @@ body
     progress, meter
         width: 100%
 
+    .hand
+        display: flex
+        .card
+            padding: none
+
     &.player .hand
         display: none
 
     &.enemy
-        border-style: dotted
+        // border-style: dotted
         &.attacking .icon
             transform: translateX(-1rem)
         &.hit .icon
@@ -176,26 +181,14 @@ body
 // HAND
 .hand
     display: flex
-    flex-direction: column
+    gap: $spacing-small
 
-.card
-    border: 0.3rem solid beige
-    padding: $spacing-medium
-    opacity: 0.5
-    border-radius: 1rem
-    display: flex
-    flex-direction: column
-    justify-content: center
-    gap: $spacing-medium
-    text-align: center
+    .card
+        opacity: 0.5
+        border: 1px solid beige
 
-    .cost
-        display: flex
-        justify-content: center
-        gap: $spacing-small
-
-    &.can-afford
-        opacity: 1
+        &.can-afford
+            opacity: 1
 
 .player-hand
     display: flex
@@ -205,3 +198,20 @@ body
         width: 10rem
         user-select: none
         cursor: pointer
+        border: 0.3rem solid beige
+        padding: $spacing-medium
+        opacity: 0.5
+        border-radius: 1rem
+        display: flex
+        flex-direction: column
+        justify-content: center
+        gap: $spacing-medium
+        text-align: center
+
+        &.can-afford
+            opacity: 1
+
+    .cost
+        display: flex
+        justify-content: center
+        gap: $spacing-small
