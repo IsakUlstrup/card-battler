@@ -8,7 +8,7 @@ import Character exposing (Character)
 import Cooldown exposing (Cooldown)
 import CustomDict as Dict
 import Energy exposing (Energy)
-import Html exposing (Html, main_)
+import Html exposing (Attribute, Html, main_)
 import Html.Attributes
 import Html.Events
 import Stat exposing (Stat)
@@ -374,8 +374,8 @@ viewSmallCard character card =
         ]
 
 
-viewCharacter : TurnState -> ( Bool, Character ) -> Html msg
-viewCharacter turnState ( isPlayer, character ) =
+characterClasses : TurnState -> Bool -> List (Attribute msg)
+characterClasses turnState isPlayer =
     let
         isAttacking : Bool
         isAttacking =
@@ -413,16 +413,20 @@ viewCharacter turnState ( isPlayer, character ) =
                 _ ->
                     False
     in
-    Html.div
-        [ Html.Attributes.class "character"
-        , Html.Attributes.class (characterTypeString isPlayer)
-        , Html.Attributes.classList
-            [ ( "attacking", isAttacking )
-            , ( "hit", isHit )
-            , ( "dead", isDead )
-            , ( "winner", isWinner )
-            ]
+    [ Html.Attributes.class (characterTypeString isPlayer)
+    , Html.Attributes.classList
+        [ ( "attacking", isAttacking )
+        , ( "hit", isHit )
+        , ( "dead", isDead )
+        , ( "winner", isWinner )
         ]
+    ]
+
+
+viewCharacter : List (Attribute msg) -> Character -> Html msg
+viewCharacter attrs character =
+    Html.div
+        (Html.Attributes.class "character" :: attrs)
         [ Html.h1 [ Html.Attributes.class "icon" ] [ Html.text (String.fromChar character.icon) ]
         , Html.div [ Html.Attributes.class "health-history" ] (List.map viewHealthHistoryItem character.healthHistory)
         , Html.p []
@@ -488,9 +492,9 @@ view model =
 
             _ ->
                 Html.div [ Html.Attributes.class "characters" ]
-                    ([ ( True, Tuple.first model.characters ), ( False, Tuple.second model.characters ) ]
-                        |> List.map (viewCharacter model.turnState)
-                    )
+                    [ viewCharacter (characterClasses model.turnState True) (Tuple.first model.characters)
+                    , viewCharacter (characterClasses model.turnState False) (Tuple.second model.characters)
+                    ]
         , viewPlayerHand (Tuple.first model.characters)
         ]
 
