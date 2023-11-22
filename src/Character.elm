@@ -67,7 +67,7 @@ drawCard character =
     case List.head character.deck of
         Just card ->
             { character
-                | hand = card :: character.hand
+                | hand = character.hand ++ [ card ]
                 , deck = List.drop 1 character.deck
             }
 

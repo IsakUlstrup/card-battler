@@ -55,6 +55,7 @@ enemyCharacter =
         '🦡'
         [ basicCard
         , basicCard
+        , basicCard2
         , basicCard
         , basicCard
         , basicCard
@@ -70,6 +71,11 @@ enemyCharacter =
 basicCard : Card
 basicCard =
     Card.new "Basic Attack" (Card.Attack 1) [ ( Energy.Cyan, 2 ) ]
+
+
+basicCard2 : Card
+basicCard2 =
+    Card.new "Basic Attack2" (Card.Attack 2) [ ( Energy.Cyan, 4 ) ]
 
 
 expensiveCard : Card
@@ -429,25 +435,27 @@ viewCharacter attrs character =
         (Html.Attributes.class "character" :: attrs)
         [ Html.h1 [ Html.Attributes.class "icon" ] [ Html.text (String.fromChar character.icon) ]
         , Html.div [ Html.Attributes.class "health-history" ] (List.map viewHealthHistoryItem character.healthHistory)
-        , Html.p []
-            [ Html.text
-                ("hlt: "
-                    ++ String.fromInt (Tuple.first character.health)
-                    ++ "/"
-                    ++ String.fromInt (Tuple.second character.health)
-                )
-            ]
+
+        -- , Html.p []
+        --     [ Html.text
+        --         ("hlt: "
+        --             ++ String.fromInt (Tuple.first character.health)
+        --             ++ "/"
+        --             ++ String.fromInt (Tuple.second character.health)
+        --         )
+        --     ]
         , viewCustomMeter (Tuple.second character.health) (Tuple.first character.health)
         , Html.div [ Html.Attributes.class "energy" ] (Dict.toList character.energy |> List.filterMap viewEnergy)
         , Html.div [ Html.Attributes.class "hand" ] (List.map (viewSmallCard character) character.hand)
-        , Html.details [ Html.Attributes.class "stats" ]
-            [ Html.summary []
-                [ Html.text "Stats" ]
-            , Html.div []
-                (Character.deriveStats character
-                    |> List.map viewStat
-                )
-            ]
+
+        -- , Html.details [ Html.Attributes.class "stats" ]
+        --     [ Html.summary []
+        --         [ Html.text "Stats" ]
+        --     , Html.div []
+        --         (Character.deriveStats character
+        --             |> List.map viewStat
+        --         )
+        --     ]
         , Html.ul [ Html.Attributes.class "buffs" ] (List.map viewBuff character.buffs)
         ]
 
