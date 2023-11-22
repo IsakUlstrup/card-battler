@@ -203,14 +203,18 @@ body
 
 .player-hand
     display: flex
+    justify-content: center
     gap: $spacing-medium
+    overflow-x: auto
+    padding: $spacing-medium 0
 
     .card
-        width: 10rem
+        flex: 0 0 8rem
+        height: 12rem
         user-select: none
         cursor: pointer
-        border: 0.3rem solid beige
-        padding: $spacing-medium
+        border: 0.2rem solid beige
+        padding: $spacing-small
         opacity: 0.5
         border-radius: 1rem
         display: flex
