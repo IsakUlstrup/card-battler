@@ -488,17 +488,18 @@ viewCombatSummary playerVictory =
 view : Model -> Html Msg
 view model =
     main_ [ Html.Attributes.id "app" ]
-        [ case model.turnState of
+        (case model.turnState of
             Done isPlayer ->
-                viewCombatSummary isPlayer
+                [ viewCombatSummary isPlayer ]
 
             _ ->
-                Html.div [ Html.Attributes.class "characters" ]
+                [ Html.div [ Html.Attributes.class "characters" ]
                     [ viewCharacter (characterClasses model.turnState True) (Tuple.first model.characters)
                     , viewCharacter (characterClasses model.turnState False) (Tuple.second model.characters)
                     ]
-        , viewPlayerHand (Tuple.first model.characters)
-        ]
+                , viewPlayerHand (Tuple.first model.characters)
+                ]
+        )
 
 
 
