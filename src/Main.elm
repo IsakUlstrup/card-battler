@@ -440,12 +440,14 @@ viewCharacter attrs character =
         , viewCustomMeter (Tuple.second character.health) (Tuple.first character.health)
         , Html.div [ Html.Attributes.class "energy" ] (Dict.toList character.energy |> List.filterMap viewEnergy)
         , Html.div [ Html.Attributes.class "hand" ] (List.map (viewSmallCard character) character.hand)
-        , Html.details []
-            (Html.summary [] [ Html.text "Stats" ]
-                :: (Character.deriveStats character
-                        |> List.map viewStat
-                   )
-            )
+        , Html.details [ Html.Attributes.class "stats" ]
+            [ Html.summary []
+                [ Html.text "Stats" ]
+            , Html.div []
+                (Character.deriveStats character
+                    |> List.map viewStat
+                )
+            ]
         , Html.ul [ Html.Attributes.class "buffs" ] (List.map viewBuff character.buffs)
         ]
 
