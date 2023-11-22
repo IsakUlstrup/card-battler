@@ -6,7 +6,7 @@ import Buff exposing (Buff)
 import Card exposing (Action, Card)
 import Character exposing (Character)
 import Cooldown exposing (Cooldown)
-import CustomDict as Dict exposing (Dict)
+import CustomDict as Dict
 import Energy exposing (Energy)
 import Html exposing (Html, main_)
 import Html.Attributes
@@ -109,7 +109,7 @@ type TurnState
 
 
 type alias Model =
-    { characters : Dict Bool Character
+    { characters : ( Character, Character )
     , turnState : TurnState
     }
 
@@ -117,10 +117,8 @@ type alias Model =
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( Model
-        (Dict.fromList
-            [ ( True, playerCharacter )
-            , ( False, enemyCharacter )
-            ]
+        ( playerCharacter
+        , enemyCharacter
         )
         Recovering
     , Cmd.none
@@ -149,7 +147,7 @@ update msg model =
 
         ClickedResetEnemy ->
             { model
-                | characters = model.characters |> Dict.update False (always enemyCharacter)
+                | characters = model.characters |> Tuple.mapSecond (always enemyCharacter)
                 , turnState = Recovering
             }
 
@@ -165,32 +163,36 @@ update msg model =
                     model
 
 
+updateFlag : (Character -> Character) -> Bool -> Model -> Model
+updateFlag f isPlayer model =
+    if isPlayer then
+        { model | characters = model.characters |> Tuple.mapFirst f }
+
+    else
+        { model | characters = model.characters |> Tuple.mapSecond f }
+
+
 playCard : Bool -> Int -> Model -> Model
 playCard isPlayer index model =
-    case Dict.get isPlayer model.characters of
-        Just player ->
-            case Character.playCardAtIndex index player of
-                ( newCharacter, Just action ) ->
-                    { model
-                        | turnState = Attacking isPlayer action (Cooldown.new characterAnimationDuration)
-                        , characters = Dict.update isPlayer (always newCharacter) model.characters
-                    }
+    case Character.playCardAtIndex index (Tuple.first model.characters) of
+        ( newCharacter, Just action ) ->
+            { model | turnState = Attacking isPlayer action (Cooldown.new characterAnimationDuration) }
+                |> updateFlag (always newCharacter) isPlayer
 
-                ( _, Nothing ) ->
-                    model
-
-        Nothing ->
+        ( _, Nothing ) ->
             model
 
 
 tickCharacters : Float -> Model -> Model
 tickCharacters dt model =
-    case ( model.turnState, Dict.all Character.isAlive model.characters ) of
+    case ( model.turnState, [ Tuple.first model.characters, Tuple.second model.characters ] |> List.all Character.isAlive ) of
         ( Recovering, True ) ->
             { model
                 | characters =
                     model.characters
-                        |> Dict.map (\_ character -> Character.tick dt character)
+                        |> Tuple.mapBoth (Character.tick dt) (Character.tick dt)
+
+                -- |> Dict.map (\_ character -> Character.tick dt character)
             }
 
         _ ->
@@ -217,11 +219,13 @@ setHitState : Bool -> Action -> Model -> Model
 setHitState isPlayer action model =
     { model
         | turnState = Hit (not isPlayer) (Cooldown.new characterAnimationDuration)
-        , characters =
-            model.characters
-                -- |> Dict.update isPlayer Character.resetCooldown
-                |> Dict.update (not isPlayer) (Character.applyAction action)
+
+        -- , characters =
+        --     model.characters
+        -- |> Dict.update isPlayer Character.resetCooldown
+        -- |> Dict.update (not isPlayer) (Character.applyAction action)
     }
+        |> updateFlag (Character.applyAction action) (not isPlayer)
 
 
 setRecoveringState : Model -> Model
@@ -236,11 +240,15 @@ setDoneState isPlayer model =
 
 getDeadCharacter : Model -> Maybe Bool
 getDeadCharacter model =
-    model.characters
-        |> Dict.filter (\_ character -> not (Character.isAlive character))
-        |> Dict.toList
+    [ ( True, Tuple.first model.characters ), ( False, Tuple.second model.characters ) ]
+        |> List.map (\( plr, c ) -> ( plr, Character.isAlive c |> not ))
+        |> List.filter (\( _, a ) -> a)
         |> List.head
         |> Maybe.map Tuple.first
+
+
+
+-- |> Maybe.map Tuple.first
 
 
 advanceTurnState : Model -> Model
@@ -252,19 +260,14 @@ advanceTurnState model =
                     setDoneState isPlayer model
 
                 Nothing ->
-                    case Dict.get False model.characters of
-                        Just enemy ->
-                            case Character.playCardAtIndex 0 enemy of
-                                ( newCharacter, Just action ) ->
-                                    { model
-                                        | turnState = Attacking False action (Cooldown.new characterAnimationDuration)
-                                        , characters = Dict.update False (always newCharacter) model.characters
-                                    }
+                    case Character.playCardAtIndex 0 (Tuple.second model.characters) of
+                        ( newCharacter, Just action ) ->
+                            { model
+                                | turnState = Attacking False action (Cooldown.new characterAnimationDuration)
+                                , characters = Tuple.mapSecond (always newCharacter) model.characters
+                            }
 
-                                ( _, Nothing ) ->
-                                    model
-
-                        Nothing ->
+                        ( _, Nothing ) ->
                             model
 
         Attacking isPlayer action cooldown ->
@@ -485,11 +488,10 @@ view model =
 
             _ ->
                 Html.div [ Html.Attributes.class "characters" ]
-                    (model.characters
-                        |> Dict.toList
+                    ([ ( True, Tuple.first model.characters ), ( False, Tuple.second model.characters ) ]
                         |> List.map (viewCharacter model.turnState)
                     )
-        , Html.div [] ([ Dict.get True model.characters |> Maybe.map viewPlayerHand ] |> List.filterMap identity)
+        , viewPlayerHand (Tuple.first model.characters)
         ]
 
 
