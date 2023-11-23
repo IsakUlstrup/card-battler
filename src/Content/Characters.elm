@@ -1,4 +1,4 @@
-module Content.Characters exposing (badger, panda)
+module Content.Characters exposing (badger, panda, rabbit)
 
 import Card exposing (Card)
 import Character exposing (Character)
@@ -26,3 +26,15 @@ badger deck =
         , ( Stat.AutoPlayFirst, 1 )
         ]
         20
+
+
+rabbit : List Card -> Character
+rabbit deck =
+    Character.new
+        '🐰'
+        deck
+        [ ( Stat.CyanRegenModifier, 0.5 )
+        , ( Stat.MagentaRegenModifier, 0.2 )
+        , ( Stat.AutoPlayFirst, 1 )
+        ]
+        5

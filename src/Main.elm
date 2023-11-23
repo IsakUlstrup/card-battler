@@ -54,6 +54,7 @@ type TurnState
 type alias Model =
     { characters : ( Character, Character )
     , turnState : TurnState
+    , encounters : List Character
     }
 
 
@@ -64,6 +65,7 @@ init _ =
         , Characters.badger Cards.basicDeck |> Character.drawHand 3
         )
         Recovering
+        [ Characters.rabbit [] ]
     , Cmd.none
     )
 
@@ -90,14 +92,20 @@ update msg model =
                 |> advanceTurnState
 
         ClickedResetEnemy ->
-            { model
-                | characters =
-                    model.characters
-                        |> Tuple.mapSecond (always (Characters.badger Cards.basicDeck |> Character.drawHand 3))
-                        |> Tuple.mapFirst Character.resetCards
-                        |> Tuple.mapFirst (Character.drawHand 5)
-                , turnState = Recovering
-            }
+            case List.head model.encounters of
+                Just character ->
+                    { model
+                        | characters =
+                            model.characters
+                                |> Tuple.mapSecond (always (character |> Character.drawHand 3))
+                                |> Tuple.mapFirst Character.resetCards
+                                |> Tuple.mapFirst (Character.drawHand 5)
+                        , encounters = List.drop 1 model.encounters
+                        , turnState = Recovering
+                    }
+
+                Nothing ->
+                    model
 
         ClickedResetGame ->
             init () |> Tuple.first
