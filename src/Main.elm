@@ -500,6 +500,14 @@ viewVictory rewards =
         ]
 
 
+viewEncounters : List Character -> Html msg
+viewEncounters encounters =
+    Html.div []
+        [ Html.h3 [] [ Html.text "Next encounters" ]
+        , Html.div [ Html.Attributes.class "encounters" ] (List.map (\character -> Html.p [] [ Html.text (String.fromChar character.icon) ]) encounters)
+        ]
+
+
 view : Model -> Html Msg
 view model =
     main_ [ Html.Attributes.id "app" ]
@@ -517,6 +525,7 @@ view model =
                     ]
                 , viewPlayerDeckStats (Tuple.first model.characters)
                 , viewPlayerHand (Tuple.first model.characters)
+                , viewEncounters model.encounters
                 ]
         )
 
