@@ -41,7 +41,7 @@ characterTypeString isPlayer =
 type TurnState
     = Recovering
     | Attacking Bool Action Cooldown
-    | Hit Bool Cooldown
+      -- | Hit Bool Cooldown
     | Defeat
     | Victory (List Card)
 
@@ -164,9 +164,8 @@ tickTurnState dt model =
         Attacking isPlayer power cooldown ->
             { model | turnState = Attacking isPlayer power (Cooldown.tick dt cooldown) }
 
-        Hit isPlayer cooldown ->
-            { model | turnState = Hit isPlayer (Cooldown.tick dt cooldown) }
-
+        -- Hit isPlayer cooldown ->
+        --     { model | turnState = Hit isPlayer (Cooldown.tick dt cooldown) }
         Defeat ->
             model
 
@@ -174,12 +173,13 @@ tickTurnState dt model =
             model
 
 
-setHitState : Bool -> Action -> Model -> Model
-setHitState isPlayer action model =
-    { model
-        | turnState = Hit (not isPlayer) (Cooldown.new characterAnimationDuration)
-    }
-        |> updateFlag (Character.applyAction action) (not isPlayer)
+
+-- setHitState : Bool -> Action -> Model -> Model
+-- setHitState isPlayer action model =
+--     { model
+--         | turnState = Hit (not isPlayer) (Cooldown.new characterAnimationDuration)
+--     }
+--         |> updateFlag (Character.applyAction action) (not isPlayer)
 
 
 setRecoveringState : Model -> Model
@@ -233,21 +233,23 @@ advanceTurnState model =
             if Cooldown.isDone cooldown then
                 case action of
                     Card.Attack _ ->
-                        setHitState isPlayer action model
+                        model
+                            |> updateFlag (Character.applyAction action) (not isPlayer)
+                            |> setRecoveringState
 
                     Card.Buff _ ->
-                        setHitState (not isPlayer) action model
+                        model
+                            |> updateFlag (Character.applyAction action) isPlayer
+                            |> setRecoveringState
 
             else
                 model
 
-        Hit _ cooldown ->
-            if Cooldown.isDone cooldown then
-                setRecoveringState model
-
-            else
-                model
-
+        -- Hit _ cooldown ->
+        --     if Cooldown.isDone cooldown then
+        --         setRecoveringState model
+        --     else
+        --         model
         Defeat ->
             model
 
@@ -352,8 +354,13 @@ characterClasses turnState isPlayer =
         isHit : Bool
         isHit =
             case turnState of
-                Hit characterType _ ->
-                    characterType == isPlayer
+                Attacking characterType action _ ->
+                    case action of
+                        Card.Attack _ ->
+                            characterType /= isPlayer
+
+                        Card.Buff _ ->
+                            False
 
                 _ ->
                     False
