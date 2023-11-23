@@ -441,6 +441,14 @@ viewCard character index card =
         ]
 
 
+viewPlayerDeckStats : Character -> Html msg
+viewPlayerDeckStats character =
+    Html.div []
+        [ Html.p [] [ Html.text ("Deck: " ++ String.fromInt (List.length character.deck)) ]
+        , Html.p [] [ Html.text ("Played: " ++ String.fromInt (List.length character.played)) ]
+        ]
+
+
 viewPlayerHand : Character -> Html Msg
 viewPlayerHand character =
     Html.div [ Html.Attributes.class "player-hand" ] (List.indexedMap (viewCard character) character.hand)
@@ -482,6 +490,7 @@ view model =
                     [ viewCharacter (characterClasses model.turnState True) (Tuple.first model.characters)
                     , viewCharacter (characterClasses model.turnState False) (Tuple.second model.characters)
                     ]
+                , viewPlayerDeckStats (Tuple.first model.characters)
                 , viewPlayerHand (Tuple.first model.characters)
                 ]
         )
