@@ -5,6 +5,7 @@ import Browser.Events
 import Buff exposing (Buff)
 import Card exposing (Action, Card)
 import Character exposing (Character)
+import Content.Cards as Cards
 import Cooldown exposing (Cooldown)
 import CustomDict as Dict
 import Energy exposing (Energy)
@@ -31,16 +32,16 @@ playerCharacter : Character
 playerCharacter =
     Character.new
         '🐼'
-        [ basicCard
-        , expensiveCard
-        , basicCard
-        , expensiveCard
-        , basicCard
-        , buffCard
-        , basicCard
-        , buffCard
-        , basicCard
-        , buffCard
+        [ Cards.basicCard
+        , Cards.expensiveCard
+        , Cards.basicCard
+        , Cards.expensiveCard
+        , Cards.basicCard
+        , Cards.buffCard
+        , Cards.basicCard
+        , Cards.buffCard
+        , Cards.basicCard
+        , Cards.buffCard
         ]
         [ ( Stat.CyanRegenModifier, 2 )
         , ( Stat.YellowRegenModifier, 0.7 )
@@ -53,12 +54,12 @@ enemyCharacter : Character
 enemyCharacter =
     Character.new
         '🦡'
-        [ basicCard
-        , basicCard
-        , basicCard2
-        , basicCard
-        , basicCard
-        , basicCard
+        [ Cards.basicCard
+        , Cards.basicCard
+        , Cards.basicCard2
+        , Cards.basicCard
+        , Cards.basicCard
+        , Cards.basicCard
         ]
         [ ( Stat.CyanRegenModifier, 1 )
         , ( Stat.MagentaRegenModifier, 0.2 )
@@ -66,28 +67,6 @@ enemyCharacter =
         ]
         20
         |> Character.drawHand 3
-
-
-basicCard : Card
-basicCard =
-    Card.new "Basic Attack" (Card.Attack 1) [ ( Energy.Cyan, 2 ) ]
-
-
-basicCard2 : Card
-basicCard2 =
-    Card.new "Basic Attack2" (Card.Attack 2) [ ( Energy.Cyan, 4 ) ]
-
-
-expensiveCard : Card
-expensiveCard =
-    Card.new "Expensive Attack" (Card.Attack 10) [ ( Energy.Cyan, 8 ), ( Energy.Yellow, 7 ) ]
-
-
-buffCard : Card
-buffCard =
-    Card.new "Buff yellow regen"
-        (Card.Buff (Buff.new 10000 ( Stat.YellowRegenModifier, 3 )))
-        [ ( Energy.Yellow, 2 ) ]
 
 
 
