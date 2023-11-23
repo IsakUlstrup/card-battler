@@ -345,8 +345,27 @@ characterClasses turnState isPlayer =
         isAttacking : Bool
         isAttacking =
             case turnState of
-                Attacking characterType _ _ ->
-                    characterType == isPlayer
+                Attacking characterType action _ ->
+                    case action of
+                        Card.Attack _ ->
+                            characterType == isPlayer
+
+                        Card.Buff _ ->
+                            False
+
+                _ ->
+                    False
+
+        isBuffing : Bool
+        isBuffing =
+            case turnState of
+                Attacking characterType action _ ->
+                    case action of
+                        Card.Buff _ ->
+                            characterType == isPlayer
+
+                        Card.Attack _ ->
+                            False
 
                 _ ->
                     False
@@ -389,6 +408,7 @@ characterClasses turnState isPlayer =
         , ( "hit", isHit )
         , ( "dead", isDead )
         , ( "winner", isWinner )
+        , ( "buffing", isBuffing )
         ]
     ]
 
