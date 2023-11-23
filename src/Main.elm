@@ -516,7 +516,9 @@ view model =
                 [ viewDefeat ]
 
             Victory rewards ->
-                [ viewVictory rewards ]
+                [ viewVictory rewards
+                , viewEncounters model.encounters
+                ]
 
             _ ->
                 [ Html.div [ Html.Attributes.class "characters" ]
@@ -525,7 +527,6 @@ view model =
                     ]
                 , viewPlayerDeckStats (Tuple.first model.characters)
                 , viewPlayerHand (Tuple.first model.characters)
-                , viewEncounters model.encounters
                 ]
         )
 
