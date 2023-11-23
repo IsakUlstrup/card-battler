@@ -1,9 +1,20 @@
-module Content.Cards exposing (basicCard, basicCard2, buffCard, expensiveCard)
+module Content.Cards exposing
+    ( basicCard
+    , basicCard2
+    , basicDeck
+    , buffCard
+    , expensiveCard
+    , testDeck1
+    )
 
 import Buff
 import Card exposing (Card)
 import Energy
 import Stat
+
+
+
+-- CARDS
 
 
 basicCard : Card
@@ -26,3 +37,17 @@ buffCard =
     Card.new "Buff yellow regen"
         (Card.Buff (Buff.new 10000 ( Stat.YellowRegenModifier, 3 )))
         [ ( Energy.Yellow, 2 ) ]
+
+
+
+-- DECKS
+
+
+testDeck1 : List Card
+testDeck1 =
+    [ basicCard, basicCard2, expensiveCard, buffCard, basicCard, basicCard2 ]
+
+
+basicDeck : List Card
+basicDeck =
+    [ basicCard, basicCard2, basicCard, basicCard2, basicCard, basicCard2 ]

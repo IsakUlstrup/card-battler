@@ -6,13 +6,14 @@ import Buff exposing (Buff)
 import Card exposing (Action, Card)
 import Character exposing (Character)
 import Content.Cards as Cards
+import Content.Characters as Characters
 import Cooldown exposing (Cooldown)
 import CustomDict as Dict
 import Energy exposing (Energy)
 import Html exposing (Attribute, Html, main_)
 import Html.Attributes
 import Html.Events
-import Stat exposing (Stat)
+import Stat
 
 
 
@@ -22,51 +23,6 @@ import Stat exposing (Stat)
 characterAnimationDuration : Float
 characterAnimationDuration =
     300
-
-
-
--- CONTENT
-
-
-playerCharacter : Character
-playerCharacter =
-    Character.new
-        '🐼'
-        [ Cards.basicCard
-        , Cards.expensiveCard
-        , Cards.basicCard
-        , Cards.expensiveCard
-        , Cards.basicCard
-        , Cards.buffCard
-        , Cards.basicCard
-        , Cards.buffCard
-        , Cards.basicCard
-        , Cards.buffCard
-        ]
-        [ ( Stat.CyanRegenModifier, 2 )
-        , ( Stat.YellowRegenModifier, 0.7 )
-        ]
-        100
-        |> Character.drawHand 5
-
-
-enemyCharacter : Character
-enemyCharacter =
-    Character.new
-        '🦡'
-        [ Cards.basicCard
-        , Cards.basicCard
-        , Cards.basicCard2
-        , Cards.basicCard
-        , Cards.basicCard
-        , Cards.basicCard
-        ]
-        [ ( Stat.CyanRegenModifier, 1 )
-        , ( Stat.MagentaRegenModifier, 0.2 )
-        , ( Stat.AutoPlayFirst, 1 )
-        ]
-        20
-        |> Character.drawHand 3
 
 
 
@@ -102,8 +58,8 @@ type alias Model =
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( Model
-        ( playerCharacter
-        , enemyCharacter
+        ( Characters.panda Cards.testDeck1 |> Character.drawHand 5
+        , Characters.badger Cards.basicDeck |> Character.drawHand 3
         )
         Recovering
     , Cmd.none
@@ -132,7 +88,7 @@ update msg model =
 
         ClickedResetEnemy ->
             { model
-                | characters = model.characters |> Tuple.mapSecond (always enemyCharacter)
+                | characters = model.characters |> Tuple.mapSecond (always (Characters.badger Cards.basicDeck |> Character.drawHand 3))
                 , turnState = Recovering
             }
 
@@ -319,9 +275,10 @@ viewBuff buff =
         ]
 
 
-viewStat : ( Stat, Float ) -> Html msg
-viewStat ( statType, statValue ) =
-    Html.p [ Html.Attributes.class "stat" ] [ Html.text (Stat.toString statType ++ ": " ++ String.fromFloat statValue) ]
+
+-- viewStat : ( Stat, Float ) -> Html msg
+-- viewStat ( statType, statValue ) =
+--     Html.p [ Html.Attributes.class "stat" ] [ Html.text (Stat.toString statType ++ ": " ++ String.fromFloat statValue) ]
 
 
 viewHealthHistoryItem : Int -> Html msg
