@@ -65,7 +65,7 @@ init _ =
         , Characters.badger Cards.basicDeck |> Character.drawHand 3
         )
         Recovering
-        [ Characters.rabbit [] ]
+        [ Characters.rabbit [], Characters.chick [] ]
     , Cmd.none
     )
 
@@ -468,7 +468,7 @@ viewCard character index card =
 
 viewPlayerDeckStats : Character -> Html msg
 viewPlayerDeckStats character =
-    Html.div []
+    Html.div [ Html.Attributes.class "deck-stats" ]
         [ Html.p [] [ Html.text ("Deck: " ++ String.fromInt (List.length character.deck)) ]
         , Html.p [] [ Html.text ("Played: " ++ String.fromInt (List.length character.played)) ]
         ]
