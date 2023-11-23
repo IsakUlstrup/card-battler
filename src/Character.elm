@@ -11,6 +11,7 @@ module Character exposing
     , new
     , playCardAtIndex
     , removeEnergy
+    , resetCards
     , tick
     )
 
@@ -56,6 +57,17 @@ new icon deck baseStats health =
         deck
         []
         []
+
+
+{-| Put all cards back in deck
+-}
+resetCards : Character -> Character
+resetCards character =
+    { character
+        | deck = character.deck ++ character.hand ++ character.played
+        , hand = []
+        , played = []
+    }
 
 
 addCard : Card -> Character -> Character

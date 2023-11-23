@@ -90,7 +90,11 @@ update msg model =
 
         ClickedResetEnemy ->
             { model
-                | characters = model.characters |> Tuple.mapSecond (always (Characters.badger Cards.basicDeck |> Character.drawHand 3))
+                | characters =
+                    model.characters
+                        |> Tuple.mapSecond (always (Characters.badger Cards.basicDeck |> Character.drawHand 3))
+                        |> Tuple.mapFirst Character.resetCards
+                        |> Tuple.mapFirst (Character.drawHand 5)
                 , turnState = Recovering
             }
 
