@@ -13,6 +13,7 @@ import Energy exposing (Energy)
 import Html exposing (Attribute, Html, main_)
 import Html.Attributes
 import Html.Events
+import Html.Keyed
 import Stat
 
 
@@ -304,9 +305,9 @@ viewBuff buff =
 --     Html.p [ Html.Attributes.class "stat" ] [ Html.text (Stat.toString statType ++ ": " ++ String.fromFloat statValue) ]
 
 
-viewHealthHistoryItem : Int -> Html msg
-viewHealthHistoryItem delta =
-    Html.p [] [ Html.text (String.fromInt delta) ]
+viewHealthHistoryItem : ( Int, Int ) -> ( String, Html msg )
+viewHealthHistoryItem ( id, delta ) =
+    ( "item" ++ String.fromInt id, Html.p [] [ Html.text (String.fromInt delta) ] )
 
 
 viewEnergy : ( Energy, ( Cooldown, ( Int, Int ) ) ) -> Maybe (Html msg)
@@ -418,7 +419,7 @@ viewCharacter attrs character =
     Html.div
         (Html.Attributes.class "character" :: attrs)
         [ Html.h1 [ Html.Attributes.class "icon" ] [ Html.text (String.fromChar character.icon) ]
-        , Html.div [ Html.Attributes.class "health-history" ] (List.map viewHealthHistoryItem character.healthHistory)
+        , Html.Keyed.node "div" [ Html.Attributes.class "health-history" ] (List.map viewHealthHistoryItem character.healthHistory)
 
         -- , Html.p []
         --     [ Html.text

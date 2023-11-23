@@ -26,9 +26,10 @@ import Stat exposing (Stat)
 {-| Main Character type
 -}
 type alias Character =
-    { icon : Char
+    { idCounter : Int
+    , icon : Char
     , health : ( Int, Int )
-    , healthHistory : List Int
+    , healthHistory : List ( Int, Int )
     , baseStats : Dict Stat Float
     , buffs : List Buff
     , energy : Dict Energy ( Cooldown, ( Int, Int ) )
@@ -43,6 +44,7 @@ type alias Character =
 new : Char -> List Card -> List ( Stat, Float ) -> Int -> Character
 new icon deck baseStats health =
     Character
+        0
         icon
         ( health, health )
         []
@@ -164,7 +166,8 @@ hit : Int -> Character -> Character
 hit power character =
     { character
         | health = character.health |> Tuple.mapFirst (\h -> max 0 (h - power))
-        , healthHistory = -power :: character.healthHistory
+        , healthHistory = ( character.idCounter, -power ) :: character.healthHistory |> List.take 10
+        , idCounter = character.idCounter + 1
     }
 
 
