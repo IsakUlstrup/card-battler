@@ -149,8 +149,6 @@ tickCharacters dt model =
                 | characters =
                     model.characters
                         |> Tuple.mapBoth (Character.tick dt) (Character.tick dt)
-
-                -- |> Dict.map (\_ character -> Character.tick dt character)
             }
 
         _ ->
@@ -180,11 +178,6 @@ setHitState : Bool -> Action -> Model -> Model
 setHitState isPlayer action model =
     { model
         | turnState = Hit (not isPlayer) (Cooldown.new characterAnimationDuration)
-
-        -- , characters =
-        --     model.characters
-        -- |> Dict.update isPlayer Character.resetCooldown
-        -- |> Dict.update (not isPlayer) (Character.applyAction action)
     }
         |> updateFlag (Character.applyAction action) (not isPlayer)
 
@@ -211,10 +204,6 @@ getDeadCharacter model =
         |> List.filter (\( _, a ) -> a)
         |> List.head
         |> Maybe.map Tuple.first
-
-
-
--- |> Maybe.map Tuple.first
 
 
 advanceTurnState : Model -> Model
