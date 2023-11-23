@@ -1,5 +1,6 @@
 module Character exposing
     ( Character
+    , addCard
     , applyAction
     , canAfford
     , canPlayFirst
@@ -55,6 +56,11 @@ new icon deck baseStats health =
         deck
         []
         []
+
+
+addCard : Card -> Character -> Character
+addCard card character =
+    { character | deck = card :: character.deck }
 
 
 drawHand : Int -> Character -> Character

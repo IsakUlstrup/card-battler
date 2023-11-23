@@ -42,7 +42,8 @@ type TurnState
     = Recovering
     | Attacking Bool Action Cooldown
     | Hit Bool Cooldown
-    | Done Bool
+    | Defeat
+    | Victory (List Card)
 
 
 
@@ -75,6 +76,7 @@ type Msg
     | ClickedResetEnemy
     | ClickedResetGame
     | ClickedPlayerCard Int
+    | ClickedReward Card
 
 
 update : Msg -> Model -> Model
@@ -99,6 +101,17 @@ update msg model =
             case model.turnState of
                 Recovering ->
                     playCard True index model
+
+                _ ->
+                    model
+
+        ClickedReward card ->
+            case model.turnState of
+                Victory _ ->
+                    { model
+                        | turnState = Victory []
+                        , characters = Tuple.mapFirst (Character.addCard card) model.characters
+                    }
 
                 _ ->
                     model
@@ -152,7 +165,10 @@ tickTurnState dt model =
         Hit isPlayer cooldown ->
             { model | turnState = Hit isPlayer (Cooldown.tick dt cooldown) }
 
-        Done _ ->
+        Defeat ->
+            model
+
+        Victory _ ->
             model
 
 
@@ -174,9 +190,14 @@ setRecoveringState model =
     { model | turnState = Recovering }
 
 
-setDoneState : Bool -> Model -> Model
-setDoneState isPlayer model =
-    { model | turnState = Done (not isPlayer) }
+setDefeatState : Model -> Model
+setDefeatState model =
+    { model | turnState = Defeat }
+
+
+setVictoryState : List Card -> Model -> Model
+setVictoryState rewards model =
+    { model | turnState = Victory rewards }
 
 
 getDeadCharacter : Model -> Maybe Bool
@@ -198,7 +219,11 @@ advanceTurnState model =
         Recovering ->
             case getDeadCharacter model of
                 Just isPlayer ->
-                    setDoneState isPlayer model
+                    if isPlayer then
+                        setDefeatState model
+
+                    else
+                        setVictoryState [ Cards.basicCard2, Cards.expensiveCard ] model
 
                 Nothing ->
                     case Character.playCardAtIndex 0 (Tuple.second model.characters) of
@@ -230,7 +255,10 @@ advanceTurnState model =
             else
                 model
 
-        Done _ ->
+        Defeat ->
+            model
+
+        Victory _ ->
             model
 
 
@@ -340,8 +368,8 @@ characterClasses turnState isPlayer =
         isDead : Bool
         isDead =
             case turnState of
-                Done characterType ->
-                    characterType /= isPlayer
+                Defeat ->
+                    isPlayer
 
                 _ ->
                     False
@@ -349,8 +377,8 @@ characterClasses turnState isPlayer =
         isWinner : Bool
         isWinner =
             case turnState of
-                Done characterType ->
-                    characterType == isPlayer
+                Victory _ ->
+                    isPlayer
 
                 _ ->
                     False
@@ -414,27 +442,36 @@ viewPlayerHand character =
     Html.div [ Html.Attributes.class "player-hand" ] (List.indexedMap (viewCard character) character.hand)
 
 
-viewCombatSummary : Bool -> Html Msg
-viewCombatSummary playerVictory =
-    if playerVictory then
-        Html.div []
-            [ Html.p [] [ Html.text "Victory!" ]
-            , Html.button [ Html.Events.onClick ClickedResetEnemy ] [ Html.text "Next enemy" ]
-            ]
+viewDefeat : Html Msg
+viewDefeat =
+    Html.div []
+        [ Html.p [] [ Html.text "Defeat :(" ]
+        , Html.button [ Html.Events.onClick ClickedResetGame ] [ Html.text "Reset" ]
+        ]
 
-    else
-        Html.div []
-            [ Html.p [] [ Html.text "Defeat :(" ]
-            , Html.button [ Html.Events.onClick ClickedResetGame ] [ Html.text "Reset" ]
-            ]
+
+viewVictory : List Card -> Html Msg
+viewVictory rewards =
+    let
+        viewReward reward =
+            Html.div [ Html.Events.onClick (ClickedReward reward) ] [ Html.text reward.name ]
+    in
+    Html.div []
+        [ Html.p [] [ Html.text "Victory!" ]
+        , Html.div [] (List.map viewReward rewards)
+        , Html.button [ Html.Events.onClick ClickedResetEnemy ] [ Html.text "Next enemy" ]
+        ]
 
 
 view : Model -> Html Msg
 view model =
     main_ [ Html.Attributes.id "app" ]
         (case model.turnState of
-            Done isPlayer ->
-                [ viewCombatSummary isPlayer ]
+            Defeat ->
+                [ viewDefeat ]
+
+            Victory rewards ->
+                [ viewVictory rewards ]
 
             _ ->
                 [ Html.div [ Html.Attributes.class "characters" ]
