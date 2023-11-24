@@ -457,6 +457,7 @@ viewCard : Character -> Int -> Card -> Html Msg
 viewCard character index card =
     Html.div
         [ Html.Attributes.class "card"
+        , Html.Attributes.class (Energy.toString card.element)
         , Html.Attributes.classList [ ( "can-afford", Character.canAfford character card.cost ) ]
         , Html.Events.onClick (ClickedPlayerCard index)
         ]
