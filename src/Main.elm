@@ -51,21 +51,29 @@ type TurnState
 -- MODEL
 
 
-type alias Model =
+type alias RunState =
     { characters : ( Character, Character )
     , turnState : TurnState
     , encounters : List Character
     }
 
 
+type GameState
+    = Run RunState
+    | Home
+
+
+type alias Model =
+    { gameState : GameState
+    , cards : List Card
+    }
+
+
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( Model
-        ( Characters.panda Cards.testDeck1 |> Character.drawHand 5
-        , Characters.badger Cards.basicDeck |> Character.drawHand 3
-        )
-        Recovering
-        [ Characters.rabbit [], Characters.chick [] ]
+        Home
+        []
     , Cmd.none
     )
 
@@ -76,61 +84,98 @@ init _ =
 
 type Msg
     = Tick Float
-    | ClickedResetEnemy
+    | ClickedNextEnemy
+    | ClickedReturnHome
     | ClickedResetGame
     | ClickedPlayerCard Int
     | ClickedReward Card
+    | ClickedStartRun Character
 
 
 update : Msg -> Model -> Model
 update msg model =
-    case msg of
-        Tick dt ->
-            model
-                |> tickCharacters dt
-                |> tickTurnState dt
-                |> advanceTurnState
+    case ( msg, model.gameState ) of
+        ( Tick dt, Run runState ) ->
+            { model
+                | gameState =
+                    Run
+                        (runState
+                            |> tickCharacters dt
+                            |> tickTurnState dt
+                            |> advanceTurnState
+                        )
+            }
 
-        ClickedResetEnemy ->
-            case List.head model.encounters of
+        ( ClickedNextEnemy, Run runState ) ->
+            case List.head runState.encounters of
                 Just character ->
                     { model
-                        | characters =
-                            model.characters
-                                |> Tuple.mapSecond (always (character |> Character.drawHand 3))
-                                |> Tuple.mapFirst Character.resetCards
-                                |> Tuple.mapFirst (Character.drawHand 5)
-                        , encounters = List.drop 1 model.encounters
-                        , turnState = Recovering
+                        | gameState =
+                            Run
+                                { runState
+                                    | characters =
+                                        runState.characters
+                                            |> Tuple.mapSecond (always (character |> Character.drawHand 3))
+                                            |> Tuple.mapFirst Character.resetCards
+                                            |> Tuple.mapFirst (Character.drawHand 5)
+                                    , encounters = List.drop 1 runState.encounters
+                                    , turnState = Recovering
+                                }
                     }
 
                 Nothing ->
                     model
 
-        ClickedResetGame ->
+        ( ClickedReturnHome, Run runState ) ->
+            { model
+                | gameState = Home
+                , cards = (runState.characters |> Tuple.first |> Character.resetCards |> .deck) ++ model.cards
+            }
+
+        ( ClickedResetGame, _ ) ->
             init () |> Tuple.first
 
-        ClickedPlayerCard index ->
-            case model.turnState of
+        ( ClickedPlayerCard index, Run runState ) ->
+            case runState.turnState of
                 Recovering ->
-                    playCard True index model
+                    { model | gameState = Run (playCard True index runState) }
 
                 _ ->
                     model
 
-        ClickedReward card ->
-            case model.turnState of
+        ( ClickedReward card, Run runState ) ->
+            case runState.turnState of
                 Victory _ ->
                     { model
-                        | turnState = Victory []
-                        , characters = Tuple.mapFirst (Character.addCard card) model.characters
+                        | gameState =
+                            Run
+                                { runState
+                                    | turnState = Victory []
+                                    , characters = Tuple.mapFirst (Character.addCard card) runState.characters
+                                }
                     }
 
                 _ ->
                     model
 
+        ( ClickedStartRun player, _ ) ->
+            { model
+                | gameState =
+                    Run
+                        (RunState
+                            ( player |> Character.drawHand 5
+                            , Characters.badger Cards.basicDeck |> Character.drawHand 1
+                            )
+                            Recovering
+                            [ Characters.rabbit [], Characters.chick [] ]
+                        )
+            }
 
-updateFlag : (Character -> Character) -> Bool -> Model -> Model
+        _ ->
+            model
+
+
+updateFlag : (Character -> Character) -> Bool -> RunState -> RunState
 updateFlag f isPlayer model =
     if isPlayer then
         { model | characters = model.characters |> Tuple.mapFirst f }
@@ -139,7 +184,7 @@ updateFlag f isPlayer model =
         { model | characters = model.characters |> Tuple.mapSecond f }
 
 
-playCard : Bool -> Int -> Model -> Model
+playCard : Bool -> Int -> RunState -> RunState
 playCard isPlayer index model =
     case Character.playCardAtIndex index (Tuple.first model.characters) of
         ( newCharacter, Just action ) ->
@@ -150,7 +195,7 @@ playCard isPlayer index model =
             model
 
 
-tickCharacters : Float -> Model -> Model
+tickCharacters : Float -> RunState -> RunState
 tickCharacters dt model =
     case ( model.turnState, [ Tuple.first model.characters, Tuple.second model.characters ] |> List.all Character.isAlive ) of
         ( Recovering, True ) ->
@@ -164,7 +209,7 @@ tickCharacters dt model =
             model
 
 
-tickTurnState : Float -> Model -> Model
+tickTurnState : Float -> RunState -> RunState
 tickTurnState dt model =
     case model.turnState of
         Recovering ->
@@ -191,22 +236,22 @@ tickTurnState dt model =
 --         |> updateFlag (Character.applyAction action) (not isPlayer)
 
 
-setRecoveringState : Model -> Model
+setRecoveringState : RunState -> RunState
 setRecoveringState model =
     { model | turnState = Recovering }
 
 
-setDefeatState : Model -> Model
+setDefeatState : RunState -> RunState
 setDefeatState model =
     { model | turnState = Defeat }
 
 
-setVictoryState : List Card -> Model -> Model
+setVictoryState : List Card -> RunState -> RunState
 setVictoryState rewards model =
     { model | turnState = Victory rewards }
 
 
-getDeadCharacter : Model -> Maybe Bool
+getDeadCharacter : RunState -> Maybe Bool
 getDeadCharacter model =
     [ ( True, Tuple.first model.characters ), ( False, Tuple.second model.characters ) ]
         |> List.map (\( plr, c ) -> ( plr, Character.isAlive c |> not ))
@@ -215,7 +260,7 @@ getDeadCharacter model =
         |> Maybe.map Tuple.first
 
 
-advanceTurnState : Model -> Model
+advanceTurnState : RunState -> RunState
 advanceTurnState model =
     case model.turnState of
         Recovering ->
@@ -497,7 +542,8 @@ viewVictory rewards =
     Html.div []
         [ Html.p [] [ Html.text "Victory!" ]
         , Html.div [] (List.map viewReward rewards)
-        , Html.button [ Html.Events.onClick ClickedResetEnemy ] [ Html.text "Next enemy" ]
+        , Html.button [ Html.Events.onClick ClickedNextEnemy ] [ Html.text "Next enemy" ]
+        , Html.button [ Html.Events.onClick ClickedReturnHome ] [ Html.text "Return home" ]
         ]
 
 
@@ -509,26 +555,46 @@ viewEncounters encounters =
         ]
 
 
-view : Model -> Html Msg
-view model =
-    main_ [ Html.Attributes.id "app" ]
-        (case model.turnState of
+viewRun : RunState -> Html Msg
+viewRun runState =
+    Html.div [ Html.Attributes.class "run" ]
+        (case runState.turnState of
             Defeat ->
                 [ viewDefeat ]
 
             Victory rewards ->
                 [ viewVictory rewards
-                , viewEncounters model.encounters
+                , viewEncounters runState.encounters
                 ]
 
             _ ->
                 [ Html.div [ Html.Attributes.class "characters" ]
-                    [ viewCharacter (characterClasses model.turnState True) (Tuple.first model.characters)
-                    , viewCharacter (characterClasses model.turnState False) (Tuple.second model.characters)
+                    [ viewCharacter (characterClasses runState.turnState True) (Tuple.first runState.characters)
+                    , viewCharacter (characterClasses runState.turnState False) (Tuple.second runState.characters)
                     ]
-                , viewPlayerDeckStats (Tuple.first model.characters)
-                , viewPlayerHand (Tuple.first model.characters)
+                , viewPlayerDeckStats (Tuple.first runState.characters)
+                , viewPlayerHand (Tuple.first runState.characters)
                 ]
+        )
+
+
+viewHome : Model -> Html Msg
+viewHome _ =
+    Html.div [ Html.Attributes.class "home" ]
+        [ Html.h3 [] [ Html.text "Home" ]
+        , Html.button [ Html.Events.onClick (ClickedStartRun (Characters.panda Cards.testDeck1)) ] [ Html.text "Start run" ]
+        ]
+
+
+view : Model -> Html Msg
+view model =
+    main_ [ Html.Attributes.id "app" ]
+        (case model.gameState of
+            Run runState ->
+                [ viewRun runState ]
+
+            Home ->
+                [ viewHome model ]
         )
 
 
