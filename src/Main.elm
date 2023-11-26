@@ -579,10 +579,11 @@ viewRun runState =
 
 
 viewHome : Model -> Html Msg
-viewHome _ =
+viewHome model =
     Html.div [ Html.Attributes.class "home" ]
         [ Html.h3 [] [ Html.text "Home" ]
         , Html.button [ Html.Events.onClick (ClickedStartRun (Characters.panda Cards.testDeck1)) ] [ Html.text "Start run" ]
+        , Html.div [ Html.Attributes.class "cards" ] (List.indexedMap (viewCard (Characters.panda Cards.testDeck1)) model.cards)
         ]
 
 
