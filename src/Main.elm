@@ -58,9 +58,15 @@ type alias RunState =
     }
 
 
+type alias HomeState =
+    { character : Maybe Character
+    , deck : List Card
+    }
+
+
 type GameState
     = Run RunState
-    | Home
+    | Home HomeState
 
 
 type alias Model =
@@ -72,8 +78,8 @@ type alias Model =
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( Model
-        Home
-        []
+        (Home (HomeState Nothing []))
+        [ Cards.basicCard, Cards.basicCard, Cards.buffCard ]
     , Cmd.none
     )
 
@@ -89,7 +95,9 @@ type Msg
     | ClickedResetGame
     | ClickedPlayerCard Int
     | ClickedReward Card
-    | ClickedStartRun Character
+    | ClickedStartRun Character (List Card)
+    | ClickedCardInCollection Int Card
+    | ClickedCardInSelectedCards Int Card
 
 
 update : Msg -> Model -> Model
@@ -128,7 +136,7 @@ update msg model =
 
         ( ClickedReturnHome, Run runState ) ->
             { model
-                | gameState = Home
+                | gameState = Home (HomeState Nothing [])
                 , cards = (runState.characters |> Tuple.first |> Character.resetCards |> .deck) ++ model.cards
             }
 
@@ -158,17 +166,29 @@ update msg model =
                 _ ->
                     model
 
-        ( ClickedStartRun player, _ ) ->
+        ( ClickedStartRun player deck, _ ) ->
             { model
                 | gameState =
                     Run
                         (RunState
-                            ( player |> Character.drawHand 5
+                            ( player |> Character.setDeck deck |> Character.drawHand 5
                             , Characters.badger |> Character.drawHand 1
                             )
                             Recovering
                             [ Characters.rabbit, Characters.chick ]
                         )
+            }
+
+        ( ClickedCardInCollection index card, Home homeState ) ->
+            { model
+                | gameState = Home { homeState | deck = card :: homeState.deck }
+                , cards = List.take index model.cards ++ List.drop (index + 1) model.cards
+            }
+
+        ( ClickedCardInSelectedCards index card, Home homeState ) ->
+            { model
+                | gameState = Home { homeState | deck = List.take index homeState.deck ++ List.drop (index + 1) homeState.deck }
+                , cards = card :: model.cards
             }
 
         _ ->
@@ -584,12 +604,21 @@ viewRun runState =
         )
 
 
-viewHome : Model -> Html Msg
-viewHome model =
+viewHome : HomeState -> Model -> Html Msg
+viewHome homeState model =
     Html.div [ Html.Attributes.class "home" ]
-        [ Html.h3 [] [ Html.text "Home" ]
-        , Html.button [ Html.Events.onClick (ClickedStartRun Characters.panda) ] [ Html.text "Start run" ]
-        , Html.div [ Html.Attributes.class "card-group" ] (List.map (viewCard []) model.cards)
+        [ Html.h1 [] [ Html.text "Home" ]
+
+        -- , Html.h3 [] [ Html.text "Selected Character" ]
+        -- , Html.div [] []
+        , Html.h3 [] [ Html.text "Selected Cards" ]
+        , Html.div [ Html.Attributes.class "card-group" ] (List.indexedMap (\index card -> viewCard [ Html.Events.onClick (ClickedCardInSelectedCards index card) ] card) homeState.deck)
+        , Html.button [ Html.Events.onClick (ClickedStartRun Characters.panda homeState.deck) ] [ Html.text "Start run" ]
+
+        -- , Html.h3 [] [ Html.text "Characters" ]
+        -- , Html.div [] []
+        , Html.h3 [] [ Html.text "Card Collection" ]
+        , Html.div [ Html.Attributes.class "card-group" ] (List.indexedMap (\index card -> viewCard [ Html.Events.onClick (ClickedCardInCollection index card) ] card) model.cards)
         ]
 
 
@@ -600,8 +629,8 @@ view model =
             Run runState ->
                 [ viewRun runState ]
 
-            Home ->
-                [ viewHome model ]
+            Home homeState ->
+                [ viewHome homeState model ]
         )
 
 
@@ -610,8 +639,13 @@ view model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions _ =
-    Browser.Events.onAnimationFrameDelta (min 1000 >> Tick)
+subscriptions model =
+    case model.gameState of
+        Run _ ->
+            Browser.Events.onAnimationFrameDelta (min 1000 >> Tick)
+
+        Home _ ->
+            Sub.none
 
 
 

@@ -12,6 +12,7 @@ module Character exposing
     , playCardAtIndex
     , removeEnergy
     , resetCards
+    , setDeck
     , tick
     )
 
@@ -75,6 +76,11 @@ resetCards character =
 addCard : Card -> Character -> Character
 addCard card character =
     { character | deck = card :: character.deck }
+
+
+setDeck : List Card -> Character -> Character
+setDeck deck character =
+    { character | deck = deck }
 
 
 drawHand : Int -> Character -> Character
