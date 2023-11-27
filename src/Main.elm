@@ -537,11 +537,7 @@ viewCharacterPreview attrs character =
 viewCard : List (Attribute msg) -> Card -> Html msg
 viewCard attrs card =
     Html.div
-        ([ Html.Attributes.class "card"
-         , Html.Attributes.class (Energy.toString card.element)
-         ]
-            ++ attrs
-        )
+        (Html.Attributes.class "card" :: attrs)
         [ Html.h3 [] [ Html.text card.name ]
         , Html.div [ Html.Attributes.class "cost" ] (card.cost |> Dict.toList |> List.map viewCardCost)
         , Html.p [] [ Html.text (Card.actionToString card.action) ]

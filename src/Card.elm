@@ -39,10 +39,9 @@ type alias Card =
     { name : String
     , action : Action
     , cost : Dict Energy Int
-    , element : Energy
     }
 
 
-new : String -> Action -> List ( Energy, Int ) -> Energy -> Card
-new name action cost element =
-    Card name action (Dict.fromList cost) element
+new : String -> Action -> List ( Energy, Int ) -> Card
+new name action cost =
+    Card name action (Dict.fromList cost)
