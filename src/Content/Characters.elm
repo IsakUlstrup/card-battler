@@ -1,26 +1,25 @@
 module Content.Characters exposing (badger, chick, panda, rabbit)
 
-import Card exposing (Card)
 import Character exposing (Character)
 import Stat
 
 
-panda : List Card -> Character
-panda deck =
+panda : Character
+panda =
     Character.new
         '🐼'
-        deck
+        []
         [ ( Stat.CyanRegenModifier, 2 )
         , ( Stat.YellowRegenModifier, 0.7 )
         ]
         100
 
 
-badger : List Card -> Character
-badger deck =
+badger : Character
+badger =
     Character.new
         '🦡'
-        deck
+        []
         [ ( Stat.CyanRegenModifier, 1 )
         , ( Stat.MagentaRegenModifier, 0.2 )
         , ( Stat.AutoPlayFirst, 1 )
@@ -28,11 +27,11 @@ badger deck =
         20
 
 
-rabbit : List Card -> Character
-rabbit deck =
+rabbit : Character
+rabbit =
     Character.new
         '🐰'
-        deck
+        []
         [ ( Stat.CyanRegenModifier, 0.5 )
         , ( Stat.MagentaRegenModifier, 0.2 )
         , ( Stat.AutoPlayFirst, 1 )
@@ -40,11 +39,11 @@ rabbit deck =
         5
 
 
-chick : List Card -> Character
-chick deck =
+chick : Character
+chick =
     Character.new
         '🐤'
-        deck
+        []
         [ ( Stat.CyanRegenModifier, 0.5 )
         , ( Stat.MagentaRegenModifier, 0.2 )
         , ( Stat.AutoPlayFirst, 1 )

@@ -164,10 +164,10 @@ update msg model =
                     Run
                         (RunState
                             ( player |> Character.drawHand 5
-                            , Characters.badger Cards.basicDeck |> Character.drawHand 1
+                            , Characters.badger |> Character.drawHand 1
                             )
                             Recovering
-                            [ Characters.rabbit [], Characters.chick [] ]
+                            [ Characters.rabbit, Characters.chick ]
                         )
             }
 
@@ -588,7 +588,7 @@ viewHome : Model -> Html Msg
 viewHome model =
     Html.div [ Html.Attributes.class "home" ]
         [ Html.h3 [] [ Html.text "Home" ]
-        , Html.button [ Html.Events.onClick (ClickedStartRun (Characters.panda Cards.testDeck1)) ] [ Html.text "Start run" ]
+        , Html.button [ Html.Events.onClick (ClickedStartRun Characters.panda) ] [ Html.text "Start run" ]
         , Html.div [ Html.Attributes.class "card-group" ] (List.map (viewCard []) model.cards)
         ]
 
