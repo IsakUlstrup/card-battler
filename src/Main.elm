@@ -98,6 +98,7 @@ type Msg
     | ClickedStartRun Character (List Card)
     | ClickedCardInCollection Int Card
     | ClickedCardInSelectedCards Int Card
+    | ClickedCharacterPreset Character
 
 
 update : Msg -> Model -> Model
@@ -189,6 +190,11 @@ update msg model =
             { model
                 | gameState = Home { homeState | deck = List.take index homeState.deck ++ List.drop (index + 1) homeState.deck }
                 , cards = card :: model.cards
+            }
+
+        ( ClickedCharacterPreset character, Home homeState ) ->
+            { model
+                | gameState = Home { homeState | character = Just character }
             }
 
         _ ->
@@ -606,18 +612,29 @@ viewRun runState =
 
 viewHome : HomeState -> Model -> Html Msg
 viewHome homeState model =
+    let
+        viewCharacterPreset character =
+            viewCharacter [ Html.Events.onClick (ClickedCharacterPreset character) ] character
+    in
     Html.div [ Html.Attributes.class "home" ]
         [ Html.h1 [] [ Html.text "Home" ]
+        , Html.h3 [] [ Html.text "Selected Character" ]
+        , Html.div []
+            (case homeState.character of
+                Just character ->
+                    [ viewCharacter [] character
+                    , Html.button [ Html.Events.onClick (ClickedStartRun character homeState.deck) ] [ Html.text "Start run" ]
+                    ]
 
-        -- , Html.h3 [] [ Html.text "Selected Character" ]
-        -- , Html.div [] []
+                Nothing ->
+                    []
+            )
         , Html.h3 [] [ Html.text "Selected Cards" ]
         , Html.div [ Html.Attributes.class "card-group" ] (List.indexedMap (\index card -> viewCard [ Html.Events.onClick (ClickedCardInSelectedCards index card) ] card) homeState.deck)
-        , Html.button [ Html.Events.onClick (ClickedStartRun Characters.panda homeState.deck) ] [ Html.text "Start run" ]
         , Html.h3 [] [ Html.text "Characters" ]
         , Html.div []
-            [ viewCharacter [] Characters.panda
-            , viewCharacter [] Characters.unicorn
+            [ viewCharacterPreset Characters.panda
+            , viewCharacterPreset Characters.unicorn
             ]
         , Html.h3 [] [ Html.text "Card Collection" ]
         , Html.div [ Html.Attributes.class "card-group" ] (List.indexedMap (\index card -> viewCard [ Html.Events.onClick (ClickedCardInCollection index card) ] card) model.cards)
