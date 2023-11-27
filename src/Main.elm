@@ -14,7 +14,7 @@ import Html exposing (Attribute, Html, main_)
 import Html.Attributes
 import Html.Events
 import Html.Keyed
-import Stat
+import Stat exposing (Stat)
 
 
 
@@ -378,10 +378,9 @@ viewBuff buff =
         ]
 
 
-
--- viewStat : ( Stat, Float ) -> Html msg
--- viewStat ( statType, statValue ) =
---     Html.p [ Html.Attributes.class "stat" ] [ Html.text (Stat.toString statType ++ ": " ++ String.fromFloat statValue) ]
+viewStat : ( Stat, Float ) -> Html msg
+viewStat ( statType, statValue ) =
+    Html.p [ Html.Attributes.class "stat" ] [ Html.text (Stat.toString statType ++ ": " ++ String.fromFloat statValue) ]
 
 
 viewHealthHistoryItem : ( Int, Int ) -> ( String, Html msg )
@@ -524,6 +523,17 @@ viewCharacter attrs character =
         ]
 
 
+viewCharacterPreview : List (Attribute msg) -> Character -> Html msg
+viewCharacterPreview attrs character =
+    Html.div (Html.Attributes.class "character-preview" :: attrs)
+        [ Html.h1 [ Html.Attributes.class "icon" ] [ Html.text (String.fromChar character.icon) ]
+        , Html.div []
+            (Character.deriveStats character
+                |> List.map viewStat
+            )
+        ]
+
+
 viewCard : List (Attribute msg) -> Card -> Html msg
 viewCard attrs card =
     Html.div
@@ -614,7 +624,7 @@ viewHome : HomeState -> Model -> Html Msg
 viewHome homeState model =
     let
         viewCharacterPreset character =
-            viewCharacter [ Html.Events.onClick (ClickedCharacterPreset character) ] character
+            viewCharacterPreview [ Html.Events.onClick (ClickedCharacterPreset character) ] character
     in
     Html.div [ Html.Attributes.class "home" ]
         [ Html.h1 [] [ Html.text "Home" ]
@@ -622,7 +632,7 @@ viewHome homeState model =
         , Html.div []
             (case homeState.character of
                 Just character ->
-                    [ viewCharacter [] character
+                    [ viewCharacterPreview [] character
                     , Html.button [ Html.Events.onClick (ClickedStartRun character homeState.deck) ] [ Html.text "Start run" ]
                     ]
 
@@ -632,7 +642,7 @@ viewHome homeState model =
         , Html.h3 [] [ Html.text "Selected Cards" ]
         , Html.div [ Html.Attributes.class "card-group" ] (List.indexedMap (\index card -> viewCard [ Html.Events.onClick (ClickedCardInSelectedCards index card) ] card) homeState.deck)
         , Html.h3 [] [ Html.text "Characters" ]
-        , Html.div []
+        , Html.div [ Html.Attributes.style "display" "flex", Html.Attributes.style "gap" "1rem" ]
             [ viewCharacterPreset Characters.panda
             , viewCharacterPreset Characters.unicorn
             ]
