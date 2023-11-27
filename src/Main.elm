@@ -498,14 +498,14 @@ viewCharacter attrs character =
         ]
 
 
-viewCard : Character -> Int -> Card -> Html Msg
-viewCard character index card =
+viewCard : List (Attribute msg) -> Card -> Html msg
+viewCard attrs card =
     Html.div
-        [ Html.Attributes.class "card"
-        , Html.Attributes.class (Energy.toString card.element)
-        , Html.Attributes.classList [ ( "can-afford", Character.canAfford character card.cost ) ]
-        , Html.Events.onClick (ClickedPlayerCard index)
-        ]
+        ([ Html.Attributes.class "card"
+         , Html.Attributes.class (Energy.toString card.element)
+         ]
+            ++ attrs
+        )
         [ Html.h3 [] [ Html.text card.name ]
         , Html.div [ Html.Attributes.class "cost" ] (card.cost |> Dict.toList |> List.map viewCardCost)
         , Html.p [] [ Html.text (Card.actionToString card.action) ]
@@ -522,7 +522,13 @@ viewPlayerDeckStats character =
 
 viewPlayerHand : Character -> Html Msg
 viewPlayerHand character =
-    Html.div [ Html.Attributes.class "player-hand" ] (List.indexedMap (viewCard character) character.hand)
+    let
+        cardAttributes index card =
+            [ Html.Attributes.classList [ ( "cant-afford", Character.canAfford character card.cost |> not ) ]
+            , Html.Events.onClick (ClickedPlayerCard index)
+            ]
+    in
+    Html.div [ Html.Attributes.class "player-hand" ] (List.indexedMap (\index card -> viewCard (cardAttributes index card) card) character.hand)
 
 
 viewDefeat : Html Msg
@@ -537,11 +543,11 @@ viewVictory : List Card -> Html Msg
 viewVictory rewards =
     let
         viewReward reward =
-            Html.div [ Html.Events.onClick (ClickedReward reward) ] [ Html.text reward.name ]
+            viewCard [ Html.Events.onClick (ClickedReward reward) ] reward
     in
     Html.div []
         [ Html.p [] [ Html.text "Victory!" ]
-        , Html.div [] (List.map viewReward rewards)
+        , Html.div [ Html.Attributes.class "card-group" ] (List.map viewReward rewards)
         , Html.button [ Html.Events.onClick ClickedNextEnemy ] [ Html.text "Next enemy" ]
         , Html.button [ Html.Events.onClick ClickedReturnHome ] [ Html.text "Return home" ]
         ]
@@ -583,7 +589,7 @@ viewHome model =
     Html.div [ Html.Attributes.class "home" ]
         [ Html.h3 [] [ Html.text "Home" ]
         , Html.button [ Html.Events.onClick (ClickedStartRun (Characters.panda Cards.testDeck1)) ] [ Html.text "Start run" ]
-        , Html.div [ Html.Attributes.class "hand" ] (List.indexedMap (viewCard (Characters.panda Cards.testDeck1)) model.cards)
+        , Html.div [ Html.Attributes.class "card-group" ] (List.map (viewCard []) model.cards)
         ]
 
 

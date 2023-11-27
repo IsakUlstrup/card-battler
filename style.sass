@@ -213,23 +213,27 @@ body
     overflow-x: auto
     padding: $spacing-medium 0
 
-    .card
-        flex: 0 0 8rem
-        height: 12rem
-        user-select: none
-        cursor: pointer
-        border: 0.2rem solid beige
-        padding: $spacing-small
-        opacity: 0.5
-        border-radius: 1rem
-        display: flex
-        flex-direction: column
-        justify-content: center
-        gap: $spacing-medium
-        text-align: center
+.card-group
+    display: flex
+    gap: $spacing-medium
+    flex-wrap: wrap
 
-        &.can-afford
-            opacity: 1
+.card
+    flex: 0 0 8rem
+    height: 12rem
+    user-select: none
+    cursor: pointer
+    border: 0.2rem solid beige
+    padding: $spacing-small
+    border-radius: 1rem
+    display: flex
+    flex-direction: column
+    justify-content: center
+    gap: $spacing-medium
+    text-align: center
+
+    &.cant-afford
+        opacity: 0.5
 
     .cost
         display: flex
