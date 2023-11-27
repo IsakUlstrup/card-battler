@@ -5,6 +5,7 @@ import Browser.Events
 import Buff exposing (Buff)
 import Card exposing (Action, Card)
 import Character exposing (Character)
+import Codec
 import Content.Cards as Cards
 import Content.Characters as Characters
 import Cooldown exposing (Cooldown)
@@ -682,6 +683,13 @@ main =
     Browser.element
         { init = init
         , view = view
-        , update = \msg model -> ( update msg model, Cmd.none )
+        , update =
+            \msg model ->
+                case msg of
+                    ClickedReturnHome ->
+                        ( update msg model, Codec.saveCards model.cards )
+
+                    _ ->
+                        ( update msg model, Cmd.none )
         , subscriptions = subscriptions
         }

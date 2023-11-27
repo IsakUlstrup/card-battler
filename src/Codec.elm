@@ -1,4 +1,4 @@
-module Codec exposing (savePosts)
+module Codec exposing (saveCards)
 
 import Card exposing (Action, Card)
 import Json.Encode as Encode
@@ -22,8 +22,8 @@ cardEncoder card =
         ]
 
 
-savePosts : List Card -> Cmd msg
-savePosts cards =
+saveCards : List Card -> Cmd msg
+saveCards cards =
     Encode.list cardEncoder cards
         |> Encode.encode 0
         |> Ports.storeCards
