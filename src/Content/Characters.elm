@@ -1,4 +1,4 @@
-module Content.Characters exposing (badger, chick, panda, rabbit)
+module Content.Characters exposing (badger, chick, panda, rabbit, unicorn)
 
 import Character exposing (Character)
 import Content.Cards
@@ -13,6 +13,17 @@ panda : Character
 panda =
     Character.new
         '🐼'
+        []
+        [ ( Stat.CyanRegenModifier, 2 )
+        , ( Stat.YellowRegenModifier, 0.7 )
+        ]
+        100
+
+
+unicorn : Character
+unicorn =
+    Character.new
+        '🦄'
         []
         [ ( Stat.CyanRegenModifier, 2 )
         , ( Stat.YellowRegenModifier, 0.7 )

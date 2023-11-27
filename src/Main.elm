@@ -614,9 +614,11 @@ viewHome homeState model =
         , Html.h3 [] [ Html.text "Selected Cards" ]
         , Html.div [ Html.Attributes.class "card-group" ] (List.indexedMap (\index card -> viewCard [ Html.Events.onClick (ClickedCardInSelectedCards index card) ] card) homeState.deck)
         , Html.button [ Html.Events.onClick (ClickedStartRun Characters.panda homeState.deck) ] [ Html.text "Start run" ]
-
-        -- , Html.h3 [] [ Html.text "Characters" ]
-        -- , Html.div [] []
+        , Html.h3 [] [ Html.text "Characters" ]
+        , Html.div []
+            [ viewCharacter [] Characters.panda
+            , viewCharacter [] Characters.unicorn
+            ]
         , Html.h3 [] [ Html.text "Card Collection" ]
         , Html.div [ Html.Attributes.class "card-group" ] (List.indexedMap (\index card -> viewCard [ Html.Events.onClick (ClickedCardInCollection index card) ] card) model.cards)
         ]
