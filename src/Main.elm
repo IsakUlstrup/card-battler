@@ -3,7 +3,7 @@ module Main exposing (Model, Msg, TurnState, main)
 import Browser
 import Browser.Events
 import Buff exposing (Buff)
-import Card exposing (Action, Card)
+import Card exposing (Action(..), Card)
 import Character exposing (Character)
 import Codec
 import Content.Cards as Cards
@@ -43,7 +43,6 @@ characterTypeString isPlayer =
 type TurnState
     = Recovering
     | Attacking Bool Action Cooldown
-      -- | Hit Bool Cooldown
     | Defeat
     | Victory (List Card)
 
@@ -300,14 +299,28 @@ advanceTurnState model =
                         setVictoryState [ Cards.basicCard2, Cards.expensiveCard ] model
 
                 Nothing ->
-                    case Character.playCardAtIndex 0 (Tuple.second model.characters) of
-                        ( newCharacter, Just action ) ->
+                    -- case Character.playCardAtIndex 0 (Tuple.second model.characters) of
+                    --     ( newCharacter, Just action ) ->
+                    --         { model
+                    --             | turnState = Attacking False action (Cooldown.new characterAnimationDuration)
+                    --             , characters = Tuple.mapSecond (always newCharacter) model.characters
+                    --         }
+                    --     ( _, Nothing ) ->
+                    --         model
+                    case ( Character.isReady (Tuple.first model.characters), Character.isReady (Tuple.second model.characters) ) of
+                        ( True, _ ) ->
                             { model
-                                | turnState = Attacking False action (Cooldown.new characterAnimationDuration)
-                                , characters = Tuple.mapSecond (always newCharacter) model.characters
+                                | turnState = Attacking True (Attack 1) (Cooldown.new characterAnimationDuration)
+                                , characters = Tuple.mapFirst Character.resetCooldown model.characters
                             }
 
-                        ( _, Nothing ) ->
+                        ( False, True ) ->
+                            { model
+                                | turnState = Attacking False (Attack 1) (Cooldown.new characterAnimationDuration)
+                                , characters = Tuple.mapSecond Character.resetCooldown model.characters
+                            }
+
+                        _ ->
                             model
 
         Attacking isPlayer action cooldown ->
@@ -514,9 +527,13 @@ viewCharacter attrs character =
         --             ++ String.fromInt (Tuple.second character.health)
         --         )
         --     ]
+        , Html.p [] [ Html.text "health" ]
         , viewCustomMeter (Tuple.second character.health) (Tuple.first character.health)
-        , Html.div [ Html.Attributes.class "energy" ] (Dict.toList character.energy |> List.filterMap viewEnergy)
-        , Html.div [ Html.Attributes.class "hand" ] (List.map (viewSmallCard character) character.hand)
+
+        -- , Html.div [ Html.Attributes.class "energy" ] (Dict.toList character.energy |> List.filterMap viewEnergy)
+        -- , Html.div [ Html.Attributes.class "hand" ] (List.map (viewSmallCard character) character.hand)
+        , Html.p [] [ Html.text "cooldown" ]
+        , viewCooldown character.cooldown
 
         -- , Html.details [ Html.Attributes.class "stats" ]
         --     [ Html.summary []

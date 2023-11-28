@@ -8,16 +8,19 @@ module Character exposing
     , deriveStats
     , drawHand
     , isAlive
+    , isReady
     , new
     , playCardAtIndex
     , removeEnergy
     , resetCards
+    , resetCooldown
     , setDeck
     , tick
     )
 
 import Buff exposing (Buff)
 import Card exposing (Action, Card)
+import Cooldown exposing (Cooldown)
 import CustomDict as Dict exposing (Dict)
 import Energy exposing (Energy(..))
 import Stat exposing (Stat)
@@ -31,6 +34,7 @@ type alias Character =
     , health : ( Int, Int )
     , healthHistory : List ( Int, Int )
     , baseStats : Dict Stat Float
+    , cooldown : Cooldown
     , buffs : List Buff
     , energy : Dict Energy Float
     , deck : List Card
@@ -49,6 +53,7 @@ new icon deck baseStats health =
         ( health, health )
         []
         (Dict.fromList baseStats)
+        (Cooldown.new 5000)
         []
         (Dict.fromList
             [ ( Cyan, 0 )
@@ -155,6 +160,7 @@ tick dt character =
                 character.buffs
                     |> List.map (Buff.tick dt)
                     |> List.filter Buff.notDone
+            , cooldown = Cooldown.tick dt character.cooldown
             , energy =
                 character.energy
                     |> Dict.map (tickEnergy character dt)
@@ -164,6 +170,11 @@ tick dt character =
 
     else
         character
+
+
+resetCooldown : Character -> Character
+resetCooldown character =
+    { character | cooldown = Cooldown.reset character.cooldown }
 
 
 {-| Apply hit to character
@@ -196,6 +207,11 @@ applyAction action character =
 isAlive : Character -> Bool
 isAlive character =
     Tuple.first character.health > 0
+
+
+isReady : Character -> Bool
+isReady character =
+    Cooldown.isDone character.cooldown
 
 
 
