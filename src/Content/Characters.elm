@@ -16,6 +16,8 @@ panda =
         []
         [ ( Stat.CyanRegenModifier, 2 )
         , ( Stat.YellowRegenModifier, 0.7 )
+        , ( Stat.Attack, 2 )
+        , ( Stat.Speed, 0.5 )
         ]
         100
 
@@ -28,6 +30,8 @@ unicorn =
         [ ( Stat.CyanRegenModifier, 2 )
         , ( Stat.YellowRegenModifier, 0.7 )
         , ( Stat.CyanCap, 2 )
+        , ( Stat.Attack, 5 )
+        , ( Stat.Speed, 3 )
         ]
         100
 
@@ -44,6 +48,8 @@ badger =
         [ ( Stat.CyanRegenModifier, 1 )
         , ( Stat.MagentaRegenModifier, 0.2 )
         , ( Stat.AutoPlayFirst, 1 )
+        , ( Stat.Attack, 5 )
+        , ( Stat.Speed, 2 )
         ]
         7
 
@@ -56,6 +62,8 @@ rabbit =
         [ ( Stat.CyanRegenModifier, 0.5 )
         , ( Stat.MagentaRegenModifier, 0.2 )
         , ( Stat.AutoPlayFirst, 1 )
+        , ( Stat.Attack, 1 )
+        , ( Stat.Speed, 5 )
         ]
         5
 
@@ -64,9 +72,6 @@ chick : Character
 chick =
     Character.new
         '🐤'
-        [ Content.Cards.buffCard ]
-        [ ( Stat.CyanRegenModifier, 0.5 )
-        , ( Stat.MagentaRegenModifier, 0.2 )
-        , ( Stat.AutoPlayFirst, 1 )
-        ]
+        []
+        []
         5

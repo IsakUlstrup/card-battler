@@ -244,8 +244,6 @@ tickTurnState dt model =
         Attacking isPlayer power cooldown ->
             { model | turnState = Attacking isPlayer power (Cooldown.tick dt cooldown) }
 
-        -- Hit isPlayer cooldown ->
-        --     { model | turnState = Hit isPlayer (Cooldown.tick dt cooldown) }
         Defeat ->
             model
 
@@ -310,13 +308,13 @@ advanceTurnState model =
                     case ( Character.isReady (Tuple.first model.characters), Character.isReady (Tuple.second model.characters) ) of
                         ( True, _ ) ->
                             { model
-                                | turnState = Attacking True (Attack 1) (Cooldown.new characterAnimationDuration)
+                                | turnState = Attacking True (Attack (Character.deriveStat Stat.Attack (Tuple.first model.characters) |> round)) (Cooldown.new characterAnimationDuration)
                                 , characters = Tuple.mapFirst Character.resetCooldown model.characters
                             }
 
                         ( False, True ) ->
                             { model
-                                | turnState = Attacking False (Attack 1) (Cooldown.new characterAnimationDuration)
+                                | turnState = Attacking False (Attack (Character.deriveStat Stat.Attack (Tuple.second model.characters) |> round)) (Cooldown.new characterAnimationDuration)
                                 , characters = Tuple.mapSecond Character.resetCooldown model.characters
                             }
 
@@ -402,24 +400,23 @@ viewHealthHistoryItem ( id, delta ) =
     ( "item" ++ String.fromInt id, Html.p [] [ Html.text (String.fromInt delta) ] )
 
 
-viewEnergy : ( Energy, Float ) -> Maybe (Html msg)
-viewEnergy ( energy, amount ) =
-    if amount > 0 then
-        Just
-            (Html.div [ Html.Attributes.class (Energy.toString energy) ]
-                [ Html.p [] [ Html.text (String.fromInt (floor amount)) ]
-                , Html.progress
-                    [ Html.Attributes.value (String.fromFloat (amount - toFloat (floor amount)))
-                    , Html.Attributes.max "1"
-                    ]
-                    []
 
-                -- , viewCooldown cooldown
-                ]
-            )
-
-    else
-        Nothing
+-- viewEnergy : ( Energy, Float ) -> Maybe (Html msg)
+-- viewEnergy ( energy, amount ) =
+--     if amount > 0 then
+--         Just
+--             (Html.div [ Html.Attributes.class (Energy.toString energy) ]
+--                 [ Html.p [] [ Html.text (String.fromInt (floor amount)) ]
+--                 , Html.progress
+--                     [ Html.Attributes.value (String.fromFloat (amount - toFloat (floor amount)))
+--                     , Html.Attributes.max "1"
+--                     ]
+--                     []
+--                 -- , viewCooldown cooldown
+--                 ]
+--             )
+--     else
+--         Nothing
 
 
 viewCardCost : ( Energy, Int ) -> Html msg
@@ -427,15 +424,16 @@ viewCardCost ( energy, amount ) =
     Html.p [ Html.Attributes.class (Energy.toString energy) ] [ Html.text (String.fromInt amount) ]
 
 
-viewSmallCard : Character -> Card -> Html msg
-viewSmallCard character card =
-    Html.div
-        [ Html.Attributes.class "card"
-        , Html.Attributes.classList [ ( "can-afford", Character.canAfford character card.cost ) ]
-        ]
-        [ Html.div [] (card.cost |> Dict.toList |> List.map viewCardCost)
-        , Html.p [] [ Html.text (Card.actionToIcon card.action) ]
-        ]
+
+-- viewSmallCard : Character -> Card -> Html msg
+-- viewSmallCard character card =
+--     Html.div
+--         [ Html.Attributes.class "card"
+--         , Html.Attributes.classList [ ( "can-afford", Character.canAfford character card.cost ) ]
+--         ]
+--         [ Html.div [] (card.cost |> Dict.toList |> List.map viewCardCost)
+--         , Html.p [] [ Html.text (Card.actionToIcon card.action) ]
+--         ]
 
 
 characterClasses : TurnState -> Bool -> List (Attribute msg)

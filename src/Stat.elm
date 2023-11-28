@@ -12,6 +12,8 @@ type Stat
     | CyanCap
     | MagentaCap
     | YellowCap
+    | Attack
+    | Speed
 
 
 {-| stat to string
@@ -39,3 +41,9 @@ toString stat =
 
         YellowCap ->
             "Yellow cap"
+
+        Attack ->
+            "Attack"
+
+        Speed ->
+            "Speed"

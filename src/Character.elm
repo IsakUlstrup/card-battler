@@ -160,7 +160,7 @@ tick dt character =
                 character.buffs
                     |> List.map (Buff.tick dt)
                     |> List.filter Buff.notDone
-            , cooldown = Cooldown.tick dt character.cooldown
+            , cooldown = Cooldown.tick (dt * deriveStat Stat.Speed character) character.cooldown
             , energy =
                 character.energy
                     |> Dict.map (tickEnergy character dt)
