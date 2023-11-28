@@ -45,7 +45,7 @@ badger =
         , ( Stat.MagentaRegenModifier, 0.2 )
         , ( Stat.AutoPlayFirst, 1 )
         ]
-        20
+        7
 
 
 rabbit : Character
