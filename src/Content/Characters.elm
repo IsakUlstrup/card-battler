@@ -27,6 +27,7 @@ unicorn =
         []
         [ ( Stat.CyanRegenModifier, 2 )
         , ( Stat.YellowRegenModifier, 0.7 )
+        , ( Stat.CyanCap, 2 )
         ]
         100
 

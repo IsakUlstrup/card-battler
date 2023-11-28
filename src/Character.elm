@@ -32,7 +32,7 @@ type alias Character =
     , healthHistory : List ( Int, Int )
     , baseStats : Dict Stat Float
     , buffs : List Buff
-    , energy : Dict Energy ( Float, Int )
+    , energy : Dict Energy Float
     , deck : List Card
     , hand : List Card
     , played : List Card
@@ -51,9 +51,9 @@ new icon deck baseStats health =
         (Dict.fromList baseStats)
         []
         (Dict.fromList
-            [ ( Cyan, ( 0, defaultEnergyCap ) )
-            , ( Magenta, ( 0, defaultEnergyCap ) )
-            , ( Yellow, ( 0, defaultEnergyCap ) )
+            [ ( Cyan, 0 )
+            , ( Magenta, 0 )
+            , ( Yellow, 0 )
             ]
         )
         deck
@@ -263,7 +263,7 @@ addBuff buff character =
 getEnergy : Character -> Dict Energy Int
 getEnergy character =
     character.energy
-        |> Dict.map (\_ v -> Tuple.first v |> floor)
+        |> Dict.map (\_ v -> floor v)
 
 
 canAfford : Character -> Dict Energy Int -> Bool
@@ -290,38 +290,53 @@ canPlayFirst character =
         |> Maybe.withDefault False
 
 
-defaultEnergyCap : Int
-defaultEnergyCap =
-    10
+tickEnergy : Character -> Float -> Energy -> Float -> Float
+tickEnergy character dt energy amount =
+    case energy of
+        Cyan ->
+            let
+                cap =
+                    deriveStat Stat.CyanCap character
+            in
+            if amount < cap then
+                amount + ((dt / 3500) * deriveStat Stat.CyanRegenModifier character) |> min cap
 
+            else
+                amount
 
-tickEnergy : Character -> Float -> Energy -> ( Float, Int ) -> ( Float, Int )
-tickEnergy character dt energy ( amount, cap ) =
-    if amount < toFloat cap then
-        case energy of
-            Cyan ->
-                ( amount + ((dt / 3500) * deriveStat Stat.CyanRegenModifier character) |> min (toFloat cap), cap )
+        Magenta ->
+            let
+                cap =
+                    deriveStat Stat.MagentaCap character
+            in
+            if amount < cap then
+                amount + ((dt / 3500) * deriveStat Stat.MagentaRegenModifier character) |> min cap
 
-            Magenta ->
-                ( amount + ((dt / 3500) * deriveStat Stat.MagentaRegenModifier character) |> min (toFloat cap), cap )
+            else
+                amount
 
-            Yellow ->
-                ( amount + ((dt / 3500) * deriveStat Stat.YellowRegenModifier character) |> min (toFloat cap), cap )
+        Yellow ->
+            let
+                cap =
+                    deriveStat Stat.YellowCap character
+            in
+            if amount < cap then
+                amount + ((dt / 3500) * deriveStat Stat.YellowRegenModifier character) |> min cap
 
-    else
-        ( amount, cap )
+            else
+                amount
 
 
 removeEnergy : Dict Energy Int -> Character -> Character
 removeEnergy cost character =
     let
-        remove : Energy -> ( Float, Int ) -> ( Float, Int )
-        remove energyType energyState =
+        remove : Energy -> Float -> Float
+        remove energyType energyAmount =
             case Dict.get energyType cost of
                 Just energyCost ->
-                    Tuple.mapFirst (\e -> max 0 (e - toFloat energyCost)) energyState
+                    max 0 (energyAmount - toFloat energyCost)
 
                 Nothing ->
-                    energyState
+                    energyAmount
     in
     { character | energy = character.energy |> Dict.map remove }

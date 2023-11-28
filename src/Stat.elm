@@ -9,6 +9,9 @@ type Stat
     | MagentaRegenModifier
     | YellowRegenModifier
     | AutoPlayFirst
+    | CyanCap
+    | MagentaCap
+    | YellowCap
 
 
 {-| stat to string
@@ -27,3 +30,12 @@ toString stat =
 
         AutoPlayFirst ->
             "Auto play first"
+
+        CyanCap ->
+            "Cyan cap"
+
+        MagentaCap ->
+            "Magenta cap"
+
+        YellowCap ->
+            "Yellow cap"
