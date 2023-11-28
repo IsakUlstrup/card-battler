@@ -18,7 +18,6 @@ module Character exposing
 
 import Buff exposing (Buff)
 import Card exposing (Action, Card)
-import Cooldown exposing (Cooldown)
 import CustomDict as Dict exposing (Dict)
 import Energy exposing (Energy(..))
 import Stat exposing (Stat)
@@ -33,7 +32,7 @@ type alias Character =
     , healthHistory : List ( Int, Int )
     , baseStats : Dict Stat Float
     , buffs : List Buff
-    , energy : Dict Energy ( Cooldown, ( Int, Int ) )
+    , energy : Dict Energy ( Float, Int )
     , deck : List Card
     , hand : List Card
     , played : List Card
@@ -52,9 +51,9 @@ new icon deck baseStats health =
         (Dict.fromList baseStats)
         []
         (Dict.fromList
-            [ ( Cyan, ( Cooldown.new 3500, ( 0, defaultEnergyCap ) ) )
-            , ( Magenta, ( Cooldown.new 3500, ( 0, defaultEnergyCap ) ) )
-            , ( Yellow, ( Cooldown.new 3500, ( 0, defaultEnergyCap ) ) )
+            [ ( Cyan, ( 0, defaultEnergyCap ) )
+            , ( Magenta, ( 0, defaultEnergyCap ) )
+            , ( Yellow, ( 0, defaultEnergyCap ) )
             ]
         )
         deck
@@ -159,7 +158,8 @@ tick dt character =
             , energy =
                 character.energy
                     |> Dict.map (tickEnergy character dt)
-                    |> Dict.map addEnergy
+
+            -- |> Dict.map addEnergy
         }
 
     else
@@ -263,7 +263,7 @@ addBuff buff character =
 getEnergy : Character -> Dict Energy Int
 getEnergy character =
     character.energy
-        |> Dict.map (\_ v -> Tuple.second v |> Tuple.first)
+        |> Dict.map (\_ v -> Tuple.first v |> floor)
 
 
 canAfford : Character -> Dict Energy Int -> Bool
@@ -295,42 +295,33 @@ defaultEnergyCap =
     10
 
 
-tickEnergy : Character -> Float -> Energy -> ( Cooldown, ( Int, Int ) ) -> ( Cooldown, ( Int, Int ) )
-tickEnergy character dt energy ( cooldown, ( amount, cap ) ) =
-    if amount /= cap then
+tickEnergy : Character -> Float -> Energy -> ( Float, Int ) -> ( Float, Int )
+tickEnergy character dt energy ( amount, cap ) =
+    if amount < toFloat cap then
         case energy of
             Cyan ->
-                ( Cooldown.tick (dt * deriveStat Stat.CyanRegenModifier character) cooldown, ( amount, cap ) )
+                ( amount + ((dt / 3500) * deriveStat Stat.CyanRegenModifier character) |> min (toFloat cap), cap )
 
             Magenta ->
-                ( Cooldown.tick (dt * deriveStat Stat.MagentaRegenModifier character) cooldown, ( amount, cap ) )
+                ( amount + ((dt / 3500) * deriveStat Stat.MagentaRegenModifier character) |> min (toFloat cap), cap )
 
             Yellow ->
-                ( Cooldown.tick (dt * deriveStat Stat.YellowRegenModifier character) cooldown, ( amount, cap ) )
+                ( amount + ((dt / 3500) * deriveStat Stat.YellowRegenModifier character) |> min (toFloat cap), cap )
 
     else
-        ( cooldown, ( amount, cap ) )
-
-
-addEnergy : Energy -> ( Cooldown, ( Int, Int ) ) -> ( Cooldown, ( Int, Int ) )
-addEnergy _ ( cooldown, ( amount, cap ) ) =
-    if Cooldown.isDone cooldown then
-        ( Cooldown.reset cooldown, ( min cap (amount + 1), cap ) )
-
-    else
-        ( cooldown, ( amount, cap ) )
+        ( amount, cap )
 
 
 removeEnergy : Dict Energy Int -> Character -> Character
 removeEnergy cost character =
     let
-        remove : Energy -> ( Cooldown, ( Int, Int ) ) -> ( Cooldown, ( Int, Int ) )
-        remove energyType ( cooldown, energyState ) =
+        remove : Energy -> ( Float, Int ) -> ( Float, Int )
+        remove energyType energyState =
             case Dict.get energyType cost of
                 Just energyCost ->
-                    ( cooldown, Tuple.mapFirst (\e -> max 0 (e - energyCost)) energyState )
+                    Tuple.mapFirst (\e -> max 0 (e - toFloat energyCost)) energyState
 
                 Nothing ->
-                    ( cooldown, energyState )
+                    energyState
     in
     { character | energy = character.energy |> Dict.map remove }

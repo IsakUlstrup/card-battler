@@ -389,13 +389,19 @@ viewHealthHistoryItem ( id, delta ) =
     ( "item" ++ String.fromInt id, Html.p [] [ Html.text (String.fromInt delta) ] )
 
 
-viewEnergy : ( Energy, ( Cooldown, ( Int, Int ) ) ) -> Maybe (Html msg)
-viewEnergy ( energy, ( cooldown, ( amount, cap ) ) ) =
-    if amount > 0 || Tuple.first cooldown > 0 then
+viewEnergy : ( Energy, ( Float, Int ) ) -> Maybe (Html msg)
+viewEnergy ( energy, ( amount, cap ) ) =
+    if amount > 0 then
         Just
             (Html.div [ Html.Attributes.class (Energy.toString energy) ]
-                [ Html.p [] [ Html.text (String.fromInt amount ++ "/" ++ String.fromInt cap) ]
-                , viewCooldown cooldown
+                [ Html.p [] [ Html.text (String.fromInt (floor amount) ++ "/" ++ String.fromInt cap) ]
+                , Html.progress
+                    [ Html.Attributes.value (String.fromFloat (amount - toFloat (floor amount)))
+                    , Html.Attributes.max "1"
+                    ]
+                    []
+
+                -- , viewCooldown cooldown
                 ]
             )
 
