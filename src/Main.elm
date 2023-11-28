@@ -214,8 +214,9 @@ playCard : Bool -> Int -> RunState -> RunState
 playCard isPlayer index model =
     case Character.playCardAtIndex index (Tuple.first model.characters) of
         ( newCharacter, Just action ) ->
-            { model | turnState = Attacking isPlayer action (Cooldown.new characterAnimationDuration) }
+            model
                 |> updateFlag (always newCharacter) isPlayer
+                |> updateFlag (Character.applyAction action) (not isPlayer)
 
         ( _, Nothing ) ->
             model
