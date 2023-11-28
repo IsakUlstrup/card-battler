@@ -401,23 +401,24 @@ viewHealthHistoryItem ( id, delta ) =
     ( "item" ++ String.fromInt id, Html.p [] [ Html.text (String.fromInt delta) ] )
 
 
+viewEnergy : ( Energy, Float ) -> Maybe (Html msg)
+viewEnergy ( energy, amount ) =
+    if amount > 0 then
+        Just
+            (Html.div [ Html.Attributes.class (Energy.toString energy) ]
+                [ Html.p [] [ Html.text (String.fromInt (floor amount)) ]
+                , Html.progress
+                    [ Html.Attributes.value (String.fromFloat (amount - toFloat (floor amount)))
+                    , Html.Attributes.max "1"
+                    ]
+                    []
 
--- viewEnergy : ( Energy, Float ) -> Maybe (Html msg)
--- viewEnergy ( energy, amount ) =
---     if amount > 0 then
---         Just
---             (Html.div [ Html.Attributes.class (Energy.toString energy) ]
---                 [ Html.p [] [ Html.text (String.fromInt (floor amount)) ]
---                 , Html.progress
---                     [ Html.Attributes.value (String.fromFloat (amount - toFloat (floor amount)))
---                     , Html.Attributes.max "1"
---                     ]
---                     []
---                 -- , viewCooldown cooldown
---                 ]
---             )
---     else
---         Nothing
+                -- , viewCooldown cooldown
+                ]
+            )
+
+    else
+        Nothing
 
 
 viewCardCost : ( Energy, Int ) -> Html msg
@@ -528,8 +529,8 @@ viewCharacter attrs character =
         --     ]
         , Html.p [] [ Html.text "health" ]
         , viewCustomMeter (Tuple.second character.health) (Tuple.first character.health)
+        , Html.div [ Html.Attributes.class "energy" ] (Dict.toList character.energy |> List.filterMap viewEnergy)
 
-        -- , Html.div [ Html.Attributes.class "energy" ] (Dict.toList character.energy |> List.filterMap viewEnergy)
         -- , Html.div [ Html.Attributes.class "hand" ] (List.map (viewSmallCard character) character.hand)
         , Html.p [] [ Html.text "cooldown" ]
         , viewCooldown character.cooldown
