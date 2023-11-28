@@ -24,7 +24,7 @@ import Stat exposing (Stat)
 
 characterAnimationDuration : Float
 characterAnimationDuration =
-    300
+    150
 
 
 
