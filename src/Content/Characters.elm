@@ -14,12 +14,12 @@ panda =
     Character.new
         '🐼'
         []
-        [ ( Stat.CyanRegenModifier, 2 )
-        , ( Stat.YellowRegenModifier, 0.7 )
-        , ( Stat.Attack, 2 )
+        [ ( Stat.CyanRegenModifier, 5 )
+        , ( Stat.CyanCap, 5 )
+        , ( Stat.Attack, 1 )
         , ( Stat.Speed, 0.5 )
         ]
-        100
+        200
 
 
 unicorn : Character
