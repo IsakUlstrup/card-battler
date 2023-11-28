@@ -464,44 +464,39 @@ characterClasses turnState isPlayer =
                 _ ->
                     False
 
-        isHit : Bool
-        isHit =
-            case turnState of
-                Attacking characterType action _ ->
-                    case action of
-                        Card.Attack _ ->
-                            characterType /= isPlayer
-
-                        Card.Buff _ ->
-                            False
-
-                _ ->
-                    False
-
-        isDead : Bool
-        isDead =
-            case turnState of
-                Defeat ->
-                    isPlayer
-
-                _ ->
-                    False
-
-        isWinner : Bool
-        isWinner =
-            case turnState of
-                Victory _ ->
-                    isPlayer
-
-                _ ->
-                    False
+        -- isHit : Bool
+        -- isHit =
+        --     case turnState of
+        --         Attacking characterType action _ ->
+        --             case action of
+        --                 Card.Attack _ ->
+        --                     characterType /= isPlayer
+        --                 Card.Buff _ ->
+        --                     False
+        --         _ ->
+        --             False
+        -- isDead : Bool
+        -- isDead =
+        --     case turnState of
+        --         Defeat ->
+        --             isPlayer
+        --         _ ->
+        --             False
+        -- isWinner : Bool
+        -- isWinner =
+        --     case turnState of
+        --         Victory _ ->
+        --             isPlayer
+        --         _ ->
+        --             False
     in
     [ Html.Attributes.class (characterTypeString isPlayer)
     , Html.Attributes.classList
         [ ( "attacking", isAttacking )
-        , ( "hit", isHit )
-        , ( "dead", isDead )
-        , ( "winner", isWinner )
+
+        -- , ( "hit", isHit )
+        -- , ( "dead", isDead )
+        -- , ( "winner", isWinner )
         , ( "buffing", isBuffing )
         ]
     ]
