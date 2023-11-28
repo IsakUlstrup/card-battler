@@ -145,12 +145,7 @@ update msg model =
             init () |> Tuple.first
 
         ( ClickedPlayerCard index, Run runState ) ->
-            case runState.turnState of
-                Recovering ->
-                    { model | gameState = Run (playCard True index runState) }
-
-                _ ->
-                    model
+            { model | gameState = Run (playCard True index runState) }
 
         ( ClickedReward card, Run runState ) ->
             case runState.turnState of
