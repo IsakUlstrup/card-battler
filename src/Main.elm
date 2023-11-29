@@ -9,8 +9,6 @@ import Codec
 import Content.Cards as Cards
 import Content.Characters as Characters
 import Cooldown exposing (Cooldown)
-import CustomDict as Dict
-import Energy exposing (Energy)
 import Html exposing (Attribute, Html, main_)
 import Html.Attributes
 import Html.Events
@@ -396,19 +394,17 @@ viewHealthHistoryItem ( id, delta ) =
     ( "item" ++ String.fromInt id, Html.p [] [ Html.text (String.fromInt delta) ] )
 
 
-viewEnergy : ( Energy, Float ) -> Maybe (Html msg)
-viewEnergy ( energy, amount ) =
+viewEnergy : Float -> Maybe (Html msg)
+viewEnergy amount =
     if amount > 0 then
         Just
-            (Html.div [ Html.Attributes.class (Energy.toString energy) ]
+            (Html.div []
                 [ Html.p [] [ Html.text (String.fromInt (floor amount)) ]
                 , Html.progress
                     [ Html.Attributes.value (String.fromFloat (amount - toFloat (floor amount)))
                     , Html.Attributes.max "1"
                     ]
                     []
-
-                -- , viewCooldown cooldown
                 ]
             )
 
@@ -416,9 +412,9 @@ viewEnergy ( energy, amount ) =
         Nothing
 
 
-viewCardCost : ( Energy, Int ) -> Html msg
-viewCardCost ( energy, amount ) =
-    Html.p [ Html.Attributes.class (Energy.toString energy) ] [ Html.text (String.fromInt amount) ]
+viewCardCost : Int -> Html msg
+viewCardCost cost =
+    Html.p [] [ Html.text (String.fromInt cost) ]
 
 
 
@@ -519,7 +515,8 @@ viewCharacter attrs character =
         --     ]
         , Html.p [] [ Html.text "health" ]
         , viewCustomMeter (Tuple.second character.health) (Tuple.first character.health)
-        , Html.div [ Html.Attributes.class "energy" ] (Dict.toList character.energy |> List.filterMap viewEnergy)
+        , Html.p [] [ Html.text "energy" ]
+        , Html.div [ Html.Attributes.class "energy" ] ([ character.energy ] |> List.filterMap viewEnergy)
 
         -- , Html.div [ Html.Attributes.class "hand" ] (List.map (viewSmallCard character) character.hand)
         , Html.p [] [ Html.text "cooldown" ]
@@ -553,7 +550,7 @@ viewCard attrs card =
     Html.div
         (Html.Attributes.class "card" :: attrs)
         [ Html.h3 [] [ Html.text card.name ]
-        , Html.div [ Html.Attributes.class "cost" ] (card.cost |> Dict.toList |> List.map viewCardCost)
+        , card.cost |> viewCardCost
         , Html.p [] [ Html.text (Card.actionToString card.action) ]
         ]
 

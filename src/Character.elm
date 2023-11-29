@@ -36,7 +36,7 @@ type alias Character =
     , baseStats : Dict Stat Float
     , cooldown : Cooldown
     , buffs : List Buff
-    , energy : Dict Energy Float
+    , energy : Float
     , deck : List Card
     , hand : List Card
     , played : List Card
@@ -55,12 +55,7 @@ new icon deck baseStats health =
         (Dict.fromList baseStats)
         (Cooldown.new 5000)
         []
-        (Dict.fromList
-            [ ( Cyan, 0 )
-            , ( Magenta, 0 )
-            , ( Yellow, 0 )
-            ]
-        )
+        0
         deck
         []
         []
@@ -161,11 +156,7 @@ tick dt character =
                     |> List.map (Buff.tick dt)
                     |> List.filter Buff.notDone
             , cooldown = Cooldown.tick (dt * deriveStat Stat.Speed character) character.cooldown
-            , energy =
-                character.energy
-                    |> Dict.map (tickEnergy character dt)
-
-            -- |> Dict.map addEnergy
+            , energy = tickEnergy character dt character.energy
         }
 
     else
@@ -276,24 +267,14 @@ addBuff buff character =
 
 {-| Get a dict of current character energy
 -}
-getEnergy : Character -> Dict Energy Int
+getEnergy : Character -> Int
 getEnergy character =
-    character.energy
-        |> Dict.map (\_ v -> floor v)
+    floor character.energy
 
 
-canAfford : Character -> Dict Energy Int -> Bool
+canAfford : Character -> Int -> Bool
 canAfford character cost =
-    let
-        characterEnergy : Dict Energy Int
-        characterEnergy =
-            getEnergy character
-
-        hasEnergy : Energy -> Int -> Bool
-        hasEnergy e c =
-            Dict.get e characterEnergy |> Maybe.map (\me -> me >= c) |> Maybe.withDefault False
-    in
-    Dict.map hasEnergy cost |> Dict.all identity
+    getEnergy character >= cost
 
 
 {-| Can character afford the first card in their hand. Return False if no cards are present
@@ -306,53 +287,11 @@ canPlayFirst character =
         |> Maybe.withDefault False
 
 
-tickEnergy : Character -> Float -> Energy -> Float -> Float
-tickEnergy character dt energy amount =
-    case energy of
-        Cyan ->
-            let
-                cap =
-                    deriveStat Stat.CyanCap character
-            in
-            if amount < cap then
-                amount + ((dt / 3500) * deriveStat Stat.CyanRegenModifier character) |> min cap
-
-            else
-                amount
-
-        Magenta ->
-            let
-                cap =
-                    deriveStat Stat.MagentaCap character
-            in
-            if amount < cap then
-                amount + ((dt / 3500) * deriveStat Stat.MagentaRegenModifier character) |> min cap
-
-            else
-                amount
-
-        Yellow ->
-            let
-                cap =
-                    deriveStat Stat.YellowCap character
-            in
-            if amount < cap then
-                amount + ((dt / 3500) * deriveStat Stat.YellowRegenModifier character) |> min cap
-
-            else
-                amount
+tickEnergy : Character -> Float -> Float -> Float
+tickEnergy character dt amount =
+    amount + ((dt / 3500) * deriveStat Stat.EnergyRegenRate character) |> min (deriveStat Stat.EnergyCap character)
 
 
-removeEnergy : Dict Energy Int -> Character -> Character
+removeEnergy : Int -> Character -> Character
 removeEnergy cost character =
-    let
-        remove : Energy -> Float -> Float
-        remove energyType energyAmount =
-            case Dict.get energyType cost of
-                Just energyCost ->
-                    max 0 (energyAmount - toFloat energyCost)
-
-                Nothing ->
-                    energyAmount
-    in
-    { character | energy = character.energy |> Dict.map remove }
+    { character | energy = character.energy - toFloat cost |> max 0 }

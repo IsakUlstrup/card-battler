@@ -5,13 +5,9 @@ module Stat exposing (Stat(..), toString)
 
 
 type Stat
-    = CyanRegenModifier
-    | MagentaRegenModifier
-    | YellowRegenModifier
+    = EnergyRegenRate
+    | EnergyCap
     | AutoPlayFirst
-    | CyanCap
-    | MagentaCap
-    | YellowCap
     | Attack
     | Speed
 
@@ -21,26 +17,14 @@ type Stat
 toString : Stat -> String
 toString stat =
     case stat of
-        CyanRegenModifier ->
-            "Cyan regen rate"
+        EnergyRegenRate ->
+            "Energy regen rate"
 
-        MagentaRegenModifier ->
-            "Magenta regen rate"
-
-        YellowRegenModifier ->
-            "Yellow regen rate"
+        EnergyCap ->
+            "Energy cap"
 
         AutoPlayFirst ->
             "Auto play first"
-
-        CyanCap ->
-            "Cyan cap"
-
-        MagentaCap ->
-            "Magenta cap"
-
-        YellowCap ->
-            "Yellow cap"
 
         Attack ->
             "Attack"

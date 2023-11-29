@@ -14,8 +14,8 @@ panda =
     Character.new
         '🐼'
         []
-        [ ( Stat.CyanRegenModifier, 5 )
-        , ( Stat.CyanCap, 5 )
+        [ ( Stat.EnergyRegenRate, 5 )
+        , ( Stat.EnergyCap, 5 )
         , ( Stat.Attack, 1 )
         , ( Stat.Speed, 0.5 )
         ]
@@ -27,9 +27,8 @@ unicorn =
     Character.new
         '🦄'
         []
-        [ ( Stat.CyanRegenModifier, 2 )
-        , ( Stat.YellowRegenModifier, 0.7 )
-        , ( Stat.CyanCap, 2 )
+        [ ( Stat.EnergyRegenRate, 2 )
+        , ( Stat.EnergyCap, 2 )
         , ( Stat.Attack, 5 )
         , ( Stat.Speed, 3 )
         ]
@@ -45,8 +44,8 @@ badger =
     Character.new
         '🦡'
         [ Content.Cards.basicCard, Content.Cards.buffCard ]
-        [ ( Stat.CyanRegenModifier, 1 )
-        , ( Stat.MagentaRegenModifier, 0.2 )
+        [ ( Stat.EnergyRegenRate, 1 )
+        , ( Stat.EnergyCap, 2 )
         , ( Stat.AutoPlayFirst, 1 )
         , ( Stat.Attack, 5 )
         , ( Stat.Speed, 2 )
@@ -59,8 +58,7 @@ rabbit =
     Character.new
         '🐰'
         []
-        [ ( Stat.CyanRegenModifier, 0.5 )
-        , ( Stat.MagentaRegenModifier, 0.2 )
+        [ ( Stat.EnergyRegenRate, 0.5 )
         , ( Stat.AutoPlayFirst, 1 )
         , ( Stat.Attack, 1 )
         , ( Stat.Speed, 5 )

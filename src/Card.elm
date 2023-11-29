@@ -1,8 +1,6 @@
 module Card exposing (Action(..), Card, actionToIcon, actionToString, new)
 
 import Buff exposing (Buff)
-import CustomDict as Dict exposing (Dict)
-import Energy exposing (Energy)
 import Stat
 
 
@@ -38,10 +36,10 @@ actionToIcon action =
 type alias Card =
     { name : String
     , action : Action
-    , cost : Dict Energy Int
+    , cost : Int
     }
 
 
-new : String -> Action -> List ( Energy, Int ) -> Card
+new : String -> Action -> Int -> Card
 new name action cost =
-    Card name action (Dict.fromList cost)
+    Card name action cost

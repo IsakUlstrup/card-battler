@@ -1,8 +1,6 @@
 module Codec exposing (saveCards)
 
 import Card exposing (Action, Card)
-import CustomDict as Dict exposing (Dict)
-import Energy exposing (Energy)
 import Json.Encode as Encode
 import Ports
 
@@ -11,17 +9,9 @@ import Ports
 -- ENCODER
 
 
-energyEncoder : ( Energy, Int ) -> Encode.Value
-energyEncoder ( energy, amount ) =
-    Encode.object
-        [ ( "first", Encode.string (Energy.toString energy) )
-        , ( "second", Encode.string (String.fromInt amount) )
-        ]
-
-
-costEncoder : Dict Energy Int -> Encode.Value
+costEncoder : Int -> Encode.Value
 costEncoder cost =
-    Encode.list energyEncoder (Dict.toList cost)
+    Encode.string (String.fromInt cost)
 
 
 actionEncoder : Action -> Encode.Value
