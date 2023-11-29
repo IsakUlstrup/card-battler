@@ -336,13 +336,13 @@ advanceTurnState model =
                     case ( Character.isReady (Tuple.first model.characters), Character.isReady (Tuple.second model.characters) ) of
                         ( True, _ ) ->
                             { model
-                                | turnState = Attacking True (Card.Damage (Character.deriveStat Stat.Attack (Tuple.first model.characters) |> round)) (Cooldown.new characterAnimationDuration)
+                                | turnState = Attacking True (Tuple.first model.characters).ability (Cooldown.new characterAnimationDuration)
                                 , characters = Tuple.mapFirst Character.resetCooldown model.characters
                             }
 
                         ( False, True ) ->
                             { model
-                                | turnState = Attacking False (Card.Damage (Character.deriveStat Stat.Attack (Tuple.second model.characters) |> round)) (Cooldown.new characterAnimationDuration)
+                                | turnState = Attacking False (Tuple.second model.characters).ability (Cooldown.new characterAnimationDuration)
                                 , characters = Tuple.mapSecond Character.resetCooldown model.characters
                             }
 

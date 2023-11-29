@@ -33,6 +33,7 @@ type alias Character =
     , healthHistory : List ( Int, Int )
     , baseStats : Dict Stat Float
     , cooldown : Cooldown
+    , ability : Action
     , energy : Float
     , deck : List Card
     , hand : List Card
@@ -42,8 +43,8 @@ type alias Character =
 
 {-| Character constructor
 -}
-new : Char -> List Card -> List ( Stat, Float ) -> Int -> Character
-new icon deck baseStats health =
+new : Char -> List Card -> List ( Stat, Float ) -> Action -> Int -> Character
+new icon deck baseStats ability health =
     Character
         0
         icon
@@ -51,6 +52,7 @@ new icon deck baseStats health =
         []
         (Dict.fromList baseStats)
         (Cooldown.new 5000)
+        ability
         0
         deck
         []
