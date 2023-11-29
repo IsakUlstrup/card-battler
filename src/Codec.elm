@@ -87,9 +87,5 @@ decodeStoredCards postsJson =
         Ok cards ->
             cards
 
-        Err error ->
-            let
-                _ =
-                    Debug.log "error" error
-            in
+        Err _ ->
             []
