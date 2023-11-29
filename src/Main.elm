@@ -44,10 +44,6 @@ type TurnState
     | Victory (List Card)
 
 
-
--- MODEL
-
-
 type alias RunState =
     { characters : ( Character, Character )
     , turnState : TurnState
@@ -66,17 +62,36 @@ type GameState
     | Home HomeState
 
 
+
+-- MODEL
+
+
+type alias Flags =
+    { timestamp : Int
+    , cards : Maybe String
+    }
+
+
 type alias Model =
     { gameState : GameState
     , cards : List Card
     }
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
+init : Flags -> ( Model, Cmd Msg )
+init flags =
+    let
+        loadCards =
+            case flags.cards of
+                Just cardsString ->
+                    Codec.decodeStoredCards cardsString
+
+                Nothing ->
+                    [ Cards.basicCard, Cards.basicCard ]
+    in
     ( Model
         (Home (HomeState Nothing []))
-        [ Cards.basicCard, Cards.basicCard ]
+        loadCards
     , Cmd.none
     )
 
@@ -164,7 +179,7 @@ update msg model =
                     ( model, Cmd.none )
 
         ClickedResetGame ->
-            init ()
+            init (Flags 0 Nothing)
 
         ClickedPlayerCard index ->
             case model.gameState of
@@ -655,7 +670,7 @@ subscriptions model =
 -- MAIN
 
 
-main : Program () Model Msg
+main : Program Flags Model Msg
 main =
     Browser.element
         { init = init

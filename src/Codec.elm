@@ -1,4 +1,4 @@
-module Codec exposing (parseCards, saveCards)
+module Codec exposing (decodeCards, decodeStoredCards, saveCards)
 
 import Card exposing (Action, Card)
 import Json.Decode as Decode exposing (Decoder)
@@ -12,7 +12,7 @@ import Ports
 
 costEncoder : Int -> Encode.Value
 costEncoder cost =
-    Encode.string (String.fromInt cost)
+    Encode.int cost
 
 
 actionEncoder : Action -> Encode.Value
@@ -53,6 +53,20 @@ decodeCard =
         (Decode.field "cost" Decode.int)
 
 
-parseCards : Decoder (List Card)
-parseCards =
+decodeCards : Decoder (List Card)
+decodeCards =
     Decode.list decodeCard
+
+
+decodeStoredCards : String -> List Card
+decodeStoredCards postsJson =
+    case Decode.decodeString decodeCards postsJson of
+        Ok cards ->
+            cards
+
+        Err error ->
+            let
+                _ =
+                    Debug.log "error" error
+            in
+            []
