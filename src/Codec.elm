@@ -1,6 +1,6 @@
 module Codec exposing (decodeCards, decodeStoredCards, saveCards)
 
-import Card exposing (Action, Card)
+import Card exposing (Action(..), Card)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode
 import Ports
@@ -17,7 +17,12 @@ costEncoder cost =
 
 actionEncoder : Action -> Encode.Value
 actionEncoder action =
-    Encode.string (Card.actionToString action)
+    case action of
+        Damage amount ->
+            Encode.object
+                [ ( "variant", Encode.string "Damage" )
+                , ( "tag", Encode.int amount )
+                ]
 
 
 cardEncoder : Card -> Encode.Value
@@ -40,9 +45,27 @@ saveCards cards =
 -- DECODER
 
 
+decodeDamage : Decoder Action
+decodeDamage =
+    Decode.field "variant" Decode.string
+        |> Decode.andThen
+            (\variant ->
+                case variant of
+                    "Damage" ->
+                        Decode.map Damage (Decode.field "tag" Decode.int)
+
+                    _ ->
+                        Decode.fail "Non-existing variant"
+            )
+
+
 decodeAction : Decoder Action
 decodeAction =
-    Decode.succeed (Card.Damage 1)
+    Decode.oneOf [ decodeDamage ]
+
+
+
+-- Decode.object (Card.Damage 1)
 
 
 decodeCard : Decoder Card
