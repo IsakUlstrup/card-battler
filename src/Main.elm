@@ -2,7 +2,6 @@ module Main exposing (Model, Msg, TurnState, main)
 
 import Browser
 import Browser.Events
-import Buff exposing (Buff)
 import Card exposing (Action(..), Card)
 import Character exposing (Character)
 import Codec
@@ -77,7 +76,7 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( Model
         (Home (HomeState Nothing []))
-        [ Cards.basicCard, Cards.basicCard, Cards.buffCard ]
+        [ Cards.basicCard, Cards.basicCard ]
     , Cmd.none
     )
 
@@ -337,13 +336,13 @@ advanceTurnState model =
                     case ( Character.isReady (Tuple.first model.characters), Character.isReady (Tuple.second model.characters) ) of
                         ( True, _ ) ->
                             { model
-                                | turnState = Attacking True (Attack (Character.deriveStat Stat.Attack (Tuple.first model.characters) |> round)) (Cooldown.new characterAnimationDuration)
+                                | turnState = Attacking True (Card.Damage (Character.deriveStat Stat.Attack (Tuple.first model.characters) |> round)) (Cooldown.new characterAnimationDuration)
                                 , characters = Tuple.mapFirst Character.resetCooldown model.characters
                             }
 
                         ( False, True ) ->
                             { model
-                                | turnState = Attacking False (Attack (Character.deriveStat Stat.Attack (Tuple.second model.characters) |> round)) (Cooldown.new characterAnimationDuration)
+                                | turnState = Attacking False (Card.Damage (Character.deriveStat Stat.Attack (Tuple.second model.characters) |> round)) (Cooldown.new characterAnimationDuration)
                                 , characters = Tuple.mapSecond Character.resetCooldown model.characters
                             }
 
@@ -353,14 +352,9 @@ advanceTurnState model =
         Attacking isPlayer action cooldown ->
             if Cooldown.isDone cooldown then
                 case action of
-                    Card.Attack _ ->
+                    Card.Damage _ ->
                         model
                             |> updateFlag (Character.applyAction action) (not isPlayer)
-                            |> setRecoveringState
-
-                    Card.Buff _ ->
-                        model
-                            |> updateFlag (Character.applyAction action) isPlayer
                             |> setRecoveringState
 
             else
@@ -402,16 +396,17 @@ viewCooldown ( cd, maxCd ) =
         []
 
 
-viewBuff : Buff -> Html msg
-viewBuff buff =
-    Html.li [ Html.Attributes.class "buff" ]
-        [ Html.text
-            (Stat.toString (Tuple.first buff.statModifier)
-                ++ " x"
-                ++ String.fromFloat (Tuple.second buff.statModifier)
-            )
-        , viewCooldown buff.duration
-        ]
+
+-- viewBuff : Buff -> Html msg
+-- viewBuff buff =
+--     Html.li [ Html.Attributes.class "buff" ]
+--         [ Html.text
+--             (Stat.toString (Tuple.first buff.statModifier)
+--                 ++ " x"
+--                 ++ String.fromFloat (Tuple.second buff.statModifier)
+--             )
+--         , viewCooldown buff.duration
+--         ]
 
 
 viewStat : ( Stat, Float ) -> Html msg
@@ -455,25 +450,8 @@ characterClasses turnState isPlayer =
             case turnState of
                 Attacking characterType action _ ->
                     case action of
-                        Card.Attack _ ->
+                        Card.Damage _ ->
                             characterType == isPlayer
-
-                        Card.Buff _ ->
-                            False
-
-                _ ->
-                    False
-
-        isBuffing : Bool
-        isBuffing =
-            case turnState of
-                Attacking characterType action _ ->
-                    case action of
-                        Card.Buff _ ->
-                            characterType == isPlayer
-
-                        Card.Attack _ ->
-                            False
 
                 _ ->
                     False
@@ -481,7 +459,6 @@ characterClasses turnState isPlayer =
     [ Html.Attributes.class (characterTypeString isPlayer)
     , Html.Attributes.classList
         [ ( "attacking", isAttacking )
-        , ( "buffing", isBuffing )
         ]
     ]
 
@@ -518,7 +495,7 @@ viewCharacter attrs character =
         --             |> List.map viewStat
         --         )
         --     ]
-        , Html.ul [ Html.Attributes.class "buffs" ] (List.map viewBuff character.buffs)
+        -- , Html.ul [ Html.Attributes.class "buffs" ] (List.map viewBuff character.buffs)
         ]
 
 

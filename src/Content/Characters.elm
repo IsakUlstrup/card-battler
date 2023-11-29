@@ -1,7 +1,6 @@
 module Content.Characters exposing (badger, chick, panda, rabbit, unicorn)
 
 import Character exposing (Character)
-import Content.Cards
 import Stat
 
 
@@ -43,7 +42,7 @@ badger : Character
 badger =
     Character.new
         '🦡'
-        [ Content.Cards.basicCard, Content.Cards.buffCard ]
+        []
         [ ( Stat.EnergyRegenRate, 1 )
         , ( Stat.EnergyCap, 2 )
         , ( Stat.AutoPlayFirst, 1 )

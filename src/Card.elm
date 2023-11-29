@@ -1,36 +1,22 @@
 module Card exposing (Action(..), Card, actionToIcon, actionToString, new)
 
-import Buff exposing (Buff)
-import Stat
-
 
 type Action
-    = Attack Int
-    | Buff Buff
+    = Damage Int
 
 
 actionToString : Action -> String
 actionToString action =
     case action of
-        Attack power ->
+        Damage power ->
             "Attack " ++ String.fromInt power
-
-        Buff buff ->
-            "Buff "
-                ++ (Stat.toString (Tuple.first buff.statModifier)
-                        ++ " x"
-                        ++ String.fromFloat (Tuple.second buff.statModifier)
-                   )
 
 
 actionToIcon : Action -> String
 actionToIcon action =
     case action of
-        Attack power ->
+        Damage power ->
             "🗡️" ++ String.fromInt power
-
-        Buff _ ->
-            "buff"
 
 
 type alias Card =
