@@ -8,7 +8,6 @@ type Stat
     = EnergyRegenRate
     | EnergyCap
     | AutoPlayFirst
-    | Attack
     | Speed
 
 
@@ -25,9 +24,6 @@ toString stat =
 
         AutoPlayFirst ->
             "Auto play first"
-
-        Attack ->
-            "Attack"
 
         Speed ->
             "Speed"

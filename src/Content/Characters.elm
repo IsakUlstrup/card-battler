@@ -16,7 +16,6 @@ panda =
         []
         [ ( Stat.EnergyRegenRate, 5 )
         , ( Stat.EnergyCap, 5 )
-        , ( Stat.Attack, 1 )
         , ( Stat.Speed, 0.5 )
         ]
         (Card.Damage 2)
@@ -30,7 +29,6 @@ unicorn =
         []
         [ ( Stat.EnergyRegenRate, 2 )
         , ( Stat.EnergyCap, 2 )
-        , ( Stat.Attack, 5 )
         , ( Stat.Speed, 3 )
         ]
         (Card.Damage 4)
@@ -49,7 +47,6 @@ badger =
         [ ( Stat.EnergyRegenRate, 1 )
         , ( Stat.EnergyCap, 2 )
         , ( Stat.AutoPlayFirst, 1 )
-        , ( Stat.Attack, 5 )
         , ( Stat.Speed, 2 )
         ]
         (Card.Damage 2)
@@ -63,7 +60,6 @@ rabbit =
         []
         [ ( Stat.EnergyRegenRate, 0.5 )
         , ( Stat.AutoPlayFirst, 1 )
-        , ( Stat.Attack, 1 )
         , ( Stat.Speed, 5 )
         ]
         (Card.Damage 1)
