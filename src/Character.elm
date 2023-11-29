@@ -21,7 +21,6 @@ module Character exposing
 import Card exposing (Action, Card)
 import Cooldown exposing (Cooldown)
 import CustomDict as Dict exposing (Dict)
-import Energy exposing (Energy(..))
 import Stat exposing (Stat)
 
 
