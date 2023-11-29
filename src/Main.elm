@@ -439,7 +439,7 @@ viewEnergy amount =
 
 viewCardCost : Int -> Html msg
 viewCardCost cost =
-    Html.p [] [ Html.text (String.fromInt cost) ]
+    Html.p [] [ Html.text ("Cost: " ++ String.fromInt cost) ]
 
 
 characterClasses : TurnState -> Bool -> List (Attribute msg)

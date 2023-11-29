@@ -9,7 +9,7 @@ actionToString : Action -> String
 actionToString action =
     case action of
         Damage power ->
-            "Attack " ++ String.fromInt power
+            "Damage " ++ String.fromInt power
 
 
 actionToIcon : Action -> String
