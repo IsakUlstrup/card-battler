@@ -245,15 +245,6 @@ tickTurnState dt model =
             model
 
 
-
--- setHitState : Bool -> Action -> Model -> Model
--- setHitState isPlayer action model =
---     { model
---         | turnState = Hit (not isPlayer) (Cooldown.new characterAnimationDuration)
---     }
---         |> updateFlag (Character.applyAction action) (not isPlayer)
-
-
 setRecoveringState : RunState -> RunState
 setRecoveringState model =
     { model | turnState = Recovering }
@@ -291,14 +282,6 @@ advanceTurnState model =
                         setVictoryState [ Cards.basicCard2, Cards.expensiveCard ] model
 
                 Nothing ->
-                    -- case Character.playCardAtIndex 0 (Tuple.second model.characters) of
-                    --     ( newCharacter, Just action ) ->
-                    --         { model
-                    --             | turnState = Attacking False action (Cooldown.new characterAnimationDuration)
-                    --             , characters = Tuple.mapSecond (always newCharacter) model.characters
-                    --         }
-                    --     ( _, Nothing ) ->
-                    --         model
                     case ( Character.isReady (Tuple.first model.characters), Character.isReady (Tuple.second model.characters) ) of
                         ( True, _ ) ->
                             { model
@@ -331,11 +314,6 @@ advanceTurnState model =
             else
                 model
 
-        -- Hit _ cooldown ->
-        --     if Cooldown.isDone cooldown then
-        --         setRecoveringState model
-        --     else
-        --         model
         Defeat ->
             model
 
@@ -417,18 +395,6 @@ viewCardCost cost =
     Html.p [] [ Html.text (String.fromInt cost) ]
 
 
-
--- viewSmallCard : Character -> Card -> Html msg
--- viewSmallCard character card =
---     Html.div
---         [ Html.Attributes.class "card"
---         , Html.Attributes.classList [ ( "can-afford", Character.canAfford character card.cost ) ]
---         ]
---         [ Html.div [] (card.cost |> Dict.toList |> List.map viewCardCost)
---         , Html.p [] [ Html.text (Card.actionToIcon card.action) ]
---         ]
-
-
 characterClasses : TurnState -> Bool -> List (Attribute msg)
 characterClasses turnState isPlayer =
     let
@@ -459,40 +425,10 @@ characterClasses turnState isPlayer =
 
                 _ ->
                     False
-
-        -- isHit : Bool
-        -- isHit =
-        --     case turnState of
-        --         Attacking characterType action _ ->
-        --             case action of
-        --                 Card.Attack _ ->
-        --                     characterType /= isPlayer
-        --                 Card.Buff _ ->
-        --                     False
-        --         _ ->
-        --             False
-        -- isDead : Bool
-        -- isDead =
-        --     case turnState of
-        --         Defeat ->
-        --             isPlayer
-        --         _ ->
-        --             False
-        -- isWinner : Bool
-        -- isWinner =
-        --     case turnState of
-        --         Victory _ ->
-        --             isPlayer
-        --         _ ->
-        --             False
     in
     [ Html.Attributes.class (characterTypeString isPlayer)
     , Html.Attributes.classList
         [ ( "attacking", isAttacking )
-
-        -- , ( "hit", isHit )
-        -- , ( "dead", isDead )
-        -- , ( "winner", isWinner )
         , ( "buffing", isBuffing )
         ]
     ]
