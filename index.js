@@ -6,5 +6,7 @@ const app = Elm.Main.init({
 });
 
 app.ports.storeCards.subscribe(function (cards) {
-    console.log("Cards: ", JSON.stringify(cards));
+    const cardsJson = JSON.stringify(cards);
+    localStorage.setItem('cards', cardsJson);
+    console.log("Saved cards: ", JSON.stringify(cards));
 });
