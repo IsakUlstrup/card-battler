@@ -99,69 +99,101 @@ type Msg
     | ClickedCharacterPreset Character
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case ( msg, model.gameState ) of
-        ( Tick dt, Run runState ) ->
-            { model
-                | gameState =
-                    Run
-                        (runState
-                            |> tickCharacters dt
-                            |> tickTurnState dt
-                            |> advanceTurnState
-                        )
-            }
-
-        ( ClickedNextEnemy, Run runState ) ->
-            case List.head runState.encounters of
-                Just character ->
-                    { model
+    case msg of
+        Tick dt ->
+            case model.gameState of
+                Run runState ->
+                    ( { model
                         | gameState =
                             Run
-                                { runState
-                                    | characters =
-                                        runState.characters
-                                            |> Tuple.mapSecond (always (character |> Character.drawHand 3))
-                                            |> Tuple.mapFirst Character.resetCards
-                                            |> Tuple.mapFirst (Character.drawHand 5)
-                                    , encounters = List.drop 1 runState.encounters
-                                    , turnState = Recovering
-                                }
-                    }
+                                (runState
+                                    |> tickCharacters dt
+                                    |> tickTurnState dt
+                                    |> advanceTurnState
+                                )
+                      }
+                    , Cmd.none
+                    )
 
-                Nothing ->
-                    model
+                Home _ ->
+                    ( model, Cmd.none )
 
-        ( ClickedReturnHome, Run runState ) ->
-            { model
-                | gameState = Home (HomeState Nothing [])
-                , cards = (runState.characters |> Tuple.first |> Character.resetCards |> .deck) ++ model.cards
-            }
+        ClickedNextEnemy ->
+            case model.gameState of
+                Run runState ->
+                    case List.head runState.encounters of
+                        Just character ->
+                            ( { model
+                                | gameState =
+                                    Run
+                                        { runState
+                                            | characters =
+                                                runState.characters
+                                                    |> Tuple.mapSecond (always (character |> Character.drawHand 3))
+                                                    |> Tuple.mapFirst Character.resetCards
+                                                    |> Tuple.mapFirst (Character.drawHand 5)
+                                            , encounters = List.drop 1 runState.encounters
+                                            , turnState = Recovering
+                                        }
+                              }
+                            , Cmd.none
+                            )
 
-        ( ClickedResetGame, _ ) ->
-            init () |> Tuple.first
+                        Nothing ->
+                            ( model, Cmd.none )
 
-        ( ClickedPlayerCard index, Run runState ) ->
-            { model | gameState = Run (playCard True index runState) }
+                Home _ ->
+                    ( model, Cmd.none )
 
-        ( ClickedReward card, Run runState ) ->
-            case runState.turnState of
-                Victory _ ->
-                    { model
+        ClickedReturnHome ->
+            case model.gameState of
+                Run runState ->
+                    let
+                        newModel =
+                            { model
+                                | gameState = Home (HomeState Nothing [])
+                                , cards = (runState.characters |> Tuple.first |> Character.resetCards |> .deck) ++ model.cards
+                            }
+                    in
+                    ( newModel
+                    , Codec.saveCards model.cards
+                    )
+
+                Home _ ->
+                    ( model, Cmd.none )
+
+        ClickedResetGame ->
+            init ()
+
+        ClickedPlayerCard index ->
+            case model.gameState of
+                Run runState ->
+                    ( { model | gameState = Run (playCard True index runState) }, Cmd.none )
+
+                Home _ ->
+                    ( model, Cmd.none )
+
+        ClickedReward card ->
+            case model.gameState of
+                Run runState ->
+                    ( { model
                         | gameState =
                             Run
                                 { runState
                                     | turnState = Victory []
                                     , characters = Tuple.mapFirst (Character.addCard card) runState.characters
                                 }
-                    }
+                      }
+                    , Cmd.none
+                    )
 
-                _ ->
-                    model
+                Home _ ->
+                    ( model, Cmd.none )
 
-        ( ClickedStartRun player deck, _ ) ->
-            { model
+        ClickedStartRun player deck ->
+            ( { model
                 | gameState =
                     Run
                         (RunState
@@ -171,27 +203,47 @@ update msg model =
                             Recovering
                             [ Characters.rabbit, Characters.chick ]
                         )
-            }
+              }
+            , Cmd.none
+            )
 
-        ( ClickedCardInCollection index card, Home homeState ) ->
-            { model
-                | gameState = Home { homeState | deck = card :: homeState.deck }
-                , cards = List.take index model.cards ++ List.drop (index + 1) model.cards
-            }
+        ClickedCardInCollection index card ->
+            case model.gameState of
+                Home homeState ->
+                    ( { model
+                        | gameState = Home { homeState | deck = card :: homeState.deck }
+                        , cards = List.take index model.cards ++ List.drop (index + 1) model.cards
+                      }
+                    , Cmd.none
+                    )
 
-        ( ClickedCardInSelectedCards index card, Home homeState ) ->
-            { model
-                | gameState = Home { homeState | deck = List.take index homeState.deck ++ List.drop (index + 1) homeState.deck }
-                , cards = card :: model.cards
-            }
+                Run _ ->
+                    ( model, Cmd.none )
 
-        ( ClickedCharacterPreset character, Home homeState ) ->
-            { model
-                | gameState = Home { homeState | character = Just character }
-            }
+        ClickedCardInSelectedCards index card ->
+            case model.gameState of
+                Home homeState ->
+                    ( { model
+                        | gameState = Home { homeState | deck = List.take index homeState.deck ++ List.drop (index + 1) homeState.deck }
+                        , cards = card :: model.cards
+                      }
+                    , Cmd.none
+                    )
 
-        _ ->
-            model
+                Run _ ->
+                    ( model, Cmd.none )
+
+        ClickedCharacterPreset character ->
+            case model.gameState of
+                Home homeState ->
+                    ( { model
+                        | gameState = Home { homeState | character = Just character }
+                      }
+                    , Cmd.none
+                    )
+
+                Run _ ->
+                    ( model, Cmd.none )
 
 
 updateFlag : (Character -> Character) -> Bool -> RunState -> RunState
@@ -629,13 +681,6 @@ main =
     Browser.element
         { init = init
         , view = view
-        , update =
-            \msg model ->
-                case msg of
-                    ClickedReturnHome ->
-                        ( update msg model, Codec.saveCards model.cards )
-
-                    _ ->
-                        ( update msg model, Cmd.none )
+        , update = update
         , subscriptions = subscriptions
         }
