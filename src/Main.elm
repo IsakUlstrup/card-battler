@@ -157,7 +157,7 @@ update msg model =
                             }
                     in
                     ( newModel
-                    , Codec.saveCards model.cards
+                    , Codec.saveCards newModel.cards
                     )
 
                 Home _ ->
