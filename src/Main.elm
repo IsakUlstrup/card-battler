@@ -503,6 +503,8 @@ viewCharacterPreview : List (Attribute msg) -> Character -> Html msg
 viewCharacterPreview attrs character =
     Html.div (Html.Attributes.class "character-preview" :: attrs)
         [ Html.h1 [ Html.Attributes.class "icon" ] [ Html.text (String.fromChar character.icon) ]
+        , Html.p [] [ Html.text ("health: " ++ String.fromInt (Tuple.second character.health)) ]
+        , Html.p [] [ Html.text ("ability: " ++ Card.actionToString character.ability) ]
         , Html.div []
             (Character.deriveStats character
                 |> List.map viewStat
