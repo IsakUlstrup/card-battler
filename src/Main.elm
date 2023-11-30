@@ -562,12 +562,12 @@ viewDefeat : Html Msg
 viewDefeat =
     Html.div []
         [ Html.p [] [ Html.text "Defeat :(" ]
-        , Html.button [ Html.Events.onClick ClickedReturnHome ] [ Html.text "Reset" ]
+        , Html.button [ Html.Events.onClick ClickedReturnHome ] [ Html.text "Return home" ]
         ]
 
 
-viewVictory : List Card -> Html Msg
-viewVictory rewards =
+viewVictory : List Character -> List Card -> Html Msg
+viewVictory encounters rewards =
     let
         viewReward reward =
             viewCard [ Html.Events.onClick (ClickedReward reward) ] reward
@@ -575,8 +575,12 @@ viewVictory rewards =
     Html.div []
         [ Html.p [] [ Html.text "Victory!" ]
         , Html.div [ Html.Attributes.class "card-group" ] (List.map viewReward rewards)
-        , Html.button [ Html.Events.onClick ClickedNextEnemy ] [ Html.text "Next enemy" ]
-        , Html.button [ Html.Events.onClick ClickedReturnHome ] [ Html.text "Return home" ]
+        , if List.isEmpty encounters then
+            Html.button [ Html.Events.onClick ClickedReturnHome ] [ Html.text "Return home" ]
+
+          else
+            Html.button [ Html.Events.onClick ClickedNextEnemy ] [ Html.text "Next enemy" ]
+        , viewEncounters encounters
         ]
 
 
@@ -596,8 +600,7 @@ viewRun runState =
                 [ viewDefeat ]
 
             Victory rewards ->
-                [ viewVictory rewards
-                , viewEncounters runState.encounters
+                [ viewVictory runState.encounters rewards
                 ]
 
             _ ->
@@ -636,6 +639,7 @@ viewHome homeState model =
         , Html.div [ Html.Attributes.style "display" "flex", Html.Attributes.style "gap" "1rem" ]
             [ viewCharacterPreset Characters.panda
             , viewCharacterPreset Characters.unicorn
+            , viewCharacterPreset Characters.butterfly
             ]
         , Html.h3 [] [ Html.text "Card Collection" ]
         , Html.div [ Html.Attributes.class "card-group" ] (List.indexedMap (\index card -> viewCard [ Html.Events.onClick (ClickedCardInCollection index card) ] card) model.cards)

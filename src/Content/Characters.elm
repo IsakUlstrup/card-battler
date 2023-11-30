@@ -1,4 +1,4 @@
-module Content.Characters exposing (badger, chick, panda, rabbit, unicorn)
+module Content.Characters exposing (badger, butterfly, chick, panda, rabbit, unicorn)
 
 import Card
 import Character exposing (Character)
@@ -33,6 +33,16 @@ unicorn =
         ]
         (Card.Damage 4)
         100
+
+
+butterfly : Character
+butterfly =
+    Character.new
+        '🦋'
+        []
+        []
+        (Card.Damage 1)
+        10
 
 
 
