@@ -49,6 +49,7 @@ type alias RunState =
     { characters : ( Character, Character )
     , turnState : TurnState
     , encounters : List Character
+    , seed : Seed
     }
 
 
@@ -172,11 +173,13 @@ update msg model =
                                 { model
                                     | gameState = Home (HomeState Nothing [])
                                     , cards = (runState.characters |> Tuple.first |> Character.resetCards |> .deck) ++ model.cards
+                                    , seed = runState.seed
                                 }
 
                             else
                                 { model
                                     | gameState = Home (HomeState Nothing [])
+                                    , seed = runState.seed
                                 }
                     in
                     ( newModel
@@ -221,6 +224,7 @@ update msg model =
                             )
                             Recovering
                             [ Characters.rabbit, Characters.chick ]
+                            model.seed
                         )
               }
             , Cmd.none
@@ -350,7 +354,11 @@ advanceTurnState model =
                         setDefeatState model
 
                     else
-                        setVictoryState [ Cards.basicCard2, Cards.expensiveCard ] model
+                        let
+                            ( rewards, seed ) =
+                                Random.step (Character.generateDrops (Tuple.second model.characters)) model.seed
+                        in
+                        setVictoryState rewards { model | seed = seed }
 
                 Nothing ->
                     case ( Character.isReady (Tuple.first model.characters), Character.isReady (Tuple.second model.characters) ) of

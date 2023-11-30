@@ -7,6 +7,7 @@ module Character exposing
     , deriveStat
     , deriveStats
     , drawHand
+    , generateDrops
     , isAlive
     , isReady
     , new
@@ -21,6 +22,7 @@ module Character exposing
 import Card exposing (Action, Card)
 import Cooldown exposing (Cooldown)
 import CustomDict as Dict exposing (Dict)
+import Random exposing (Generator)
 import Stat exposing (Stat)
 
 
@@ -38,13 +40,14 @@ type alias Character =
     , deck : List Card
     , hand : List Card
     , played : List Card
+    , dropTable : Maybe ( ( Float, Card ), List ( Float, Card ) )
     }
 
 
 {-| Character constructor
 -}
-new : Char -> List Card -> List ( Stat, Float ) -> Action -> Int -> Character
-new icon deck baseStats ability health =
+new : Char -> List Card -> List ( Stat, Float ) -> Action -> Int -> Maybe ( ( Float, Card ), List ( Float, Card ) ) -> Character
+new icon deck baseStats ability health dropTable =
     Character
         0
         icon
@@ -57,6 +60,7 @@ new icon deck baseStats ability health =
         deck
         []
         []
+        dropTable
 
 
 {-| Put all cards back in deck
@@ -282,3 +286,17 @@ tickEnergy character dt amount =
 removeEnergy : Int -> Character -> Character
 removeEnergy cost character =
     { character | energy = character.energy - toFloat cost |> max 0 }
+
+
+
+-- DROPS
+
+
+generateDrops : Character -> Generator (List Card)
+generateDrops character =
+    case character.dropTable of
+        Just ( first, rest ) ->
+            Random.list 3 (Random.weighted first rest)
+
+        Nothing ->
+            Random.constant []

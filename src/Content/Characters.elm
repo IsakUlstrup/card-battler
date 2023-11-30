@@ -2,6 +2,7 @@ module Content.Characters exposing (badger, butterfly, chick, panda, rabbit, uni
 
 import Card
 import Character exposing (Character)
+import Content.Cards as Cards
 import Stat
 
 
@@ -20,6 +21,7 @@ panda =
         ]
         (Card.Damage 2)
         200
+        Nothing
 
 
 unicorn : Character
@@ -33,6 +35,7 @@ unicorn =
         ]
         (Card.Damage 4)
         100
+        Nothing
 
 
 butterfly : Character
@@ -43,6 +46,7 @@ butterfly =
         []
         (Card.Damage 1)
         10
+        Nothing
 
 
 
@@ -61,6 +65,7 @@ badger =
         ]
         (Card.Damage 2)
         7
+        (Just ( ( 10, Cards.basicCard ), [ ( 10, Cards.basicCard2 ), ( 10, Cards.expensiveCard ) ] ))
 
 
 rabbit : Character
@@ -74,6 +79,7 @@ rabbit =
         ]
         (Card.Damage 1)
         5
+        (Just ( ( 10, Cards.basicCard ), [ ( 40, Cards.basicCard2 ) ] ))
 
 
 chick : Character
@@ -84,3 +90,4 @@ chick =
         []
         (Card.Damage 1)
         5
+        (Just ( ( 10, Cards.basicCard ), [] ))
