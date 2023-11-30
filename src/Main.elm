@@ -653,7 +653,7 @@ viewHome model =
             viewCharacterPreview [ Html.Events.onClick (ClickedCharacterPreset index), Html.Attributes.classList [ ( "debug-border", selected ) ] ] character
     in
     [ Html.h1 [] [ Html.text "Home" ]
-    , Html.button [ Html.Events.onClick ClickedStartRun ] [ Html.text "Start run" ]
+    , Html.button [ Html.Events.onClick ClickedStartRun, Html.Attributes.class "padding-small" ] [ Html.text "Start run" ]
     , Html.h3 [] [ Html.text "Characters" ]
     , Html.div [ Html.Attributes.class "flex gap-medium" ]
         (List.indexedMap viewCharacterPreset model.characters)
