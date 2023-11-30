@@ -439,7 +439,10 @@ viewCooldown ( cd, maxCd ) =
 
 viewStat : ( Stat, Float ) -> Html msg
 viewStat ( statType, statValue ) =
-    Html.p [ Html.Attributes.class "stat" ] [ Html.text (Stat.toString statType ++ ": " ++ String.fromFloat statValue) ]
+    Html.tr []
+        [ Html.td [] [ Html.text (Stat.toString statType) ]
+        , Html.td [] [ Html.text (String.fromFloat statValue) ]
+        ]
 
 
 viewHealthHistoryItem : ( Int, Int ) -> ( String, Html msg )
@@ -529,11 +532,11 @@ viewCharacter attrs character =
 
 viewCharacterPreview : List (Attribute msg) -> Character -> Html msg
 viewCharacterPreview attrs character =
-    Html.div (Html.Attributes.class "character-preview" :: attrs)
-        [ Html.h1 [ Html.Attributes.class "icon" ] [ Html.text (String.fromChar character.icon) ]
+    Html.div (Html.Attributes.class "flex flex-column gap-small" :: attrs)
+        [ Html.h1 [ Html.Attributes.class "center-text font-big" ] [ Html.text (String.fromChar character.icon) ]
         , Html.p [] [ Html.text ("health: " ++ String.fromInt (Tuple.second character.health)) ]
-        , Html.p [] [ Html.text ("ability: " ++ Card.actionToString character.ability) ]
-        , Html.div []
+        , Html.p [] [ Html.text ("ability: " ++ Card.actionToIcon character.ability) ]
+        , Html.table []
             (Character.deriveStats character
                 |> List.map viewStat
             )
@@ -603,69 +606,71 @@ viewEncounters encounters =
         ]
 
 
-viewRun : RunState -> Html Msg
+viewRun : RunState -> List (Html Msg)
 viewRun runState =
-    Html.div [ Html.Attributes.class "run" ]
-        (case runState.turnState of
-            Defeat ->
-                [ viewDefeat ]
+    -- Html.section [ Html.Attributes.class "run" ]
+    case runState.turnState of
+        Defeat ->
+            [ viewDefeat ]
 
-            Victory rewards ->
-                [ viewVictory runState.encounters rewards
+        Victory rewards ->
+            [ viewVictory runState.encounters rewards
+            ]
+
+        _ ->
+            [ Html.div [ Html.Attributes.class "characters" ]
+                [ viewCharacter (characterClasses runState.turnState True) (Tuple.first runState.characters)
+                , viewCharacter (characterClasses runState.turnState False) (Tuple.second runState.characters)
                 ]
-
-            _ ->
-                [ Html.div [ Html.Attributes.class "characters" ]
-                    [ viewCharacter (characterClasses runState.turnState True) (Tuple.first runState.characters)
-                    , viewCharacter (characterClasses runState.turnState False) (Tuple.second runState.characters)
-                    ]
-                , viewPlayerDeckStats (Tuple.first runState.characters)
-                , viewPlayerHand (Tuple.first runState.characters)
-                ]
-        )
+            , viewPlayerDeckStats (Tuple.first runState.characters)
+            , viewPlayerHand (Tuple.first runState.characters)
+            ]
 
 
-viewHome : HomeState -> Model -> Html Msg
+viewHome : HomeState -> Model -> List (Html Msg)
 viewHome homeState model =
     let
         viewCharacterPreset character =
             viewCharacterPreview [ Html.Events.onClick (ClickedCharacterPreset character) ] character
     in
-    Html.div [ Html.Attributes.class "home" ]
-        [ Html.h1 [] [ Html.text "Home" ]
-        , Html.h3 [] [ Html.text "Selected Character" ]
-        , Html.div []
-            (case homeState.character of
-                Just character ->
-                    [ viewCharacterPreview [] character
-                    , Html.button [ Html.Events.onClick (ClickedStartRun character homeState.deck) ] [ Html.text "Start run" ]
-                    ]
+    -- Html.section [ Html.Attributes.class "home" ]
+    [ Html.h1 [] [ Html.text "Home" ]
+    , Html.h3 [] [ Html.text "Selected Character" ]
+    , Html.div [ Html.Attributes.class "flex" ]
+        (case homeState.character of
+            Just character ->
+                [ viewCharacterPreview [] character
+                , Html.button [ Html.Events.onClick (ClickedStartRun character homeState.deck) ] [ Html.text "Start run" ]
+                ]
 
-                Nothing ->
-                    []
-            )
-        , Html.h3 [] [ Html.text "Selected Cards" ]
-        , Html.div [ Html.Attributes.class "card-group" ] (List.indexedMap (\index card -> viewCard [ Html.Events.onClick (ClickedCardInSelectedCards index card) ] card) homeState.deck)
-        , Html.h3 [] [ Html.text "Characters" ]
-        , Html.div [ Html.Attributes.style "display" "flex", Html.Attributes.style "gap" "1rem" ]
-            [ viewCharacterPreset Characters.panda
-            , viewCharacterPreset Characters.unicorn
-            , viewCharacterPreset Characters.butterfly
-            ]
-        , Html.h3 [] [ Html.text "Card Collection" ]
-        , Html.div [ Html.Attributes.class "card-group" ] (List.indexedMap (\index card -> viewCard [ Html.Events.onClick (ClickedCardInCollection index card) ] card) model.cards)
+            Nothing ->
+                []
+        )
+    , Html.h3 [] [ Html.text "Selected Cards" ]
+    , Html.div [] (List.indexedMap (\index card -> viewCard [ Html.Events.onClick (ClickedCardInSelectedCards index card) ] card) homeState.deck)
+    , Html.h3 [] [ Html.text "Characters" ]
+    , Html.div [ Html.Attributes.class "flex gap-medium" ]
+        [ viewCharacterPreset Characters.panda
+        , viewCharacterPreset Characters.unicorn
+        , viewCharacterPreset Characters.butterfly
         ]
+    , Html.h3 [] [ Html.text "Card Collection" ]
+    , Html.div [ Html.Attributes.class "flex flex-wrap gap-medium" ] (List.indexedMap (\index card -> viewCard [ Html.Events.onClick (ClickedCardInCollection index card) ] card) model.cards)
+    ]
 
 
 view : Model -> Html Msg
 view model =
-    main_ [ Html.Attributes.id "app" ]
+    main_
+        [ Html.Attributes.id "app"
+        , Html.Attributes.class "flex flex-column padding-medium gap-medium beige-text helvetica"
+        ]
         (case model.gameState of
             Run runState ->
-                [ viewRun runState ]
+                viewRun runState
 
             Home homeState ->
-                [ viewHome homeState model ]
+                viewHome homeState model
         )
 
 
