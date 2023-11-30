@@ -504,8 +504,8 @@ characterClasses turnState isPlayer =
 viewCharacter : List (Attribute msg) -> Character -> Html msg
 viewCharacter attrs character =
     Html.div
-        (Html.Attributes.class "character" :: attrs)
-        [ Html.h1 [ Html.Attributes.class "icon" ] [ Html.text (String.fromChar character.icon) ]
+        (Html.Attributes.class "flex flex-column gap-medium" :: attrs)
+        [ Html.h1 [ Html.Attributes.class "font-big center-text" ] [ Html.text (String.fromChar character.icon) ]
 
         -- , Html.Keyed.node "div" [ Html.Attributes.class "health-history" ] (List.map viewHealthHistoryItem character.healthHistory)
         , Html.p [] [ Html.text "health" ]
@@ -636,7 +636,7 @@ viewRun runState =
             ]
 
         _ ->
-            [ Html.div [ Html.Attributes.class "flex" ]
+            [ Html.div [ Html.Attributes.style "width" "100%", Html.Attributes.class "flex space-evenly gap-large" ]
                 [ viewCharacter (characterClasses runState.turnState True) (Tuple.first runState.characters)
                 , viewCharacter (characterClasses runState.turnState False) (Tuple.second runState.characters)
                 ]
