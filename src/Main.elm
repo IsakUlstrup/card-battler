@@ -104,7 +104,6 @@ type Msg
     = Tick Float
     | ClickedNextEnemy
     | ClickedReturnHome
-    | ClickedResetGame
     | ClickedPlayerCard Int
     | ClickedReward Card
     | ClickedStartRun Character (List Card)
@@ -166,10 +165,16 @@ update msg model =
                 Run runState ->
                     let
                         newModel =
-                            { model
-                                | gameState = Home (HomeState Nothing [])
-                                , cards = (runState.characters |> Tuple.first |> Character.resetCards |> .deck) ++ model.cards
-                            }
+                            if runState.characters |> Tuple.first |> Character.isAlive then
+                                { model
+                                    | gameState = Home (HomeState Nothing [])
+                                    , cards = (runState.characters |> Tuple.first |> Character.resetCards |> .deck) ++ model.cards
+                                }
+
+                            else
+                                { model
+                                    | gameState = Home (HomeState Nothing [])
+                                }
                     in
                     ( newModel
                     , Codec.saveCards newModel.cards
@@ -177,9 +182,6 @@ update msg model =
 
                 Home _ ->
                     ( model, Cmd.none )
-
-        ClickedResetGame ->
-            init (Flags 0 Nothing)
 
         ClickedPlayerCard index ->
             case model.gameState of
@@ -560,7 +562,7 @@ viewDefeat : Html Msg
 viewDefeat =
     Html.div []
         [ Html.p [] [ Html.text "Defeat :(" ]
-        , Html.button [ Html.Events.onClick ClickedResetGame ] [ Html.text "Reset" ]
+        , Html.button [ Html.Events.onClick ClickedReturnHome ] [ Html.text "Reset" ]
         ]
 
 
