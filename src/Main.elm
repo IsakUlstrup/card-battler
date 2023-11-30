@@ -550,7 +550,7 @@ viewCharacter attrs character =
 
 viewCharacterPreview : List (Attribute msg) -> Character -> Html msg
 viewCharacterPreview attrs character =
-    Html.div (Html.Attributes.class "flex flex-column gap-small pointer" :: attrs)
+    Html.div (Html.Attributes.class "flex flex-column gap-small pointer padding-medium border border-radius-medium" :: attrs)
         [ Html.h1 [ Html.Attributes.class "center-text font-big no-select" ] [ Html.text (String.fromChar character.icon) ]
         , Html.p [] [ Html.text ("health: " ++ String.fromInt (Tuple.second character.health)) ]
         , Html.p [] [ Html.text ("ability: " ++ Card.actionToIcon character.ability) ]
@@ -564,7 +564,7 @@ viewCharacterPreview attrs character =
 viewCard : List (Attribute msg) -> Card -> Html msg
 viewCard attrs card =
     Html.div
-        (Html.Attributes.class "card" :: attrs)
+        (Html.Attributes.class "flex flex-column gap-medium padding-medium border border-radius-medium pointer no-select" :: attrs)
         [ Html.h3 [] [ Html.text card.name ]
         , card.cost |> viewCardCost
         , Html.p [] [ Html.text (Card.actionToString card.action) ]
@@ -587,7 +587,7 @@ viewPlayerHand character =
             , Html.Events.onClick (ClickedPlayerCard index)
             ]
     in
-    Html.div [ Html.Attributes.class "player-hand" ] (List.indexedMap (\index card -> viewCard (cardAttributes index card) card) character.hand)
+    Html.div [ Html.Attributes.class "flex gap-medium" ] (List.indexedMap (\index card -> viewCard (cardAttributes index card) card) character.hand)
 
 
 viewDefeat : Html Msg
@@ -604,14 +604,14 @@ viewVictory encounters rewards =
         viewReward reward =
             viewCard [ Html.Events.onClick (ClickedReward reward) ] reward
     in
-    Html.div []
-        [ Html.p [] [ Html.text "Victory!" ]
-        , Html.div [ Html.Attributes.class "card-group" ] (List.map viewReward rewards)
+    Html.div [ Html.Attributes.class "flex flex-column gap-large" ]
+        [ Html.h1 [ Html.Attributes.class "center-text" ] [ Html.text "Victory!" ]
+        , Html.div [ Html.Attributes.class "flex gap-medium" ] (List.map viewReward rewards)
         , if List.isEmpty encounters then
-            Html.button [ Html.Events.onClick ClickedReturnHome ] [ Html.text "Return home" ]
+            Html.button [ Html.Events.onClick ClickedReturnHome, Html.Attributes.class "padding-small" ] [ Html.text "Return home" ]
 
           else
-            Html.button [ Html.Events.onClick ClickedNextEnemy ] [ Html.text "Next enemy" ]
+            Html.button [ Html.Events.onClick ClickedNextEnemy, Html.Attributes.class "padding-small" ] [ Html.text "Next enemy" ]
         , viewEncounters encounters
         ]
 
@@ -620,7 +620,7 @@ viewEncounters : List Character -> Html msg
 viewEncounters encounters =
     Html.div []
         [ Html.h3 [] [ Html.text "Next encounters" ]
-        , Html.div [ Html.Attributes.class "encounters" ] (List.map (\character -> Html.p [] [ Html.text (String.fromChar character.icon) ]) encounters)
+        , Html.div [ Html.Attributes.class "flex gap-medium" ] (List.map (\character -> Html.p [ Html.Attributes.class "font-big" ] [ Html.text (String.fromChar character.icon) ]) encounters)
         ]
 
 
@@ -636,7 +636,7 @@ viewRun runState =
             ]
 
         _ ->
-            [ Html.div [ Html.Attributes.class "characters" ]
+            [ Html.div [ Html.Attributes.class "flex" ]
                 [ viewCharacter (characterClasses runState.turnState True) (Tuple.first runState.characters)
                 , viewCharacter (characterClasses runState.turnState False) (Tuple.second runState.characters)
                 ]
@@ -650,7 +650,12 @@ viewHome model =
     let
         viewCharacterPreset : Int -> ( Bool, Character ) -> Html Msg
         viewCharacterPreset index ( selected, character ) =
-            viewCharacterPreview [ Html.Events.onClick (ClickedCharacterPreset index), Html.Attributes.classList [ ( "debug-border", selected ) ] ] character
+            viewCharacterPreview
+                [ Html.Events.onClick (ClickedCharacterPreset index)
+                , Html.Attributes.classList [ ( "border-green", selected ) ]
+                , Html.Attributes.style "width" "12rem"
+                ]
+                character
     in
     [ Html.h1 [] [ Html.text "Home" ]
     , Html.button [ Html.Events.onClick ClickedStartRun, Html.Attributes.class "padding-small" ] [ Html.text "Start run" ]
@@ -663,7 +668,8 @@ viewHome model =
             (\index ( selected, card ) ->
                 viewCard
                     [ Html.Events.onClick (ClickedCardInCollection index)
-                    , Html.Attributes.classList [ ( "debug-border", selected ) ]
+                    , Html.Attributes.classList [ ( "border-green", selected ) ]
+                    , Html.Attributes.class "padding-medium"
                     ]
                     card
             )
