@@ -16,7 +16,6 @@ panda =
         1
         (Card.Damage 2)
         200
-        Nothing
 
 
 unicorn : Character
@@ -26,7 +25,6 @@ unicorn =
         3
         (Card.Damage 4)
         100
-        Nothing
 
 
 butterfly : Character
@@ -36,7 +34,6 @@ butterfly =
         0
         (Card.Damage 1)
         10
-        Nothing
 
 
 
@@ -50,7 +47,7 @@ badger =
         1
         (Card.Damage 2)
         7
-        (Just ( ( 10, Cards.basicCard ), [ ( 10, Cards.basicCard2 ), ( 10, Cards.expensiveCard ) ] ))
+        |> Character.setDropTable ( 10, Cards.basicCard ) [ ( 10, Cards.basicCard2 ), ( 10, Cards.expensiveCard ) ]
 
 
 rabbit : Character
@@ -60,7 +57,7 @@ rabbit =
         5
         (Card.Damage 1)
         5
-        (Just ( ( 10, Cards.basicCard ), [ ( 40, Cards.basicCard2 ) ] ))
+        |> Character.setDropTable ( 10, Cards.basicCard ) [ ( 40, Cards.basicCard2 ) ]
 
 
 chick : Character
@@ -70,4 +67,4 @@ chick =
         0
         (Card.Damage 1)
         5
-        (Just ( ( 10, Cards.basicCard ), [] ))
+        |> Character.setDropTable ( 10, Cards.basicCard ) []

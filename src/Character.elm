@@ -14,6 +14,7 @@ module Character exposing
     , resetCards
     , resetCooldown
     , setDeck
+    , setDropTable
     , tick
     )
 
@@ -42,8 +43,8 @@ type alias Character =
 
 {-| Character constructor
 -}
-new : Char -> Int -> Action -> Int -> Maybe ( ( Float, Card ), List ( Float, Card ) ) -> Character
-new icon speed ability health dropTable =
+new : Char -> Int -> Action -> Int -> Character
+new icon speed ability health =
     Character
         0
         icon
@@ -56,7 +57,7 @@ new icon speed ability health dropTable =
         []
         []
         []
-        dropTable
+        Nothing
 
 
 {-| Put all cards back in deck
@@ -78,6 +79,11 @@ addCard card character =
 setDeck : List Card -> Character -> Character
 setDeck deck character =
     { character | deck = deck }
+
+
+setDropTable : ( Float, Card ) -> List ( Float, Card ) -> Character -> Character
+setDropTable first rest character =
+    { character | dropTable = Just ( first, rest ) }
 
 
 drawHand : Int -> Character -> Character
