@@ -676,7 +676,7 @@ view : Model -> Html Msg
 view model =
     main_
         [ Html.Attributes.id "app"
-        , Html.Attributes.class "flex flex-column padding-medium gap-medium beige-text helvetica"
+        , Html.Attributes.class "flex flex-column center-cross padding-medium gap-large beige-text helvetica"
         ]
         (case model.gameState of
             Run runState ->
