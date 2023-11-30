@@ -532,8 +532,8 @@ viewCharacter attrs character =
 
 viewCharacterPreview : List (Attribute msg) -> Character -> Html msg
 viewCharacterPreview attrs character =
-    Html.div (Html.Attributes.class "flex flex-column gap-small" :: attrs)
-        [ Html.h1 [ Html.Attributes.class "center-text font-big" ] [ Html.text (String.fromChar character.icon) ]
+    Html.div (Html.Attributes.class "flex flex-column gap-small pointer" :: attrs)
+        [ Html.h1 [ Html.Attributes.class "center-text font-big no-select" ] [ Html.text (String.fromChar character.icon) ]
         , Html.p [] [ Html.text ("health: " ++ String.fromInt (Tuple.second character.health)) ]
         , Html.p [] [ Html.text ("ability: " ++ Card.actionToIcon character.ability) ]
         , Html.table []
