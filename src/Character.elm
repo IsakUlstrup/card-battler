@@ -4,8 +4,6 @@ module Character exposing
     , applyAction
     , canAfford
     , canPlayFirst
-    , deriveStat
-    , deriveStats
     , drawHand
     , generateDrops
     , isAlive
@@ -21,9 +19,7 @@ module Character exposing
 
 import Card exposing (Action, Card)
 import Cooldown exposing (Cooldown)
-import CustomDict as Dict exposing (Dict)
 import Random exposing (Generator)
-import Stat exposing (Stat)
 
 
 {-| Main Character type
@@ -33,7 +29,7 @@ type alias Character =
     , icon : Char
     , health : ( Int, Int )
     , healthHistory : List ( Int, Int )
-    , baseStats : Dict Stat Float
+    , speed : Int
     , cooldown : Cooldown
     , ability : Action
     , energy : Float
@@ -46,18 +42,18 @@ type alias Character =
 
 {-| Character constructor
 -}
-new : Char -> List Card -> List ( Stat, Float ) -> Action -> Int -> Maybe ( ( Float, Card ), List ( Float, Card ) ) -> Character
-new icon deck baseStats ability health dropTable =
+new : Char -> Int -> Action -> Int -> Maybe ( ( Float, Card ), List ( Float, Card ) ) -> Character
+new icon speed ability health dropTable =
     Character
         0
         icon
         ( health, health )
         []
-        (Dict.fromList baseStats)
+        speed
         (Cooldown.new 5000)
         ability
         0
-        deck
+        []
         []
         []
         dropTable
@@ -153,7 +149,7 @@ tick : Float -> Character -> Character
 tick dt character =
     if isAlive character then
         { character
-            | cooldown = Cooldown.tick (dt * deriveStat Stat.Speed character) character.cooldown
+            | cooldown = Cooldown.tick (dt * toFloat character.speed) character.cooldown
             , energy = tickEnergy character dt character.energy
         }
 
@@ -201,58 +197,6 @@ isReady character =
 
 
 
--- STATS
-
-
-{-| Derive character stat of any type
-
-Calculated using character base stat \* sum of any buffs or 1 if no buffs
-
--}
-deriveStat : Stat -> Character -> Float
-deriveStat stat character =
-    -- let
-    --     statBuffs : Float
-    --     statBuffs =
-    --         character.buffs
-    --             |> List.filterMap
-    --                 (\buff ->
-    --                     if stat == Tuple.first buff.statModifier then
-    --                         Just (Tuple.second buff.statModifier)
-    --                     else
-    --                         Nothing
-    --                 )
-    --             |> (\buffs ->
-    --                     if not (List.isEmpty buffs) then
-    --                         List.sum buffs
-    --                     else
-    --                         1
-    --                )
-    -- in
-    character.baseStats
-        |> Dict.get stat
-        |> Maybe.withDefault 0
-
-
-
--- |> (\base -> base * statBuffs)
-
-
-deriveStats : Character -> List ( Stat, Float )
-deriveStats character =
-    character.baseStats
-        |> Dict.toList
-        |> List.map Tuple.first
-        |> List.map (\stat -> ( stat, deriveStat stat character ))
-
-
-
--- -- BUFF
--- {-| Add buff to character
--- -}
--- addBuff : Buff -> Character -> Character
--- addBuff buff character =
---     { character | buffs = buff :: character.buffs }
 -- ENERGY
 
 
@@ -279,8 +223,8 @@ canPlayFirst character =
 
 
 tickEnergy : Character -> Float -> Float -> Float
-tickEnergy character dt amount =
-    amount + ((dt / 3500) * deriveStat Stat.EnergyRegenRate character) |> min (deriveStat Stat.EnergyCap character)
+tickEnergy _ dt amount =
+    amount + (dt / 3500) |> min 10
 
 
 removeEnergy : Int -> Character -> Character

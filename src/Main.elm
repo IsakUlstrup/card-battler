@@ -11,9 +11,7 @@ import Cooldown exposing (Cooldown)
 import Html exposing (Attribute, Html, main_)
 import Html.Attributes
 import Html.Events
-import Html.Keyed
 import Random exposing (Seed)
-import Stat exposing (Stat)
 
 
 
@@ -415,22 +413,20 @@ advanceTurnState model =
 
 
 -- VIEW
-
-
-viewCustomMeter : Int -> Int -> Html msg
-viewCustomMeter max value =
-    Html.div [ Html.Attributes.class "custom-meter" ]
-        [ Html.div
-            [ Html.Attributes.class "trail"
-            , Html.Attributes.style "width" (String.fromFloat (toFloat value / toFloat max * 100) ++ "%")
-            ]
-            []
-        , Html.div
-            [ Html.Attributes.class "value"
-            , Html.Attributes.style "width" (String.fromFloat (toFloat value / toFloat max * 100) ++ "%")
-            ]
-            []
-        ]
+-- viewCustomMeter : Int -> Int -> Html msg
+-- viewCustomMeter max value =
+--     Html.div [ Html.Attributes.class "custom-meter" ]
+--         [ Html.div
+--             [ Html.Attributes.class "trail"
+--             , Html.Attributes.style "width" (String.fromFloat (toFloat value / toFloat max * 100) ++ "%")
+--             ]
+--             []
+--         , Html.div
+--             [ Html.Attributes.class "value"
+--             , Html.Attributes.style "width" (String.fromFloat (toFloat value / toFloat max * 100) ++ "%")
+--             ]
+--             []
+--         ]
 
 
 viewCooldown : Cooldown -> Html msg
@@ -453,37 +449,30 @@ viewCooldown ( cd, maxCd ) =
 --             )
 --         , viewCooldown buff.duration
 --         ]
-
-
-viewStat : ( Stat, Float ) -> Html msg
-viewStat ( statType, statValue ) =
-    Html.tr []
-        [ Html.td [] [ Html.text (Stat.toString statType) ]
-        , Html.td [] [ Html.text (String.fromFloat statValue) ]
-        ]
-
-
-viewHealthHistoryItem : ( Int, Int ) -> ( String, Html msg )
-viewHealthHistoryItem ( id, delta ) =
-    ( "item" ++ String.fromInt id, Html.p [] [ Html.text (String.fromInt delta) ] )
-
-
-viewEnergy : Float -> Maybe (Html msg)
-viewEnergy amount =
-    if amount > 0 then
-        Just
-            (Html.div []
-                [ Html.p [] [ Html.text (String.fromInt (floor amount)) ]
-                , Html.progress
-                    [ Html.Attributes.value (String.fromFloat (amount - toFloat (floor amount)))
-                    , Html.Attributes.max "1"
-                    ]
-                    []
-                ]
-            )
-
-    else
-        Nothing
+-- viewStat : ( Stat, Float ) -> Html msg
+-- viewStat ( statType, statValue ) =
+--     Html.tr []
+--         [ Html.td [] [ Html.text (Stat.toString statType) ]
+--         , Html.td [] [ Html.text (String.fromFloat statValue) ]
+--         ]
+-- viewHealthHistoryItem : ( Int, Int ) -> ( String, Html msg )
+-- viewHealthHistoryItem ( id, delta ) =
+--     ( "item" ++ String.fromInt id, Html.p [] [ Html.text (String.fromInt delta) ] )
+-- viewEnergy : Float -> Maybe (Html msg)
+-- viewEnergy amount =
+--     if amount > 0 then
+--         Just
+--             (Html.div []
+--                 [ Html.p [] [ Html.text (String.fromInt (floor amount)) ]
+--                 , Html.progress
+--                     [ Html.Attributes.value (String.fromFloat (amount - toFloat (floor amount)))
+--                     , Html.Attributes.max "1"
+--                     ]
+--                     []
+--                 ]
+--             )
+--     else
+--         Nothing
 
 
 viewCardCost : Int -> Html msg
@@ -517,7 +506,9 @@ viewCharacter attrs character =
     Html.div
         (Html.Attributes.class "character" :: attrs)
         [ Html.h1 [ Html.Attributes.class "icon" ] [ Html.text (String.fromChar character.icon) ]
-        , Html.Keyed.node "div" [ Html.Attributes.class "health-history" ] (List.map viewHealthHistoryItem character.healthHistory)
+
+        -- , Html.Keyed.node "div" [ Html.Attributes.class "health-history" ] (List.map viewHealthHistoryItem character.healthHistory)
+        , Html.p [] [ Html.text "health" ]
 
         -- , Html.p []
         --     [ Html.text
@@ -527,11 +518,15 @@ viewCharacter attrs character =
         --             ++ String.fromInt (Tuple.second character.health)
         --         )
         --     ]
-        , Html.p [] [ Html.text "health" ]
-        , viewCustomMeter (Tuple.second character.health) (Tuple.first character.health)
-        , Html.p [] [ Html.text "energy" ]
-        , Html.div [ Html.Attributes.class "energy" ] ([ character.energy ] |> List.filterMap viewEnergy)
+        , Html.meter
+            [ Html.Attributes.value (Tuple.first character.health |> String.fromInt)
+            , Html.Attributes.max (Tuple.second character.health |> String.fromInt)
+            ]
+            []
 
+        -- , viewCustomMeter (Tuple.second character.health) (Tuple.first character.health)
+        -- , Html.p [] [ Html.text "energy" ]
+        -- , Html.div [ Html.Attributes.class "energy" ] ([ character.energy ] |> List.filterMap viewEnergy)
         -- , Html.div [ Html.Attributes.class "hand" ] (List.map (viewSmallCard character) character.hand)
         , Html.p [] [ Html.text "cooldown" ]
         , viewCooldown character.cooldown
@@ -555,9 +550,14 @@ viewCharacterPreview attrs character =
         , Html.p [] [ Html.text ("health: " ++ String.fromInt (Tuple.second character.health)) ]
         , Html.p [] [ Html.text ("ability: " ++ Card.actionToIcon character.ability) ]
         , Html.table []
-            (Character.deriveStats character
-                |> List.map viewStat
-            )
+            -- (Character.deriveStats character
+            --     |> List.map viewStat
+            -- )
+            [ Html.tr []
+                [ Html.td [] [ Html.text "Speed" ]
+                , Html.td [] [ Html.text (String.fromInt character.speed) ]
+                ]
+            ]
         ]
 
 
