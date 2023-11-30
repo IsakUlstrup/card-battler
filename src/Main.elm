@@ -53,15 +53,9 @@ type alias RunState =
     }
 
 
-type alias HomeState =
-    { character : Maybe Character
-    , deck : List Card
-    }
-
-
 type GameState
     = Run RunState
-    | Home HomeState
+    | Home
 
 
 
@@ -76,7 +70,8 @@ type alias Flags =
 
 type alias Model =
     { gameState : GameState
-    , cards : List Card
+    , cards : List ( Bool, Card )
+    , characters : List ( Bool, Character )
     , seed : Seed
     }
 
@@ -93,8 +88,9 @@ init flags =
                     [ Cards.basicCard, Cards.basicCard ]
     in
     ( Model
-        (Home (HomeState Nothing []))
-        loadCards
+        Home
+        (loadCards |> List.map (Tuple.pair False))
+        ([ Characters.panda, Characters.unicorn, Characters.butterfly ] |> List.map (Tuple.pair False))
         (Random.initialSeed flags.timestamp)
     , Cmd.none
     )
@@ -110,10 +106,9 @@ type Msg
     | ClickedReturnHome
     | ClickedPlayerCard Int
     | ClickedReward Card
-    | ClickedStartRun Character (List Card)
-    | ClickedCardInCollection Int Card
-    | ClickedCardInSelectedCards Int Card
-    | ClickedCharacterPreset Character
+    | ClickedStartRun
+    | ClickedCardInCollection Int
+    | ClickedCharacterPreset Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -134,7 +129,7 @@ update msg model =
                     , Cmd.none
                     )
 
-                Home _ ->
+                Home ->
                     ( model, Cmd.none )
 
         ClickedNextEnemy ->
@@ -161,7 +156,7 @@ update msg model =
                         Nothing ->
                             ( model, Cmd.none )
 
-                Home _ ->
+                Home ->
                     ( model, Cmd.none )
 
         ClickedReturnHome ->
@@ -171,22 +166,29 @@ update msg model =
                         newModel =
                             if runState.characters |> Tuple.first |> Character.isAlive then
                                 { model
-                                    | gameState = Home (HomeState Nothing [])
-                                    , cards = (runState.characters |> Tuple.first |> Character.resetCards |> .deck) ++ model.cards
+                                    | gameState = Home
+                                    , cards =
+                                        (runState.characters
+                                            |> Tuple.first
+                                            |> Character.resetCards
+                                            |> .deck
+                                            |> List.map (Tuple.pair False)
+                                        )
+                                            ++ model.cards
                                     , seed = runState.seed
                                 }
 
                             else
                                 { model
-                                    | gameState = Home (HomeState Nothing [])
+                                    | gameState = Home
                                     , seed = runState.seed
                                 }
                     in
                     ( newModel
-                    , Codec.saveCards newModel.cards
+                    , Codec.saveCards (List.map Tuple.second newModel.cards)
                     )
 
-                Home _ ->
+                Home ->
                     ( model, Cmd.none )
 
         ClickedPlayerCard index ->
@@ -194,7 +196,7 @@ update msg model =
                 Run runState ->
                     ( { model | gameState = Run (playCard True index runState) }, Cmd.none )
 
-                Home _ ->
+                Home ->
                     ( model, Cmd.none )
 
         ClickedReward card ->
@@ -211,62 +213,78 @@ update msg model =
                     , Cmd.none
                     )
 
-                Home _ ->
+                Home ->
                     ( model, Cmd.none )
 
-        ClickedStartRun player deck ->
+        ClickedStartRun ->
+            let
+                player =
+                    model.characters |> List.filter Tuple.first |> List.map Tuple.second |> List.head
+
+                deck =
+                    model.cards |> List.filter Tuple.first |> List.map Tuple.second
+            in
+            case player of
+                Just p ->
+                    ( { model
+                        | gameState =
+                            Run
+                                (RunState
+                                    ( p |> Character.setDeck deck |> Character.drawHand 5
+                                    , Characters.badger
+                                    )
+                                    Recovering
+                                    [ Characters.rabbit, Characters.chick ]
+                                    model.seed
+                                )
+                        , cards = model.cards |> List.filter (Tuple.first >> not)
+                      }
+                        |> resetSelection
+                    , Cmd.none
+                    )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        ClickedCardInCollection clickedIndex ->
             ( { model
-                | gameState =
-                    Run
-                        (RunState
-                            ( player |> Character.setDeck deck |> Character.drawHand 5
-                            , Characters.badger |> Character.drawHand 1
-                            )
-                            Recovering
-                            [ Characters.rabbit, Characters.chick ]
-                            model.seed
-                        )
+                | cards = List.indexedMap (toggleIndex clickedIndex) model.cards
               }
             , Cmd.none
             )
 
-        ClickedCardInCollection index card ->
-            case model.gameState of
-                Home homeState ->
-                    ( { model
-                        | gameState = Home { homeState | deck = card :: homeState.deck }
-                        , cards = List.take index model.cards ++ List.drop (index + 1) model.cards
-                      }
-                    , Cmd.none
-                    )
+        ClickedCharacterPreset clickedIndex ->
+            ( { model
+                | characters = List.indexedMap (setIndex clickedIndex) model.characters
+              }
+            , Cmd.none
+            )
 
-                Run _ ->
-                    ( model, Cmd.none )
 
-        ClickedCardInSelectedCards index card ->
-            case model.gameState of
-                Home homeState ->
-                    ( { model
-                        | gameState = Home { homeState | deck = List.take index homeState.deck ++ List.drop (index + 1) homeState.deck }
-                        , cards = card :: model.cards
-                      }
-                    , Cmd.none
-                    )
+toggleIndex : Int -> Int -> ( Bool, a ) -> ( Bool, a )
+toggleIndex targteIndex index ( selected, item ) =
+    if index == targteIndex then
+        ( not selected, item )
 
-                Run _ ->
-                    ( model, Cmd.none )
+    else
+        ( selected, item )
 
-        ClickedCharacterPreset character ->
-            case model.gameState of
-                Home homeState ->
-                    ( { model
-                        | gameState = Home { homeState | character = Just character }
-                      }
-                    , Cmd.none
-                    )
 
-                Run _ ->
-                    ( model, Cmd.none )
+setIndex : Int -> Int -> ( Bool, a ) -> ( Bool, a )
+setIndex targteIndex index ( selected, item ) =
+    if index == targteIndex && selected == False then
+        ( True, item )
+
+    else
+        ( False, item )
+
+
+resetSelection : Model -> Model
+resetSelection model =
+    { model
+        | cards = model.cards |> List.map (Tuple.mapFirst (always False))
+        , characters = model.characters |> List.map (Tuple.mapFirst (always False))
+    }
 
 
 updateFlag : (Character -> Character) -> Bool -> RunState -> RunState
@@ -627,35 +645,30 @@ viewRun runState =
             ]
 
 
-viewHome : HomeState -> Model -> List (Html Msg)
-viewHome homeState model =
+viewHome : Model -> List (Html Msg)
+viewHome model =
     let
-        viewCharacterPreset character =
-            viewCharacterPreview [ Html.Events.onClick (ClickedCharacterPreset character) ] character
+        viewCharacterPreset : Int -> ( Bool, Character ) -> Html Msg
+        viewCharacterPreset index ( selected, character ) =
+            viewCharacterPreview [ Html.Events.onClick (ClickedCharacterPreset index), Html.Attributes.classList [ ( "debug-border", selected ) ] ] character
     in
-    -- Html.section [ Html.Attributes.class "home" ]
     [ Html.h1 [] [ Html.text "Home" ]
-    , Html.h3 [] [ Html.text "Selected Character" ]
-    , Html.div [ Html.Attributes.class "flex" ]
-        (case homeState.character of
-            Just character ->
-                [ viewCharacterPreview [] character
-                , Html.button [ Html.Events.onClick (ClickedStartRun character homeState.deck) ] [ Html.text "Start run" ]
-                ]
-
-            Nothing ->
-                []
-        )
-    , Html.h3 [] [ Html.text "Selected Cards" ]
-    , Html.div [] (List.indexedMap (\index card -> viewCard [ Html.Events.onClick (ClickedCardInSelectedCards index card) ] card) homeState.deck)
+    , Html.button [ Html.Events.onClick ClickedStartRun ] [ Html.text "Start run" ]
     , Html.h3 [] [ Html.text "Characters" ]
     , Html.div [ Html.Attributes.class "flex gap-medium" ]
-        [ viewCharacterPreset Characters.panda
-        , viewCharacterPreset Characters.unicorn
-        , viewCharacterPreset Characters.butterfly
-        ]
+        (List.indexedMap viewCharacterPreset model.characters)
     , Html.h3 [] [ Html.text "Card Collection" ]
-    , Html.div [ Html.Attributes.class "flex flex-wrap gap-medium" ] (List.indexedMap (\index card -> viewCard [ Html.Events.onClick (ClickedCardInCollection index card) ] card) model.cards)
+    , Html.div [ Html.Attributes.class "flex flex-wrap gap-medium" ]
+        (List.indexedMap
+            (\index ( selected, card ) ->
+                viewCard
+                    [ Html.Events.onClick (ClickedCardInCollection index)
+                    , Html.Attributes.classList [ ( "debug-border", selected ) ]
+                    ]
+                    card
+            )
+            model.cards
+        )
     ]
 
 
@@ -669,8 +682,8 @@ view model =
             Run runState ->
                 viewRun runState
 
-            Home homeState ->
-                viewHome homeState model
+            Home ->
+                viewHome model
         )
 
 
@@ -684,7 +697,7 @@ subscriptions model =
         Run _ ->
             Browser.Events.onAnimationFrameDelta (min 1000 >> Tick)
 
-        Home _ ->
+        Home ->
             Sub.none
 
 
