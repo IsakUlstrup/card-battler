@@ -12,6 +12,7 @@ import Html exposing (Attribute, Html, main_)
 import Html.Attributes
 import Html.Events
 import Html.Keyed
+import Random exposing (Seed)
 import Stat exposing (Stat)
 
 
@@ -75,6 +76,7 @@ type alias Flags =
 type alias Model =
     { gameState : GameState
     , cards : List Card
+    , seed : Seed
     }
 
 
@@ -92,6 +94,7 @@ init flags =
     ( Model
         (Home (HomeState Nothing []))
         loadCards
+        (Random.initialSeed flags.timestamp)
     , Cmd.none
     )
 
