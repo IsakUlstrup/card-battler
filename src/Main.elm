@@ -131,31 +131,29 @@ update msg model =
                     ( model, Cmd.none )
 
         ClickedNextEnemy ->
-            case model.gameState of
-                Run runState ->
-                    case List.head runState.encounters of
-                        Just character ->
-                            ( { model
-                                | gameState =
-                                    Run
-                                        { runState
-                                            | characters =
-                                                runState.characters
-                                                    |> Tuple.mapSecond (always (character |> Character.drawHand 3))
-                                                    |> Tuple.mapFirst Character.resetCards
-                                                    |> Tuple.mapFirst (Character.drawHand 5)
-                                            , encounters = List.drop 1 runState.encounters
-                                            , turnState = Recovering
-                                        }
-                              }
-                            , Cmd.none
-                            )
-
-                        Nothing ->
-                            ( model, Cmd.none )
-
-                Home ->
-                    ( model, Cmd.none )
+            -- case model.gameState of
+            --     Run runState ->
+            --         case List.head runState.encounters of
+            --             Just character ->
+            --                 ( { model
+            --                     | gameState =
+            --                         Run
+            --                             { runState
+            --                                 | characters =
+            --                                     runState.characters
+            --                                         |> Tuple.mapSecond (always (character |> Character.drawHand 3))
+            --                                         |> Tuple.mapFirst Character.resetCards
+            --                                         |> Tuple.mapFirst (Character.drawHand 5)
+            --                                 , encounters = List.drop 1 runState.encounters
+            --                                 , turnState = Recovering
+            --                             }
+            --                   }
+            --                 , Cmd.none
+            --                 )
+            --             Nothing ->
+            --                 ( model, Cmd.none )
+            --     Home ->
+            ( nextEncounter model, Cmd.none )
 
         ClickedReturnHome ->
             case model.gameState of
@@ -208,6 +206,7 @@ update msg model =
                                     , characters = Tuple.mapFirst (Character.addCard card) runState.characters
                                 }
                       }
+                        |> nextEncounter
                     , Cmd.none
                     )
 
@@ -275,6 +274,33 @@ setIndex targteIndex index ( selected, item ) =
 
     else
         ( False, item )
+
+
+nextEncounter : Model -> Model
+nextEncounter model =
+    case model.gameState of
+        Run runState ->
+            case List.head runState.encounters of
+                Just character ->
+                    { model
+                        | gameState =
+                            Run
+                                { runState
+                                    | characters =
+                                        runState.characters
+                                            |> Tuple.mapSecond (always (character |> Character.drawHand 3))
+                                            |> Tuple.mapFirst Character.resetCards
+                                            |> Tuple.mapFirst (Character.drawHand 5)
+                                    , encounters = List.drop 1 runState.encounters
+                                    , turnState = Recovering
+                                }
+                    }
+
+                Nothing ->
+                    model
+
+        Home ->
+            model
 
 
 resetSelection : Model -> Model
@@ -611,7 +637,7 @@ viewVictory encounters rewards =
             Html.button [ Html.Events.onClick ClickedReturnHome, Html.Attributes.class "padding-small" ] [ Html.text "Return home" ]
 
           else
-            Html.button [ Html.Events.onClick ClickedNextEnemy, Html.Attributes.class "padding-small" ] [ Html.text "Next enemy" ]
+            Html.button [ Html.Events.onClick ClickedNextEnemy, Html.Attributes.class "padding-small" ] [ Html.text "Skip reward" ]
         , viewEncounters encounters
         ]
 
