@@ -5,6 +5,7 @@ import Browser.Events
 import Codec
 import Content.Cards as Cards
 import Content.Minions as Minions
+import Content.Opponents exposing (Opponent)
 import Cooldown exposing (Cooldown)
 import Deck exposing (Action(..), Card, Deck)
 import Html exposing (Attribute, Html, main_)
@@ -36,9 +37,9 @@ type TurnState
 
 type alias RunState =
     { playerMinions : List Minion
-    , opponentMinions : List Minion
+    , opponentMinions : List Opponent
     , turnState : TurnState
-    , encounters : List Minion
+    , encounters : List Opponent
     , deck : Deck
     , seed : Seed
     }
@@ -221,9 +222,9 @@ update msg model =
                             Run
                                 (RunState
                                     [ p ]
-                                    [ Minions.badger ]
+                                    [ Content.Opponents.badger ]
                                     Recovering
-                                    [ Minions.rabbit, Minions.chick ]
+                                    [ Content.Opponents.rabbit, Content.Opponents.chick ]
                                     (deck |> Deck.drawHand 5)
                                     model.seed
                                 )
@@ -287,7 +288,7 @@ nextEncounter model =
                                         --     |> Tuple.mapFirst (Character.drawHand 5)
                                         character
                                             :: runState.opponentMinions
-                                            |> List.filter Minion.isAlive
+                                            |> List.filter (Tuple.first >> Minion.isAlive)
                                     , encounters = List.drop 1 runState.encounters
                                     , turnState = Recovering
                                 }
@@ -323,7 +324,7 @@ playCard index model =
         ( newDeck, Just (Damage dmg) ) ->
             { model
                 | deck = newDeck
-                , opponentMinions = List.map (Minion.damage dmg) (List.take 1 model.opponentMinions) ++ List.drop 1 model.opponentMinions
+                , opponentMinions = List.map (Tuple.mapFirst (Minion.damage dmg)) (List.take 1 model.opponentMinions) ++ List.drop 1 model.opponentMinions
             }
 
         ( newDeck, Just (Summon minion) ) ->
@@ -342,7 +343,7 @@ tickMinions dt model =
         Recovering ->
             { model
                 | playerMinions = List.map (Minion.tick dt) model.playerMinions
-                , opponentMinions = List.map (Minion.tick dt) model.opponentMinions
+                , opponentMinions = List.map (Tuple.mapFirst (Minion.tick dt)) model.opponentMinions
             }
 
         _ ->
@@ -385,20 +386,24 @@ setVictoryState rewards model =
     { model | turnState = Victory rewards }
 
 
-getDeadMinion : RunState -> Maybe ( Bool, Minion )
+getDeadOpponent : RunState -> Maybe Opponent
+getDeadOpponent model =
+    model.opponentMinions
+        |> List.filter (\( minion, _ ) -> Minion.isAlive minion |> not)
+        |> List.head
+
+
+getDeadMinion : RunState -> Maybe Minion
 getDeadMinion model =
-    (model.playerMinions |> List.map (Tuple.pair True))
-        ++ (model.opponentMinions |> List.map (Tuple.pair False))
-        -- |> List.map (\( plr, minion ) -> ( plr, Minion.isAlive minion |> not ))
-        |> List.filter (\( _, minion ) -> Minion.isAlive minion |> not)
+    model.playerMinions
+        |> List.filter (Minion.isAlive >> not)
         |> List.head
 
 
 getReadyMinion : RunState -> Maybe ( Bool, Minion )
 getReadyMinion runState =
     (runState.playerMinions |> List.map (Tuple.pair True))
-        ++ (runState.opponentMinions |> List.map (Tuple.pair False))
-        -- |> List.map (\( plr, minion ) -> ( plr, Minion.isAlive minion |> not ))
+        ++ (runState.opponentMinions |> List.map Tuple.first |> List.map (Tuple.pair False))
         |> List.filter (\( _, minion ) -> Minion.isReady minion)
         |> List.head
 
@@ -407,19 +412,18 @@ advanceTurnState : RunState -> RunState
 advanceTurnState model =
     case model.turnState of
         Recovering ->
-            case getDeadMinion model of
-                Just ( isPlayer, minion ) ->
-                    if isPlayer then
-                        setDefeatState model
+            case ( getDeadMinion model, getDeadOpponent model ) of
+                ( Just _, _ ) ->
+                    setDefeatState model
 
-                    else
-                        -- let
-                        --     ( rewards, seed ) =
-                        --         Random.step (Minion.generateDrops minion) model.seed
-                        -- in
-                        setVictoryState [] model
+                ( _, Just ( _, ( first, rest ) ) ) ->
+                    let
+                        ( rewards, seed ) =
+                            Random.step (Random.list 3 (Random.weighted first rest)) model.seed
+                    in
+                    setVictoryState rewards { model | seed = seed }
 
-                Nothing ->
+                _ ->
                     case getReadyMinion model of
                         Just ( True, minion ) ->
                             { model
@@ -430,7 +434,7 @@ advanceTurnState model =
                         Just ( False, minion ) ->
                             { model
                                 | turnState = Attacking False 0 (Tuple.second minion.ability) (Cooldown.new characterAnimationDuration)
-                                , opponentMinions = List.map Minion.resetCooldown model.opponentMinions
+                                , opponentMinions = List.map (Tuple.mapFirst Minion.resetCooldown) model.opponentMinions
                             }
 
                         _ ->
@@ -439,7 +443,7 @@ advanceTurnState model =
         Attacking isPlayer _ attack cooldown ->
             if Cooldown.isDone cooldown then
                 (if isPlayer then
-                    { model | opponentMinions = List.map (Minion.damage attack) (List.take 1 model.opponentMinions) ++ List.drop 1 model.opponentMinions }
+                    { model | opponentMinions = List.map (Tuple.mapFirst (Minion.damage attack)) (List.take 1 model.opponentMinions) ++ List.drop 1 model.opponentMinions }
 
                  else
                     { model | playerMinions = List.map (Minion.damage attack) (List.take 1 model.playerMinions) ++ List.drop 1 model.playerMinions }
@@ -676,13 +680,13 @@ viewRun runState =
             [ viewDefeat ]
 
         Victory rewards ->
-            [ viewVictory runState.encounters rewards
+            [ viewVictory (List.map Tuple.first runState.encounters) rewards
             ]
 
         _ ->
             [ Html.div [ Html.Attributes.style "width" "100%", Html.Attributes.class "flex space-evenly gap-large" ]
                 [ Html.div [] (List.map (viewCharacter []) runState.playerMinions)
-                , Html.div [] (List.map (viewCharacter []) runState.opponentMinions)
+                , Html.div [] (List.map (Tuple.first >> viewCharacter []) runState.opponentMinions)
                 ]
             , viewDeckStatus runState.deck
             , viewDeckHand runState.deck
