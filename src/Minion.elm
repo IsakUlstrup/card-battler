@@ -1,7 +1,6 @@
 module Minion exposing (Minion, applyAction, generateDrops, isAlive, isReady, new, resetCooldown, setDroptable, tick)
 
 import Card exposing (Action, Card)
-import Character exposing (isAlive)
 import Cooldown exposing (Cooldown)
 import Random exposing (Generator)
 

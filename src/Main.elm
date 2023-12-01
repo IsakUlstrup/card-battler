@@ -7,6 +7,7 @@ import Codec
 import Content.Cards as Cards
 import Content.Minions as Minions
 import Cooldown exposing (Cooldown)
+import Deck exposing (Deck)
 import Html exposing (Attribute, Html, main_)
 import Html.Attributes
 import Html.Events
@@ -48,7 +49,7 @@ type alias RunState =
     , opponentMinions : List Minion
     , turnState : TurnState
     , encounters : List Minion
-    , cards : List Card
+    , deck : Deck
     , seed : Seed
     }
 
@@ -122,6 +123,7 @@ update msg model =
                             Run
                                 (runState
                                     |> tickMinions dt
+                                    |> tickDeck dt
                                     |> tickTurnState dt
                                     |> advanceTurnState
                                 )
@@ -166,7 +168,9 @@ update msg model =
                                 { model
                                     | gameState = Home
                                     , cards =
-                                        (runState.cards
+                                        (runState.deck
+                                            |> Deck.resetCards
+                                            |> .cards
                                             |> List.map (Tuple.pair False)
                                         )
                                             ++ model.cards
@@ -187,11 +191,12 @@ update msg model =
                     ( model, Cmd.none )
 
         ClickedPlayerCard index ->
-            -- case model.gameState of
-            --     Run runState ->
-            --         ( { model | gameState = Run (playCard True index runState) }, Cmd.none )
-            --     Home ->
-            ( model, Cmd.none )
+            case model.gameState of
+                Run runState ->
+                    ( { model | gameState = Run (playCard index runState) }, Cmd.none )
+
+                Home ->
+                    ( model, Cmd.none )
 
         ClickedReward card ->
             case model.gameState of
@@ -201,7 +206,7 @@ update msg model =
                             Run
                                 { runState
                                     | turnState = Victory []
-                                    , cards = card :: runState.cards
+                                    , deck = Deck.addCard card runState.deck
                                 }
                       }
                         |> nextEncounter
@@ -217,7 +222,7 @@ update msg model =
                     model.characters |> List.filter Tuple.first |> List.map Tuple.second |> List.head
 
                 deck =
-                    model.cards |> List.filter Tuple.first |> List.map Tuple.second
+                    model.cards |> List.filter Tuple.first |> List.map Tuple.second |> Deck.new
             in
             case player of
                 Just p ->
@@ -229,7 +234,7 @@ update msg model =
                                     [ Minions.badger ]
                                     Recovering
                                     [ Minions.rabbit, Minions.chick ]
-                                    deck
+                                    (deck |> Deck.drawHand 5)
                                     model.seed
                                 )
                         , cards = model.cards |> List.filter (Tuple.first >> not)
@@ -320,15 +325,19 @@ resetSelection model =
 --         { model | characters = model.characters |> Tuple.mapFirst f }
 --     else
 --         { model | characters = model.characters |> Tuple.mapSecond f }
--- playCard : Bool -> Int -> RunState -> RunState
--- playCard isPlayer index model =
---     case Character.playCardAtIndex index (Tuple.first model.characters) of
---         ( newCharacter, Just action ) ->
---             model
---                 |> updateFlag (always newCharacter) isPlayer
---                 |> updateFlag (Character.applyAction action) (not isPlayer)
---         ( _, Nothing ) ->
---             model
+
+
+playCard : Int -> RunState -> RunState
+playCard index model =
+    case Deck.playCardAtIndex index model.deck of
+        ( newDeck, Just action ) ->
+            { model
+                | deck = newDeck
+                , opponentMinions = List.map (Minion.applyAction action) (List.take 1 model.opponentMinions) ++ List.drop 1 model.opponentMinions
+            }
+
+        ( _, Nothing ) ->
+            model
 
 
 tickMinions : Float -> RunState -> RunState
@@ -342,6 +351,11 @@ tickMinions dt model =
 
         _ ->
             model
+
+
+tickDeck : Float -> RunState -> RunState
+tickDeck dt runState =
+    { runState | deck = Deck.tickEnergy dt runState.deck }
 
 
 tickTurnState : Float -> RunState -> RunState
@@ -497,21 +511,18 @@ viewCooldown ( cd, maxCd ) =
 -- viewHealthHistoryItem : ( Int, Int ) -> ( String, Html msg )
 -- viewHealthHistoryItem ( id, delta ) =
 --     ( "item" ++ String.fromInt id, Html.p [] [ Html.text (String.fromInt delta) ] )
--- viewEnergy : Float -> Maybe (Html msg)
--- viewEnergy amount =
---     if amount > 0 then
---         Just
---             (Html.div []
---                 [ Html.p [] [ Html.text (String.fromInt (floor amount)) ]
---                 , Html.progress
---                     [ Html.Attributes.value (String.fromFloat (amount - toFloat (floor amount)))
---                     , Html.Attributes.max "1"
---                     ]
---                     []
---                 ]
---             )
---     else
---         Nothing
+
+
+viewEnergy : Float -> Html msg
+viewEnergy amount =
+    Html.div []
+        [ Html.p [] [ Html.text (String.fromInt (floor amount)) ]
+        , Html.progress
+            [ Html.Attributes.value (String.fromFloat (amount - toFloat (floor amount)))
+            , Html.Attributes.max "1"
+            ]
+            []
+        ]
 
 
 viewCardCost : Int -> Html msg
@@ -609,22 +620,24 @@ viewCard attrs card =
         ]
 
 
+viewDeckStatus : Deck -> Html msg
+viewDeckStatus deck =
+    Html.div [ Html.Attributes.class "flex gap-medium" ]
+        [ Html.p [] [ Html.text ("Deck: " ++ String.fromInt (List.length deck.cards)) ]
+        , Html.p [] [ Html.text ("Played: " ++ String.fromInt (List.length deck.played)) ]
+        , viewEnergy deck.energy
+        ]
 
--- viewPlayerDeckStats : Character -> Html msg
--- viewPlayerDeckStats character =
---     Html.div [ Html.Attributes.class "deck-stats" ]
---         [ Html.p [] [ Html.text ("Deck: " ++ String.fromInt (List.length character.deck)) ]
---         , Html.p [] [ Html.text ("Played: " ++ String.fromInt (List.length character.played)) ]
---         ]
--- viewPlayerHand : Character -> Html Msg
--- viewPlayerHand character =
---     let
---         cardAttributes index card =
---             [ Html.Attributes.classList [ ( "cant-afford", Character.canAfford character card.cost |> not ) ]
---             , Html.Events.onClick (ClickedPlayerCard index)
---             ]
---     in
---     Html.div [ Html.Attributes.class "flex gap-medium" ] (List.indexedMap (\index card -> viewCard (cardAttributes index card) card) character.hand)
+
+viewDeckHand : Deck -> Html Msg
+viewDeckHand deck =
+    let
+        cardAttributes index card =
+            [ Html.Attributes.classList [ ( "cant-afford", Deck.canAfford deck card.cost |> not ) ]
+            , Html.Events.onClick (ClickedPlayerCard index)
+            ]
+    in
+    Html.div [ Html.Attributes.class "flex gap-medium" ] (List.indexedMap (\index card -> viewCard (cardAttributes index card) card) deck.hand)
 
 
 viewDefeat : Html Msg
@@ -677,8 +690,9 @@ viewRun runState =
                 [ Html.div [] (List.map (viewCharacter (characterClasses runState.turnState True)) runState.playerMinions)
                 , Html.div [] (List.map (viewCharacter (characterClasses runState.turnState False)) runState.opponentMinions)
                 ]
+            , viewDeckStatus runState.deck
+            , viewDeckHand runState.deck
 
-            -- , viewPlayerDeckStats (Tuple.first runState.characters)
             -- , viewPlayerHand (Tuple.first runState.characters)
             ]
 
