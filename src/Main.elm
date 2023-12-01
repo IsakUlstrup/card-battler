@@ -29,16 +29,16 @@ characterAnimationDuration =
 
 type TurnState
     = Recovering
-    | Attacking Bool Int Action Cooldown
+    | Attacking Bool Int Int Cooldown
     | Defeat
     | Victory (List Card)
 
 
 type alias RunState =
-    { playerMinions : List Minion
-    , opponentMinions : List Minion
+    { playerMinions : List (Minion Card)
+    , opponentMinions : List (Minion Card)
     , turnState : TurnState
-    , encounters : List Minion
+    , encounters : List (Minion Card)
     , deck : Deck
     , seed : Seed
     }
@@ -62,7 +62,7 @@ type alias Flags =
 type alias Model =
     { gameState : GameState
     , cards : List ( Bool, Card )
-    , characters : List ( Bool, Minion )
+    , characters : List ( Bool, Minion Card )
     , seed : Seed
     }
 
@@ -385,7 +385,7 @@ setVictoryState rewards model =
     { model | turnState = Victory rewards }
 
 
-getDeadMinion : RunState -> Maybe ( Bool, Minion )
+getDeadMinion : RunState -> Maybe ( Bool, Minion Card )
 getDeadMinion model =
     (model.playerMinions |> List.map (Tuple.pair True))
         ++ (model.opponentMinions |> List.map (Tuple.pair False))
@@ -394,7 +394,7 @@ getDeadMinion model =
         |> List.head
 
 
-getReadyMinion : RunState -> Maybe ( Bool, Minion )
+getReadyMinion : RunState -> Maybe ( Bool, Minion Card )
 getReadyMinion runState =
     (runState.playerMinions |> List.map (Tuple.pair True))
         ++ (runState.opponentMinions |> List.map (Tuple.pair False))
@@ -436,22 +436,15 @@ advanceTurnState model =
                         _ ->
                             model
 
-        Attacking isPlayer _ action cooldown ->
+        Attacking isPlayer _ attack cooldown ->
             if Cooldown.isDone cooldown then
-                case action of
-                    Deck.Damage dmg ->
-                        if isPlayer then
-                            { model | opponentMinions = List.map (Minion.damage dmg) (List.take 1 model.opponentMinions) ++ List.drop 1 model.opponentMinions }
-                                -- |> updateFlag (Character.applyAction action) (not isPlayer)
-                                |> setRecoveringState
+                (if isPlayer then
+                    { model | opponentMinions = List.map (Minion.damage attack) (List.take 1 model.opponentMinions) ++ List.drop 1 model.opponentMinions }
 
-                        else
-                            { model | playerMinions = List.map (Minion.damage dmg) (List.take 1 model.playerMinions) ++ List.drop 1 model.playerMinions }
-                                -- |> updateFlag (Character.applyAction action) (not isPlayer)
-                                |> setRecoveringState
-
-                    Deck.Summon _ ->
-                        { model | playerMinions = Minions.rabbit :: model.playerMinions }
+                 else
+                    { model | playerMinions = List.map (Minion.damage attack) (List.take 1 model.playerMinions) ++ List.drop 1 model.playerMinions }
+                )
+                    |> setRecoveringState
 
             else
                 model
@@ -550,7 +543,7 @@ viewCardCost cost =
 --     ]
 
 
-viewCharacter : List (Attribute msg) -> Minion -> Html msg
+viewCharacter : List (Attribute msg) -> Minion Card -> Html msg
 viewCharacter attrs character =
     Html.div
         (Html.Attributes.class "flex flex-column gap-medium" :: attrs)
@@ -591,21 +584,23 @@ viewCharacter attrs character =
         ]
 
 
-viewMinionPreview : List (Attribute msg) -> Minion -> Html msg
+viewMinionPreview : List (Attribute msg) -> Minion Card -> Html msg
 viewMinionPreview attrs minion =
     Html.div (Html.Attributes.class "flex flex-column gap-small pointer padding-medium border border-radius-medium" :: attrs)
         [ Html.h1 [ Html.Attributes.class "center-text font-big no-select" ] [ Html.text (String.fromChar minion.icon) ]
         , Html.p [] [ Html.text ("health: " ++ String.fromInt minion.health) ]
-        , Html.p [] [ Html.text ("ability: " ++ Deck.actionToIcon (Tuple.second minion.ability)) ]
-        , Html.table []
-            -- (Character.deriveStats character
-            --     |> List.map viewStat
-            -- )
-            [ Html.tr []
-                [ Html.td [] [ Html.text "Speed" ]
-                , Html.td [] [ Html.text (String.fromInt minion.speed) ]
-                ]
-            ]
+        , Html.p [] [ Html.text ("attack: " ++ String.fromInt (Tuple.second minion.ability)) ]
+        , Html.p [] [ Html.text ("speed: " ++ String.fromInt minion.speed) ]
+
+        -- , Html.table []
+        --     -- (Character.deriveStats character
+        --     --     |> List.map viewStat
+        --     -- )
+        --     [ Html.tr []
+        --         [ Html.td [] [ Html.text "Speed" ]
+        --         , Html.td [] [ Html.text (String.fromInt minion.speed) ]
+        --         ]
+        --     ]
         ]
 
 
@@ -647,7 +642,7 @@ viewDefeat =
         ]
 
 
-viewVictory : List Minion -> List Card -> Html Msg
+viewVictory : List (Minion Card) -> List Card -> Html Msg
 viewVictory encounters rewards =
     let
         viewReward reward =
@@ -665,7 +660,7 @@ viewVictory encounters rewards =
         ]
 
 
-viewEncounters : List Minion -> Html msg
+viewEncounters : List (Minion Card) -> Html msg
 viewEncounters encounters =
     Html.div []
         [ Html.h3 [] [ Html.text "Next encounters" ]
@@ -699,7 +694,7 @@ viewRun runState =
 viewHome : Model -> List (Html Msg)
 viewHome model =
     let
-        viewMinionPreset : Int -> ( Bool, Minion ) -> Html Msg
+        viewMinionPreset : Int -> ( Bool, Minion Card ) -> Html Msg
         viewMinionPreset index ( selected, minion ) =
             viewMinionPreview
                 [ Html.Events.onClick (ClickedCharacterPreset index)
