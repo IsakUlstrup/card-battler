@@ -224,7 +224,11 @@ update msg model =
                                     [ p ]
                                     [ Content.Opponents.badger ]
                                     Recovering
-                                    [ Content.Opponents.rabbit, Content.Opponents.chick ]
+                                    [ Content.Opponents.rabbit
+                                    , Content.Opponents.chick
+                                    , Content.Opponents.badger
+                                    , Content.Opponents.badger
+                                    ]
                                     (deck |> Deck.drawHand 5)
                                     model.seed
                                 )
@@ -393,11 +397,10 @@ getDeadOpponent model =
         |> List.head
 
 
-getDeadMinion : RunState -> Maybe Minion
-getDeadMinion model =
+playerWipe : RunState -> Bool
+playerWipe model =
     model.playerMinions
-        |> List.filter (Minion.isAlive >> not)
-        |> List.head
+        |> List.all (Minion.isAlive >> not)
 
 
 getReadyMinion : RunState -> Maybe ( Bool, Minion )
@@ -412,8 +415,8 @@ advanceTurnState : RunState -> RunState
 advanceTurnState model =
     case model.turnState of
         Recovering ->
-            case ( getDeadMinion model, getDeadOpponent model ) of
-                ( Just _, _ ) ->
+            case ( playerWipe model, getDeadOpponent model ) of
+                ( True, _ ) ->
                     setDefeatState model
 
                 ( _, Just ( _, ( first, rest ) ) ) ->
