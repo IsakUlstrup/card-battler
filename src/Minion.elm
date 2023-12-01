@@ -1,4 +1,4 @@
-module Minion exposing (Minion, applyAction, generateDrops, new, setDroptable, tick)
+module Minion exposing (Minion, applyAction, generateDrops, isAlive, isReady, new, resetCooldown, setDroptable, tick)
 
 import Card exposing (Action, Card)
 import Character exposing (isAlive)
@@ -20,13 +20,13 @@ type alias Minion =
 Has no drops by default. Set drops with setDroptable
 
 -}
-new : Char -> Int -> Int -> ( Float, Action ) -> Minion
-new icon health speed ( abilityCooldown, abilityAction ) =
+new : Char -> Int -> Int -> Action -> Minion
+new icon health speed abilityAction =
     Minion
         icon
         health
         speed
-        ( Cooldown.new abilityCooldown, abilityAction )
+        ( Cooldown.new 2000, abilityAction )
         Nothing
 
 
@@ -42,6 +42,11 @@ tick dt minion =
 
     else
         minion
+
+
+resetCooldown : Minion -> Minion
+resetCooldown minion =
+    { minion | ability = Tuple.mapFirst Cooldown.reset minion.ability }
 
 
 {-| Apply action to minion
@@ -65,9 +70,9 @@ damage amount minion =
 Each entry is a tuple with a weight and a card. Higher weight means a card is more likely to be selected
 
 -}
-setDroptable : ( ( Float, Card ), List ( Float, Card ) ) -> Minion -> Minion
-setDroptable dropTable minion =
-    { minion | dropTable = Just dropTable }
+setDroptable : ( Float, Card ) -> List ( Float, Card ) -> Minion -> Minion
+setDroptable first rest minion =
+    { minion | dropTable = Just ( first, rest ) }
 
 
 

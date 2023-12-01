@@ -3,14 +3,14 @@ module Main exposing (Model, Msg, TurnState, main)
 import Browser
 import Browser.Events
 import Card exposing (Action(..), Card)
-import Character exposing (Character)
 import Codec
 import Content.Cards as Cards
-import Content.Characters as Characters
+import Content.Minions as Minions
 import Cooldown exposing (Cooldown)
 import Html exposing (Attribute, Html, main_)
 import Html.Attributes
 import Html.Events
+import Minion exposing (Minion)
 import Random exposing (Seed)
 
 
@@ -38,15 +38,17 @@ characterTypeString isPlayer =
 
 type TurnState
     = Recovering
-    | Attacking Bool Action Cooldown
+    | Attacking Bool Int Action Cooldown
     | Defeat
     | Victory (List Card)
 
 
 type alias RunState =
-    { characters : ( Character, Character )
+    { playerMinions : List Minion
+    , opponentMinions : List Minion
     , turnState : TurnState
-    , encounters : List Character
+    , encounters : List Minion
+    , cards : List Card
     , seed : Seed
     }
 
@@ -69,7 +71,7 @@ type alias Flags =
 type alias Model =
     { gameState : GameState
     , cards : List ( Bool, Card )
-    , characters : List ( Bool, Character )
+    , characters : List ( Bool, Minion )
     , seed : Seed
     }
 
@@ -88,7 +90,7 @@ init flags =
     ( Model
         Home
         (loadCards |> List.map (Tuple.pair False))
-        ([ Characters.panda, Characters.unicorn, Characters.butterfly ] |> List.map (Tuple.pair False))
+        ([ Minions.panda, Minions.unicorn, Minions.butterfly ] |> List.map (Tuple.pair False))
         (Random.initialSeed flags.timestamp)
     , Cmd.none
     )
@@ -119,7 +121,7 @@ update msg model =
                         | gameState =
                             Run
                                 (runState
-                                    |> tickCharacters dt
+                                    |> tickMinions dt
                                     |> tickTurnState dt
                                     |> advanceTurnState
                                 )
@@ -160,14 +162,11 @@ update msg model =
                 Run runState ->
                     let
                         newModel =
-                            if runState.characters |> Tuple.first |> Character.isAlive then
+                            if runState.playerMinions |> List.all Minion.isAlive then
                                 { model
                                     | gameState = Home
                                     , cards =
-                                        (runState.characters
-                                            |> Tuple.first
-                                            |> Character.resetCards
-                                            |> .deck
+                                        (runState.cards
                                             |> List.map (Tuple.pair False)
                                         )
                                             ++ model.cards
@@ -188,12 +187,11 @@ update msg model =
                     ( model, Cmd.none )
 
         ClickedPlayerCard index ->
-            case model.gameState of
-                Run runState ->
-                    ( { model | gameState = Run (playCard True index runState) }, Cmd.none )
-
-                Home ->
-                    ( model, Cmd.none )
+            -- case model.gameState of
+            --     Run runState ->
+            --         ( { model | gameState = Run (playCard True index runState) }, Cmd.none )
+            --     Home ->
+            ( model, Cmd.none )
 
         ClickedReward card ->
             case model.gameState of
@@ -203,7 +201,7 @@ update msg model =
                             Run
                                 { runState
                                     | turnState = Victory []
-                                    , characters = Tuple.mapFirst (Character.addCard card) runState.characters
+                                    , cards = card :: runState.cards
                                 }
                       }
                         |> nextEncounter
@@ -227,11 +225,11 @@ update msg model =
                         | gameState =
                             Run
                                 (RunState
-                                    ( p |> Character.setDeck deck |> Character.drawHand 5
-                                    , Characters.badger
-                                    )
+                                    [ p ]
+                                    [ Minions.badger ]
                                     Recovering
-                                    [ Characters.rabbit, Characters.chick ]
+                                    [ Minions.rabbit, Minions.chick ]
+                                    deck
                                     model.seed
                                 )
                         , cards = model.cards |> List.filter (Tuple.first >> not)
@@ -286,11 +284,15 @@ nextEncounter model =
                         | gameState =
                             Run
                                 { runState
-                                    | characters =
-                                        runState.characters
-                                            |> Tuple.mapSecond (always (character |> Character.drawHand 3))
-                                            |> Tuple.mapFirst Character.resetCards
-                                            |> Tuple.mapFirst (Character.drawHand 5)
+                                    | playerMinions = List.map Minion.resetCooldown runState.playerMinions
+                                    , opponentMinions =
+                                        -- runState.characters
+                                        --     |> Tuple.mapSecond (always (character |> Character.drawHand 3))
+                                        --     |> Tuple.mapFirst Character.resetCards
+                                        --     |> Tuple.mapFirst (Character.drawHand 5)
+                                        character
+                                            :: runState.opponentMinions
+                                            |> List.filter Minion.isAlive
                                     , encounters = List.drop 1 runState.encounters
                                     , turnState = Recovering
                                 }
@@ -311,35 +313,31 @@ resetSelection model =
     }
 
 
-updateFlag : (Character -> Character) -> Bool -> RunState -> RunState
-updateFlag f isPlayer model =
-    if isPlayer then
-        { model | characters = model.characters |> Tuple.mapFirst f }
 
-    else
-        { model | characters = model.characters |> Tuple.mapSecond f }
-
-
-playCard : Bool -> Int -> RunState -> RunState
-playCard isPlayer index model =
-    case Character.playCardAtIndex index (Tuple.first model.characters) of
-        ( newCharacter, Just action ) ->
-            model
-                |> updateFlag (always newCharacter) isPlayer
-                |> updateFlag (Character.applyAction action) (not isPlayer)
-
-        ( _, Nothing ) ->
-            model
+-- updateFlag : (Character -> Character) -> Bool -> RunState -> RunState
+-- updateFlag f isPlayer model =
+--     if isPlayer then
+--         { model | characters = model.characters |> Tuple.mapFirst f }
+--     else
+--         { model | characters = model.characters |> Tuple.mapSecond f }
+-- playCard : Bool -> Int -> RunState -> RunState
+-- playCard isPlayer index model =
+--     case Character.playCardAtIndex index (Tuple.first model.characters) of
+--         ( newCharacter, Just action ) ->
+--             model
+--                 |> updateFlag (always newCharacter) isPlayer
+--                 |> updateFlag (Character.applyAction action) (not isPlayer)
+--         ( _, Nothing ) ->
+--             model
 
 
-tickCharacters : Float -> RunState -> RunState
-tickCharacters dt model =
-    case ( model.turnState, [ Tuple.first model.characters, Tuple.second model.characters ] |> List.all Character.isAlive ) of
-        ( Recovering, True ) ->
+tickMinions : Float -> RunState -> RunState
+tickMinions dt model =
+    case model.turnState of
+        Recovering ->
             { model
-                | characters =
-                    model.characters
-                        |> Tuple.mapBoth (Character.tick dt) (Character.tick dt)
+                | playerMinions = List.map (Minion.tick dt) model.playerMinions
+                , opponentMinions = List.map (Minion.tick dt) model.opponentMinions
             }
 
         _ ->
@@ -352,8 +350,8 @@ tickTurnState dt model =
         Recovering ->
             model
 
-        Attacking isPlayer power cooldown ->
-            { model | turnState = Attacking isPlayer power (Cooldown.tick dt cooldown) }
+        Attacking isPlayer index action cooldown ->
+            { model | turnState = Attacking isPlayer index action (Cooldown.tick dt cooldown) }
 
         Defeat ->
             model
@@ -377,55 +375,70 @@ setVictoryState rewards model =
     { model | turnState = Victory rewards }
 
 
-getDeadCharacter : RunState -> Maybe Bool
-getDeadCharacter model =
-    [ ( True, Tuple.first model.characters ), ( False, Tuple.second model.characters ) ]
-        |> List.map (\( plr, c ) -> ( plr, Character.isAlive c |> not ))
-        |> List.filter (\( _, a ) -> a)
+getDeadMinion : RunState -> Maybe ( Bool, Minion )
+getDeadMinion model =
+    (model.playerMinions |> List.map (Tuple.pair True))
+        ++ (model.opponentMinions |> List.map (Tuple.pair False))
+        -- |> List.map (\( plr, minion ) -> ( plr, Minion.isAlive minion |> not ))
+        |> List.filter (\( _, minion ) -> Minion.isAlive minion |> not)
         |> List.head
-        |> Maybe.map Tuple.first
+
+
+getReadyMinion : RunState -> Maybe ( Bool, Minion )
+getReadyMinion runState =
+    (runState.playerMinions |> List.map (Tuple.pair True))
+        ++ (runState.opponentMinions |> List.map (Tuple.pair False))
+        -- |> List.map (\( plr, minion ) -> ( plr, Minion.isAlive minion |> not ))
+        |> List.filter (\( _, minion ) -> Minion.isReady minion)
+        |> List.head
 
 
 advanceTurnState : RunState -> RunState
 advanceTurnState model =
     case model.turnState of
         Recovering ->
-            case getDeadCharacter model of
-                Just isPlayer ->
+            case getDeadMinion model of
+                Just ( isPlayer, minion ) ->
                     if isPlayer then
                         setDefeatState model
 
                     else
                         let
                             ( rewards, seed ) =
-                                Random.step (Character.generateDrops (Tuple.second model.characters)) model.seed
+                                Random.step (Minion.generateDrops minion) model.seed
                         in
                         setVictoryState rewards { model | seed = seed }
 
                 Nothing ->
-                    case ( Character.isReady (Tuple.first model.characters), Character.isReady (Tuple.second model.characters) ) of
-                        ( True, _ ) ->
+                    case getReadyMinion model of
+                        Just ( True, minion ) ->
                             { model
-                                | turnState = Attacking True (Tuple.first model.characters).ability (Cooldown.new characterAnimationDuration)
-                                , characters = Tuple.mapFirst Character.resetCooldown model.characters
+                                | turnState = Attacking True 0 (Tuple.second minion.ability) (Cooldown.new characterAnimationDuration)
+                                , playerMinions = List.map Minion.resetCooldown model.playerMinions
                             }
 
-                        ( False, True ) ->
+                        Just ( False, minion ) ->
                             { model
-                                | turnState = Attacking False (Tuple.second model.characters).ability (Cooldown.new characterAnimationDuration)
-                                , characters = Tuple.mapSecond Character.resetCooldown model.characters
+                                | turnState = Attacking False 0 (Tuple.second minion.ability) (Cooldown.new characterAnimationDuration)
+                                , opponentMinions = List.map Minion.resetCooldown model.opponentMinions
                             }
 
                         _ ->
                             model
 
-        Attacking isPlayer action cooldown ->
+        Attacking isPlayer _ action cooldown ->
             if Cooldown.isDone cooldown then
                 case action of
                     Card.Damage _ ->
-                        model
-                            |> updateFlag (Character.applyAction action) (not isPlayer)
-                            |> setRecoveringState
+                        if isPlayer then
+                            { model | opponentMinions = List.map (Minion.applyAction action) (List.take 1 model.opponentMinions) ++ List.drop 1 model.opponentMinions }
+                                -- |> updateFlag (Character.applyAction action) (not isPlayer)
+                                |> setRecoveringState
+
+                        else
+                            { model | playerMinions = List.map (Minion.applyAction action) (List.take 1 model.playerMinions) ++ List.drop 1 model.playerMinions }
+                                -- |> updateFlag (Character.applyAction action) (not isPlayer)
+                                |> setRecoveringState
 
             else
                 model
@@ -512,7 +525,7 @@ characterClasses turnState isPlayer =
         isAttacking : Bool
         isAttacking =
             case turnState of
-                Attacking characterType action _ ->
+                Attacking characterType index action _ ->
                     case action of
                         Card.Damage _ ->
                             characterType == isPlayer
@@ -527,14 +540,14 @@ characterClasses turnState isPlayer =
     ]
 
 
-viewCharacter : List (Attribute msg) -> Character -> Html msg
+viewCharacter : List (Attribute msg) -> Minion -> Html msg
 viewCharacter attrs character =
     Html.div
         (Html.Attributes.class "flex flex-column gap-medium" :: attrs)
         [ Html.h1 [ Html.Attributes.class "font-big center-text" ] [ Html.text (String.fromChar character.icon) ]
 
         -- , Html.Keyed.node "div" [ Html.Attributes.class "health-history" ] (List.map viewHealthHistoryItem character.healthHistory)
-        , Html.p [] [ Html.text "health" ]
+        , Html.p [] [ Html.text ("health: " ++ String.fromInt character.health) ]
 
         -- , Html.p []
         --     [ Html.text
@@ -544,18 +557,17 @@ viewCharacter attrs character =
         --             ++ String.fromInt (Tuple.second character.health)
         --         )
         --     ]
-        , Html.meter
-            [ Html.Attributes.value (Tuple.first character.health |> String.fromInt)
-            , Html.Attributes.max (Tuple.second character.health |> String.fromInt)
-            ]
-            []
-
+        -- , Html.meter
+        --     [ Html.Attributes.value (Tuple.first character.health |> String.fromInt)
+        --     , Html.Attributes.max (Tuple.second character.health |> String.fromInt)
+        --     ]
+        --     []
         -- , viewCustomMeter (Tuple.second character.health) (Tuple.first character.health)
         -- , Html.p [] [ Html.text "energy" ]
         -- , Html.div [ Html.Attributes.class "energy" ] ([ character.energy ] |> List.filterMap viewEnergy)
         -- , Html.div [ Html.Attributes.class "hand" ] (List.map (viewSmallCard character) character.hand)
         , Html.p [] [ Html.text "cooldown" ]
-        , viewCooldown character.cooldown
+        , viewCooldown (Tuple.first character.ability)
 
         -- , Html.details [ Html.Attributes.class "stats" ]
         --     [ Html.summary []
@@ -569,19 +581,19 @@ viewCharacter attrs character =
         ]
 
 
-viewCharacterPreview : List (Attribute msg) -> Character -> Html msg
-viewCharacterPreview attrs character =
+viewMinionPreview : List (Attribute msg) -> Minion -> Html msg
+viewMinionPreview attrs minion =
     Html.div (Html.Attributes.class "flex flex-column gap-small pointer padding-medium border border-radius-medium" :: attrs)
-        [ Html.h1 [ Html.Attributes.class "center-text font-big no-select" ] [ Html.text (String.fromChar character.icon) ]
-        , Html.p [] [ Html.text ("health: " ++ String.fromInt (Tuple.second character.health)) ]
-        , Html.p [] [ Html.text ("ability: " ++ Card.actionToIcon character.ability) ]
+        [ Html.h1 [ Html.Attributes.class "center-text font-big no-select" ] [ Html.text (String.fromChar minion.icon) ]
+        , Html.p [] [ Html.text ("health: " ++ String.fromInt minion.health) ]
+        , Html.p [] [ Html.text ("ability: " ++ Card.actionToIcon (Tuple.second minion.ability)) ]
         , Html.table []
             -- (Character.deriveStats character
             --     |> List.map viewStat
             -- )
             [ Html.tr []
                 [ Html.td [] [ Html.text "Speed" ]
-                , Html.td [] [ Html.text (String.fromInt character.speed) ]
+                , Html.td [] [ Html.text (String.fromInt minion.speed) ]
                 ]
             ]
         ]
@@ -597,23 +609,22 @@ viewCard attrs card =
         ]
 
 
-viewPlayerDeckStats : Character -> Html msg
-viewPlayerDeckStats character =
-    Html.div [ Html.Attributes.class "deck-stats" ]
-        [ Html.p [] [ Html.text ("Deck: " ++ String.fromInt (List.length character.deck)) ]
-        , Html.p [] [ Html.text ("Played: " ++ String.fromInt (List.length character.played)) ]
-        ]
 
-
-viewPlayerHand : Character -> Html Msg
-viewPlayerHand character =
-    let
-        cardAttributes index card =
-            [ Html.Attributes.classList [ ( "cant-afford", Character.canAfford character card.cost |> not ) ]
-            , Html.Events.onClick (ClickedPlayerCard index)
-            ]
-    in
-    Html.div [ Html.Attributes.class "flex gap-medium" ] (List.indexedMap (\index card -> viewCard (cardAttributes index card) card) character.hand)
+-- viewPlayerDeckStats : Character -> Html msg
+-- viewPlayerDeckStats character =
+--     Html.div [ Html.Attributes.class "deck-stats" ]
+--         [ Html.p [] [ Html.text ("Deck: " ++ String.fromInt (List.length character.deck)) ]
+--         , Html.p [] [ Html.text ("Played: " ++ String.fromInt (List.length character.played)) ]
+--         ]
+-- viewPlayerHand : Character -> Html Msg
+-- viewPlayerHand character =
+--     let
+--         cardAttributes index card =
+--             [ Html.Attributes.classList [ ( "cant-afford", Character.canAfford character card.cost |> not ) ]
+--             , Html.Events.onClick (ClickedPlayerCard index)
+--             ]
+--     in
+--     Html.div [ Html.Attributes.class "flex gap-medium" ] (List.indexedMap (\index card -> viewCard (cardAttributes index card) card) character.hand)
 
 
 viewDefeat : Html Msg
@@ -624,7 +635,7 @@ viewDefeat =
         ]
 
 
-viewVictory : List Character -> List Card -> Html Msg
+viewVictory : List Minion -> List Card -> Html Msg
 viewVictory encounters rewards =
     let
         viewReward reward =
@@ -642,7 +653,7 @@ viewVictory encounters rewards =
         ]
 
 
-viewEncounters : List Character -> Html msg
+viewEncounters : List Minion -> Html msg
 viewEncounters encounters =
     Html.div []
         [ Html.h3 [] [ Html.text "Next encounters" ]
@@ -663,31 +674,32 @@ viewRun runState =
 
         _ ->
             [ Html.div [ Html.Attributes.style "width" "100%", Html.Attributes.class "flex space-evenly gap-large" ]
-                [ viewCharacter (characterClasses runState.turnState True) (Tuple.first runState.characters)
-                , viewCharacter (characterClasses runState.turnState False) (Tuple.second runState.characters)
+                [ Html.div [] (List.map (viewCharacter (characterClasses runState.turnState True)) runState.playerMinions)
+                , Html.div [] (List.map (viewCharacter (characterClasses runState.turnState False)) runState.opponentMinions)
                 ]
-            , viewPlayerDeckStats (Tuple.first runState.characters)
-            , viewPlayerHand (Tuple.first runState.characters)
+
+            -- , viewPlayerDeckStats (Tuple.first runState.characters)
+            -- , viewPlayerHand (Tuple.first runState.characters)
             ]
 
 
 viewHome : Model -> List (Html Msg)
 viewHome model =
     let
-        viewCharacterPreset : Int -> ( Bool, Character ) -> Html Msg
-        viewCharacterPreset index ( selected, character ) =
-            viewCharacterPreview
+        viewMinionPreset : Int -> ( Bool, Minion ) -> Html Msg
+        viewMinionPreset index ( selected, minion ) =
+            viewMinionPreview
                 [ Html.Events.onClick (ClickedCharacterPreset index)
                 , Html.Attributes.classList [ ( "border-green", selected ) ]
                 , Html.Attributes.style "width" "12rem"
                 ]
-                character
+                minion
     in
     [ Html.h1 [] [ Html.text "Home" ]
     , Html.button [ Html.Events.onClick ClickedStartRun, Html.Attributes.class "padding-small" ] [ Html.text "Start run" ]
     , Html.h3 [] [ Html.text "Characters" ]
     , Html.div [ Html.Attributes.class "flex gap-medium" ]
-        (List.indexedMap viewCharacterPreset model.characters)
+        (List.indexedMap viewMinionPreset model.characters)
     , Html.h3 [] [ Html.text "Card Collection" ]
     , Html.div [ Html.Attributes.class "flex flex-wrap gap-medium" ]
         (List.indexedMap
