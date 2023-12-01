@@ -5,6 +5,7 @@ module Content.Cards exposing
     , summonCard
     )
 
+import Content.Minions as Minions
 import Deck exposing (Card)
 
 
@@ -29,4 +30,4 @@ expensiveCard =
 
 summonCard : Card
 summonCard =
-    Deck.newCard "Summon rabbit" (Deck.Summon 1) 2
+    Deck.newCard "Summon rabbit" (Deck.Summon Minions.rabbit) 2

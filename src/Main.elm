@@ -35,10 +35,10 @@ type TurnState
 
 
 type alias RunState =
-    { playerMinions : List (Minion Card)
-    , opponentMinions : List (Minion Card)
+    { playerMinions : List Minion
+    , opponentMinions : List Minion
     , turnState : TurnState
-    , encounters : List (Minion Card)
+    , encounters : List Minion
     , deck : Deck
     , seed : Seed
     }
@@ -62,7 +62,7 @@ type alias Flags =
 type alias Model =
     { gameState : GameState
     , cards : List ( Bool, Card )
-    , characters : List ( Bool, Minion Card )
+    , characters : List ( Bool, Minion )
     , seed : Seed
     }
 
@@ -76,7 +76,7 @@ init flags =
                     Codec.decodeStoredCards cardsString
 
                 Nothing ->
-                    [ Cards.basicCard, Cards.basicCard ]
+                    [ Cards.basicCard, Cards.basicCard, Cards.summonCard ]
     in
     ( Model
         Home
@@ -326,10 +326,10 @@ playCard index model =
                 , opponentMinions = List.map (Minion.damage dmg) (List.take 1 model.opponentMinions) ++ List.drop 1 model.opponentMinions
             }
 
-        ( newDeck, Just (Summon _) ) ->
+        ( newDeck, Just (Summon minion) ) ->
             { model
                 | deck = newDeck
-                , playerMinions = Minions.rabbit :: model.playerMinions
+                , playerMinions = minion :: model.playerMinions
             }
 
         ( _, Nothing ) ->
@@ -385,7 +385,7 @@ setVictoryState rewards model =
     { model | turnState = Victory rewards }
 
 
-getDeadMinion : RunState -> Maybe ( Bool, Minion Card )
+getDeadMinion : RunState -> Maybe ( Bool, Minion )
 getDeadMinion model =
     (model.playerMinions |> List.map (Tuple.pair True))
         ++ (model.opponentMinions |> List.map (Tuple.pair False))
@@ -394,7 +394,7 @@ getDeadMinion model =
         |> List.head
 
 
-getReadyMinion : RunState -> Maybe ( Bool, Minion Card )
+getReadyMinion : RunState -> Maybe ( Bool, Minion )
 getReadyMinion runState =
     (runState.playerMinions |> List.map (Tuple.pair True))
         ++ (runState.opponentMinions |> List.map (Tuple.pair False))
@@ -413,11 +413,11 @@ advanceTurnState model =
                         setDefeatState model
 
                     else
-                        let
-                            ( rewards, seed ) =
-                                Random.step (Minion.generateDrops minion) model.seed
-                        in
-                        setVictoryState rewards { model | seed = seed }
+                        -- let
+                        --     ( rewards, seed ) =
+                        --         Random.step (Minion.generateDrops minion) model.seed
+                        -- in
+                        setVictoryState [] model
 
                 Nothing ->
                     case getReadyMinion model of
@@ -543,7 +543,7 @@ viewCardCost cost =
 --     ]
 
 
-viewCharacter : List (Attribute msg) -> Minion Card -> Html msg
+viewCharacter : List (Attribute msg) -> Minion -> Html msg
 viewCharacter attrs character =
     Html.div
         (Html.Attributes.class "flex flex-column gap-medium" :: attrs)
@@ -584,7 +584,7 @@ viewCharacter attrs character =
         ]
 
 
-viewMinionPreview : List (Attribute msg) -> Minion Card -> Html msg
+viewMinionPreview : List (Attribute msg) -> Minion -> Html msg
 viewMinionPreview attrs minion =
     Html.div (Html.Attributes.class "flex flex-column gap-small pointer padding-medium border border-radius-medium" :: attrs)
         [ Html.h1 [ Html.Attributes.class "center-text font-big no-select" ] [ Html.text (String.fromChar minion.icon) ]
@@ -642,7 +642,7 @@ viewDefeat =
         ]
 
 
-viewVictory : List (Minion Card) -> List Card -> Html Msg
+viewVictory : List Minion -> List Card -> Html Msg
 viewVictory encounters rewards =
     let
         viewReward reward =
@@ -660,7 +660,7 @@ viewVictory encounters rewards =
         ]
 
 
-viewEncounters : List (Minion Card) -> Html msg
+viewEncounters : List Minion -> Html msg
 viewEncounters encounters =
     Html.div []
         [ Html.h3 [] [ Html.text "Next encounters" ]
@@ -694,7 +694,7 @@ viewRun runState =
 viewHome : Model -> List (Html Msg)
 viewHome model =
     let
-        viewMinionPreset : Int -> ( Bool, Minion Card ) -> Html Msg
+        viewMinionPreset : Int -> ( Bool, Minion ) -> Html Msg
         viewMinionPreset index ( selected, minion ) =
             viewMinionPreview
                 [ Html.Events.onClick (ClickedCharacterPreset index)

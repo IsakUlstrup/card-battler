@@ -14,6 +14,8 @@ module Deck exposing
     , tickEnergy
     )
 
+import Minion exposing (Minion)
+
 
 type alias Deck =
     { cards : List Card
@@ -154,7 +156,7 @@ removeEnergy cost deck =
 
 type Action
     = Damage Int
-    | Summon Int
+    | Summon Minion
 
 
 actionToString : Action -> String

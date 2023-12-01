@@ -3,6 +3,7 @@ module Codec exposing (decodeCards, decodeStoredCards, saveCards)
 import Deck exposing (Action(..), Card)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode
+import Minion exposing (Minion)
 import Ports
 
 
@@ -15,6 +16,16 @@ costEncoder cost =
     Encode.int cost
 
 
+minionEncoder : Minion -> Encode.Value
+minionEncoder minion =
+    Encode.object
+        [ ( "icon", Encode.string (String.fromChar minion.icon) )
+        , ( "health", Encode.int minion.health )
+        , ( "speed", Encode.int minion.speed )
+        , ( "attack", Encode.int (Tuple.second minion.ability) )
+        ]
+
+
 actionEncoder : Action -> Encode.Value
 actionEncoder action =
     case action of
@@ -24,10 +35,10 @@ actionEncoder action =
                 , ( "tag", Encode.int amount )
                 ]
 
-        Summon tag ->
+        Summon minion ->
             Encode.object
                 [ ( "variant", Encode.string "Summon" )
-                , ( "tag", Encode.int tag )
+                , ( "tag", minionEncoder minion )
                 ]
 
 
@@ -65,6 +76,29 @@ decodeDamage =
             )
 
 
+decodeChar : Decoder Char
+decodeChar =
+    Decode.string
+        |> Decode.andThen
+            (\s ->
+                case String.uncons s of
+                    Just ( char, _ ) ->
+                        Decode.succeed char
+
+                    _ ->
+                        Decode.fail "invalid char"
+            )
+
+
+decodeMinion : Decoder Minion
+decodeMinion =
+    Decode.map4 Minion.new
+        (Decode.field "icon" decodeChar)
+        (Decode.field "health" Decode.int)
+        (Decode.field "speed" Decode.int)
+        (Decode.field "attack" Decode.int)
+
+
 decodeSummon : Decoder Action
 decodeSummon =
     Decode.field "variant" Decode.string
@@ -72,7 +106,7 @@ decodeSummon =
             (\variant ->
                 case variant of
                     "Summon" ->
-                        Decode.map Summon (Decode.field "tag" Decode.int)
+                        Decode.map Summon (Decode.field "tag" decodeMinion)
 
                     _ ->
                         Decode.fail "Non-existing variant"
