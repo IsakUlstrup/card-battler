@@ -695,8 +695,8 @@ viewRun runState =
 
         _ ->
             [ Html.div [ Html.Attributes.style "width" "100%", Html.Attributes.class "flex space-evenly gap-large" ]
-                [ Html.div [] (List.map (viewCharacter []) runState.playerMinions)
-                , Html.div [] (List.map (.minion >> viewCharacter []) runState.opponentMinions)
+                [ Html.div [ Html.Attributes.class "flex gap-medium" ] (List.map (viewCharacter []) (List.reverse runState.playerMinions))
+                , Html.div [ Html.Attributes.class "flex gap-medium" ] (List.map (.minion >> viewCharacter []) runState.opponentMinions)
                 ]
             , viewDeckStatus runState.deck
             , viewDeckHand runState.deck
