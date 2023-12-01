@@ -1,4 +1,4 @@
-module Minion exposing (Minion, applyAction, generateDrops, isAlive, isReady, new, resetCooldown, setDroptable, tick)
+module Minion exposing (Minion, damage, generateDrops, isAlive, isReady, new, resetCooldown, setDroptable, tick)
 
 import Card exposing (Action, Card)
 import Cooldown exposing (Cooldown)
@@ -46,15 +46,6 @@ tick dt minion =
 resetCooldown : Minion -> Minion
 resetCooldown minion =
     { minion | ability = Tuple.mapFirst Cooldown.reset minion.ability }
-
-
-{-| Apply action to minion
--}
-applyAction : Action -> Minion -> Minion
-applyAction action minion =
-    case action of
-        Card.Damage power ->
-            damage power minion
 
 
 {-| Apply damage to minion

@@ -2,6 +2,7 @@ module Content.Cards exposing
     ( basicCard
     , basicCard2
     , expensiveCard
+    , summonCard
     )
 
 import Card exposing (Card)
@@ -24,3 +25,8 @@ basicCard2 =
 expensiveCard : Card
 expensiveCard =
     Card.new "Fireball" (Card.Damage 10) 7
+
+
+summonCard : Card
+summonCard =
+    Card.new "Summon rabbit" (Card.Summon 1) 2

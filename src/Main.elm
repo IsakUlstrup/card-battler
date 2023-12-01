@@ -321,10 +321,16 @@ resetSelection model =
 playCard : Int -> RunState -> RunState
 playCard index model =
     case Deck.playCardAtIndex index model.deck of
-        ( newDeck, Just action ) ->
+        ( newDeck, Just (Damage dmg) ) ->
             { model
                 | deck = newDeck
-                , opponentMinions = List.map (Minion.applyAction action) (List.take 1 model.opponentMinions) ++ List.drop 1 model.opponentMinions
+                , opponentMinions = List.map (Minion.damage dmg) (List.take 1 model.opponentMinions) ++ List.drop 1 model.opponentMinions
+            }
+
+        ( newDeck, Just (Summon _) ) ->
+            { model
+                | deck = newDeck
+                , playerMinions = Minions.rabbit :: model.playerMinions
             }
 
         ( _, Nothing ) ->
@@ -434,16 +440,19 @@ advanceTurnState model =
         Attacking isPlayer _ action cooldown ->
             if Cooldown.isDone cooldown then
                 case action of
-                    Card.Damage _ ->
+                    Card.Damage dmg ->
                         if isPlayer then
-                            { model | opponentMinions = List.map (Minion.applyAction action) (List.take 1 model.opponentMinions) ++ List.drop 1 model.opponentMinions }
+                            { model | opponentMinions = List.map (Minion.damage dmg) (List.take 1 model.opponentMinions) ++ List.drop 1 model.opponentMinions }
                                 -- |> updateFlag (Character.applyAction action) (not isPlayer)
                                 |> setRecoveringState
 
                         else
-                            { model | playerMinions = List.map (Minion.applyAction action) (List.take 1 model.playerMinions) ++ List.drop 1 model.playerMinions }
+                            { model | playerMinions = List.map (Minion.damage dmg) (List.take 1 model.playerMinions) ++ List.drop 1 model.playerMinions }
                                 -- |> updateFlag (Character.applyAction action) (not isPlayer)
                                 |> setRecoveringState
+
+                    Card.Summon _ ->
+                        { model | playerMinions = Minions.rabbit :: model.playerMinions }
 
             else
                 model

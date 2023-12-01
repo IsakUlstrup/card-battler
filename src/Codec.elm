@@ -24,6 +24,12 @@ actionEncoder action =
                 , ( "tag", Encode.int amount )
                 ]
 
+        Summon tag ->
+            Encode.object
+                [ ( "variant", Encode.string "Summon" )
+                , ( "tag", Encode.int tag )
+                ]
+
 
 cardEncoder : Card -> Encode.Value
 cardEncoder card =
@@ -59,9 +65,23 @@ decodeDamage =
             )
 
 
+decodeSummon : Decoder Action
+decodeSummon =
+    Decode.field "variant" Decode.string
+        |> Decode.andThen
+            (\variant ->
+                case variant of
+                    "Summon" ->
+                        Decode.map Summon (Decode.field "tag" Decode.int)
+
+                    _ ->
+                        Decode.fail "Non-existing variant"
+            )
+
+
 decodeAction : Decoder Action
 decodeAction =
-    Decode.oneOf [ decodeDamage ]
+    Decode.oneOf [ decodeDamage, decodeSummon ]
 
 
 

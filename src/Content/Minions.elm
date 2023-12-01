@@ -49,7 +49,7 @@ rabbit =
         5
         5
         (Card.Damage 1)
-        |> Minion.setDroptable ( 10, Cards.basicCard ) [ ( 40, Cards.basicCard2 ) ]
+        |> Minion.setDroptable ( 10, Cards.basicCard ) [ ( 40, Cards.basicCard2 ), ( 50, Cards.summonCard ) ]
 
 
 chick : Minion
