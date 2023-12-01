@@ -28,15 +28,6 @@ characterAnimationDuration =
 -- TURN STATE
 
 
-characterTypeString : Bool -> String
-characterTypeString isPlayer =
-    if isPlayer then
-        "player"
-
-    else
-        "enemy"
-
-
 type TurnState
     = Recovering
     | Attacking Bool Int Action Cooldown
@@ -530,25 +521,25 @@ viewCardCost cost =
     Html.p [] [ Html.text ("Cost: " ++ String.fromInt cost) ]
 
 
-characterClasses : TurnState -> Bool -> List (Attribute msg)
-characterClasses turnState isPlayer =
-    let
-        isAttacking : Bool
-        isAttacking =
-            case turnState of
-                Attacking characterType index action _ ->
-                    case action of
-                        Card.Damage _ ->
-                            characterType == isPlayer
 
-                _ ->
-                    False
-    in
-    [ Html.Attributes.class (characterTypeString isPlayer)
-    , Html.Attributes.classList
-        [ ( "attacking", isAttacking )
-        ]
-    ]
+-- characterClasses : TurnState -> Bool -> List (Attribute msg)
+-- characterClasses turnState isPlayer =
+--     let
+--         isAttacking : Bool
+--         isAttacking =
+--             case turnState of
+--                 Attacking characterType index action _ ->
+--                     case action of
+--                         Card.Damage _ ->
+--                             characterType == isPlayer
+--                 _ ->
+--                     False
+--     in
+--     [ Html.Attributes.class (characterTypeString isPlayer)
+--     , Html.Attributes.classList
+--         [ ( "attacking", isAttacking )
+--         ]
+--     ]
 
 
 viewCharacter : List (Attribute msg) -> Minion -> Html msg
@@ -687,8 +678,8 @@ viewRun runState =
 
         _ ->
             [ Html.div [ Html.Attributes.style "width" "100%", Html.Attributes.class "flex space-evenly gap-large" ]
-                [ Html.div [] (List.map (viewCharacter (characterClasses runState.turnState True)) runState.playerMinions)
-                , Html.div [] (List.map (viewCharacter (characterClasses runState.turnState False)) runState.opponentMinions)
+                [ Html.div [] (List.map (viewCharacter []) runState.playerMinions)
+                , Html.div [] (List.map (viewCharacter []) runState.opponentMinions)
                 ]
             , viewDeckStatus runState.deck
             , viewDeckHand runState.deck
