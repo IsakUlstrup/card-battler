@@ -1,6 +1,18 @@
-module Deck exposing (Deck, addCard, canAfford, drawHand, new, playCardAtIndex, resetCards, tickEnergy)
-
-import Card exposing (Action, Card)
+module Deck exposing
+    ( Action(..)
+    , Card
+    , Deck
+    , actionToIcon
+    , actionToString
+    , addCard
+    , canAfford
+    , drawHand
+    , new
+    , newCard
+    , playCardAtIndex
+    , resetCards
+    , tickEnergy
+    )
 
 
 type alias Deck =
@@ -134,3 +146,44 @@ tickEnergy dt deck =
 removeEnergy : Int -> Deck -> Deck
 removeEnergy cost deck =
     { deck | energy = deck.energy - toFloat cost |> max 0 }
+
+
+
+-- Card
+
+
+type Action
+    = Damage Int
+    | Summon Int
+
+
+actionToString : Action -> String
+actionToString action =
+    case action of
+        Damage power ->
+            "Damage " ++ String.fromInt power
+
+        Summon _ ->
+            "Summon"
+
+
+actionToIcon : Action -> String
+actionToIcon action =
+    case action of
+        Damage power ->
+            "🗡️" ++ String.fromInt power
+
+        Summon _ ->
+            "s"
+
+
+type alias Card =
+    { name : String
+    , action : Action
+    , cost : Int
+    }
+
+
+newCard : String -> Action -> Int -> Card
+newCard name action cost =
+    Card name action cost

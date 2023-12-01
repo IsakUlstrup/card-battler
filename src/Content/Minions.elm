@@ -1,7 +1,7 @@
 module Content.Minions exposing (badger, butterfly, chick, panda, rabbit, unicorn)
 
-import Card
 import Content.Cards as Cards
+import Deck
 import Minion exposing (Minion)
 
 
@@ -11,7 +11,7 @@ panda =
         '🐼'
         200
         1
-        (Card.Damage 2)
+        (Deck.Damage 2)
 
 
 unicorn : Minion
@@ -20,7 +20,7 @@ unicorn =
         '🦄'
         100
         3
-        (Card.Damage 4)
+        (Deck.Damage 4)
 
 
 butterfly : Minion
@@ -29,7 +29,7 @@ butterfly =
         '🦋'
         10
         0
-        (Card.Damage 1)
+        (Deck.Damage 1)
 
 
 badger : Minion
@@ -38,7 +38,7 @@ badger =
         '🦡'
         7
         1
-        (Card.Damage 2)
+        (Deck.Damage 2)
         |> Minion.setDroptable ( 10, Cards.basicCard ) [ ( 10, Cards.basicCard2 ), ( 10, Cards.expensiveCard ) ]
 
 
@@ -48,7 +48,7 @@ rabbit =
         '🐰'
         5
         5
-        (Card.Damage 1)
+        (Deck.Damage 1)
         |> Minion.setDroptable ( 10, Cards.basicCard ) [ ( 40, Cards.basicCard2 ), ( 50, Cards.summonCard ) ]
 
 
@@ -58,5 +58,5 @@ chick =
         '🐤'
         5
         0
-        (Card.Damage 1)
+        (Deck.Damage 1)
         |> Minion.setDroptable ( 10, Cards.basicCard ) []

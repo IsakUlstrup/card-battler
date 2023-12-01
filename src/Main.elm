@@ -2,12 +2,11 @@ module Main exposing (Model, Msg, TurnState, main)
 
 import Browser
 import Browser.Events
-import Card exposing (Action(..), Card)
 import Codec
 import Content.Cards as Cards
 import Content.Minions as Minions
 import Cooldown exposing (Cooldown)
-import Deck exposing (Deck)
+import Deck exposing (Action(..), Card, Deck)
 import Html exposing (Attribute, Html, main_)
 import Html.Attributes
 import Html.Events
@@ -440,7 +439,7 @@ advanceTurnState model =
         Attacking isPlayer _ action cooldown ->
             if Cooldown.isDone cooldown then
                 case action of
-                    Card.Damage dmg ->
+                    Deck.Damage dmg ->
                         if isPlayer then
                             { model | opponentMinions = List.map (Minion.damage dmg) (List.take 1 model.opponentMinions) ++ List.drop 1 model.opponentMinions }
                                 -- |> updateFlag (Character.applyAction action) (not isPlayer)
@@ -451,7 +450,7 @@ advanceTurnState model =
                                 -- |> updateFlag (Character.applyAction action) (not isPlayer)
                                 |> setRecoveringState
 
-                    Card.Summon _ ->
+                    Deck.Summon _ ->
                         { model | playerMinions = Minions.rabbit :: model.playerMinions }
 
             else
@@ -597,7 +596,7 @@ viewMinionPreview attrs minion =
     Html.div (Html.Attributes.class "flex flex-column gap-small pointer padding-medium border border-radius-medium" :: attrs)
         [ Html.h1 [ Html.Attributes.class "center-text font-big no-select" ] [ Html.text (String.fromChar minion.icon) ]
         , Html.p [] [ Html.text ("health: " ++ String.fromInt minion.health) ]
-        , Html.p [] [ Html.text ("ability: " ++ Card.actionToIcon (Tuple.second minion.ability)) ]
+        , Html.p [] [ Html.text ("ability: " ++ Deck.actionToIcon (Tuple.second minion.ability)) ]
         , Html.table []
             -- (Character.deriveStats character
             --     |> List.map viewStat
@@ -616,7 +615,7 @@ viewCard attrs card =
         (Html.Attributes.class "flex flex-column gap-medium padding-medium border border-radius-medium pointer no-select" :: attrs)
         [ Html.h3 [] [ Html.text card.name ]
         , card.cost |> viewCardCost
-        , Html.p [] [ Html.text (Card.actionToString card.action) ]
+        , Html.p [] [ Html.text (Deck.actionToString card.action) ]
         ]
 
 

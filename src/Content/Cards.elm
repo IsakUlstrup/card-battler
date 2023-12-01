@@ -5,7 +5,7 @@ module Content.Cards exposing
     , summonCard
     )
 
-import Card exposing (Card)
+import Deck exposing (Card)
 
 
 
@@ -14,19 +14,19 @@ import Card exposing (Card)
 
 basicCard : Card
 basicCard =
-    Card.new "Tackle" (Card.Damage 1) 2
+    Deck.newCard "Tackle" (Deck.Damage 1) 2
 
 
 basicCard2 : Card
 basicCard2 =
-    Card.new "Slam" (Card.Damage 2) 3
+    Deck.newCard "Slam" (Deck.Damage 2) 3
 
 
 expensiveCard : Card
 expensiveCard =
-    Card.new "Fireball" (Card.Damage 10) 7
+    Deck.newCard "Fireball" (Deck.Damage 10) 7
 
 
 summonCard : Card
 summonCard =
-    Card.new "Summon rabbit" (Card.Summon 1) 2
+    Deck.newCard "Summon rabbit" (Deck.Summon 1) 2

@@ -1,6 +1,6 @@
 module Codec exposing (decodeCards, decodeStoredCards, saveCards)
 
-import Card exposing (Action(..), Card)
+import Deck exposing (Action(..), Card)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode
 import Ports
@@ -90,7 +90,7 @@ decodeAction =
 
 decodeCard : Decoder Card
 decodeCard =
-    Decode.map3 Card.new
+    Decode.map3 Deck.newCard
         (Decode.field "name" Decode.string)
         (Decode.field "action" decodeAction)
         (Decode.field "cost" Decode.int)
