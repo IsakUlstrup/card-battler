@@ -8,9 +8,12 @@ type alias Minion =
     , health : Int
     , speed : Int
     , ability : ( Cooldown, Int )
-
-    -- , dropTable : Maybe ( ( Float, a ), List ( Float, a ) )
     }
+
+
+defaultAbilityCooldown : Float
+defaultAbilityCooldown =
+    5000
 
 
 {-| Minion constructor.
@@ -24,7 +27,7 @@ new icon health speed attack =
         icon
         health
         speed
-        ( Cooldown.new 2000, attack )
+        ( Cooldown.new defaultAbilityCooldown, attack )
 
 
 
@@ -58,12 +61,6 @@ damage amount minion =
 
 
 
--- {-| Set drop table.
--- Each entry is a tuple with a weight and a card. Higher weight means a card is more likely to be selected
--- -}
--- setDroptable : ( Float, a ) -> List ( Float, a ) -> Minion a -> Minion a
--- setDroptable first rest minion =
---     { minion | dropTable = Just ( first, rest ) }
 -- Predicates
 
 
@@ -79,16 +76,3 @@ isAlive minion =
 isReady : Minion -> Bool
 isReady minion =
     Cooldown.isDone (Tuple.first minion.ability)
-
-
-
--- -- Drops
--- {-| Generate a list of drops based on drop table
--- -}
--- generateDrops : Minion a -> Generator (List a)
--- generateDrops minion =
---     case minion.dropTable of
---         Just ( first, rest ) ->
---             Random.list 3 (Random.weighted first rest)
---         Nothing ->
---             Random.constant []
