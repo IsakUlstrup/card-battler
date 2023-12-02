@@ -119,10 +119,6 @@ nextEncounter model =
                                 { runState
                                     | playerMinions = List.map Minion.resetCooldown runState.playerMinions
                                     , opponentMinions =
-                                        -- runState.characters
-                                        --     |> Tuple.mapSecond (always (character |> Character.drawHand 3))
-                                        --     |> Tuple.mapFirst Character.resetCards
-                                        --     |> Tuple.mapFirst (Character.drawHand 5)
                                         character
                                             :: runState.opponentMinions
                                             |> List.filter (.minion >> Minion.isAlive)
@@ -136,6 +132,24 @@ nextEncounter model =
 
         Home ->
             model
+
+
+nextEncounter2 : RunState -> RunState
+nextEncounter2 runState =
+    case List.head runState.encounters of
+        Just character ->
+            { runState
+                | playerMinions = List.map Minion.resetCooldown runState.playerMinions
+                , opponentMinions =
+                    character
+                        :: runState.opponentMinions
+                        |> List.filter (.minion >> Minion.isAlive)
+                , encounters = List.drop 1 runState.encounters
+                , turnState = Recovering
+            }
+
+        Nothing ->
+            runState
 
 
 resetSelection : Model -> Model
@@ -249,6 +263,22 @@ getReadyMinion runState =
         |> List.head
 
 
+resetDoneCooldowns : RunState -> RunState
+resetDoneCooldowns runState =
+    let
+        resetIfDone minion =
+            if Minion.isReady minion then
+                Minion.resetCooldown minion
+
+            else
+                minion
+    in
+    { runState
+        | playerMinions = List.map resetIfDone runState.playerMinions
+        , opponentMinions = List.map (Opponent.updateMinion resetIfDone) runState.opponentMinions
+    }
+
+
 advanceTurnState : RunState -> RunState
 advanceTurnState model =
     case model.turnState of
@@ -262,20 +292,26 @@ advanceTurnState model =
                         ( rewards, seed ) =
                             Random.step (Opponent.generateLoot opponent) model.seed
                     in
-                    setVictoryState rewards { model | seed = seed }
+                    if List.isEmpty rewards then
+                        nextEncounter2 model
+
+                    else
+                        setVictoryState rewards { model | seed = seed }
 
                 _ ->
                     case getReadyMinion model of
                         Just ( True, minion ) ->
                             { model
                                 | turnState = Attacking True 0 (Tuple.second minion.ability) (Cooldown.new characterAnimationDuration)
-                                , playerMinions = List.map Minion.resetCooldown model.playerMinions
+
+                                -- , playerMinions = List.map Minion.resetCooldown model.playerMinions
                             }
 
                         Just ( False, minion ) ->
                             { model
                                 | turnState = Attacking False 0 (Tuple.second minion.ability) (Cooldown.new characterAnimationDuration)
-                                , opponentMinions = List.map (Opponent.updateMinion Minion.resetCooldown) model.opponentMinions
+
+                                -- , opponentMinions = List.map (Opponent.updateMinion Minion.resetCooldown) model.opponentMinions
                             }
 
                         _ ->
@@ -357,6 +393,7 @@ update msg model =
                                     |> tickTurnState dt
                                     |> advanceTurnState
                                     |> filterDeadMinions
+                                    |> resetDoneCooldowns
                                 )
                       }
                     , Cmd.none
@@ -642,7 +679,6 @@ viewEncounters encounters =
 
 viewRun : RunState -> List (Html Msg)
 viewRun runState =
-    -- Html.section [ Html.Attributes.class "run" ]
     case runState.turnState of
         Defeat ->
             [ viewDefeat ]
