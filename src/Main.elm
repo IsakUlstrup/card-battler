@@ -619,7 +619,7 @@ viewDeckHand : Deck -> Html Msg
 viewDeckHand deck =
     let
         cardAttributes index card =
-            [ Html.Attributes.classList [ ( "cant-afford", Deck.canAfford deck card.cost |> not ) ]
+            [ Html.Attributes.classList [ ( "semi-transparent", Deck.canAfford deck card.cost |> not ) ]
             , Html.Events.onClick (ClickedPlayerCard index)
             ]
     in
