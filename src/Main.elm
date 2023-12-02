@@ -33,7 +33,7 @@ type TurnState
     = Recovering
     | Attacking Bool Int Int Cooldown
     | Defeat
-    | Victory (List Card)
+    | Reward (List Card)
 
 
 type alias RunState =
@@ -218,7 +218,7 @@ tickTurnState dt model =
         Defeat ->
             model
 
-        Victory _ ->
+        Reward _ ->
             model
 
 
@@ -239,7 +239,7 @@ setDefeatState model =
 
 setVictoryState : List Card -> RunState -> RunState
 setVictoryState rewards model =
-    { model | turnState = Victory rewards }
+    { model | turnState = Reward rewards }
 
 
 getDeadOpponent : RunState -> Maybe Opponent
@@ -333,7 +333,7 @@ advanceTurnState model =
         Defeat ->
             model
 
-        Victory _ ->
+        Reward _ ->
             model
 
 
@@ -434,7 +434,7 @@ update msg model =
                         | gameState =
                             Run
                                 { runState
-                                    | turnState = Victory []
+                                    | turnState = Reward []
                                     , deck = Deck.addCard card runState.deck
                                 }
                       }
@@ -683,7 +683,7 @@ viewRun runState =
         Defeat ->
             [ viewDefeat ]
 
-        Victory rewards ->
+        Reward rewards ->
             [ viewVictory (List.map .minion runState.encounters) rewards
             ]
 
