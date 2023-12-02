@@ -89,175 +89,6 @@ init flags =
     )
 
 
-
--- UPDATE
-
-
-type Msg
-    = Tick Float
-    | ClickedNextEnemy
-    | ClickedReturnHome
-    | ClickedPlayerCard Int
-    | ClickedReward Card
-    | ClickedStartRun
-    | ClickedCardInCollection Int
-    | ClickedCharacterPreset Int
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        Tick dt ->
-            case model.gameState of
-                Run runState ->
-                    ( { model
-                        | gameState =
-                            Run
-                                (runState
-                                    |> tickMinions dt
-                                    |> tickDeck dt
-                                    |> tickTurnState dt
-                                    |> advanceTurnState
-                                    |> filterDeadMinions
-                                )
-                      }
-                    , Cmd.none
-                    )
-
-                Home ->
-                    ( model, Cmd.none )
-
-        ClickedNextEnemy ->
-            -- case model.gameState of
-            --     Run runState ->
-            --         case List.head runState.encounters of
-            --             Just character ->
-            --                 ( { model
-            --                     | gameState =
-            --                         Run
-            --                             { runState
-            --                                 | characters =
-            --                                     runState.characters
-            --                                         |> Tuple.mapSecond (always (character |> Character.drawHand 3))
-            --                                         |> Tuple.mapFirst Character.resetCards
-            --                                         |> Tuple.mapFirst (Character.drawHand 5)
-            --                                 , encounters = List.drop 1 runState.encounters
-            --                                 , turnState = Recovering
-            --                             }
-            --                   }
-            --                 , Cmd.none
-            --                 )
-            --             Nothing ->
-            --                 ( model, Cmd.none )
-            --     Home ->
-            ( nextEncounter model, Cmd.none )
-
-        ClickedReturnHome ->
-            case model.gameState of
-                Run runState ->
-                    let
-                        newModel =
-                            if runState.playerMinions |> List.all Minion.isAlive then
-                                { model
-                                    | gameState = Home
-                                    , cards =
-                                        (runState.deck
-                                            |> Deck.resetCards
-                                            |> .cards
-                                            |> List.map (Tuple.pair False)
-                                        )
-                                            ++ model.cards
-                                    , seed = runState.seed
-                                }
-
-                            else
-                                { model
-                                    | gameState = Home
-                                    , seed = runState.seed
-                                }
-                    in
-                    ( newModel
-                    , Codec.saveCards (List.map Tuple.second newModel.cards)
-                    )
-
-                Home ->
-                    ( model, Cmd.none )
-
-        ClickedPlayerCard index ->
-            case model.gameState of
-                Run runState ->
-                    ( { model | gameState = Run (playCard index runState) }, Cmd.none )
-
-                Home ->
-                    ( model, Cmd.none )
-
-        ClickedReward card ->
-            case model.gameState of
-                Run runState ->
-                    ( { model
-                        | gameState =
-                            Run
-                                { runState
-                                    | turnState = Victory []
-                                    , deck = Deck.addCard card runState.deck
-                                }
-                      }
-                        |> nextEncounter
-                    , Cmd.none
-                    )
-
-                Home ->
-                    ( model, Cmd.none )
-
-        ClickedStartRun ->
-            let
-                player =
-                    model.characters |> List.filter Tuple.first |> List.map Tuple.second |> List.head
-
-                deck =
-                    model.cards |> List.filter Tuple.first |> List.map Tuple.second |> Deck.new
-            in
-            case player of
-                Just p ->
-                    ( { model
-                        | gameState =
-                            Run
-                                (RunState
-                                    [ p ]
-                                    [ Content.Opponents.badger ]
-                                    Recovering
-                                    [ Content.Opponents.rabbit
-                                    , Content.Opponents.chick
-                                    , Content.Opponents.badger
-                                    , Content.Opponents.badger
-                                    ]
-                                    (deck |> Deck.drawHand 5)
-                                    model.seed
-                                )
-                        , cards = model.cards |> List.filter (Tuple.first >> not)
-                      }
-                        |> resetSelection
-                    , Cmd.none
-                    )
-
-                Nothing ->
-                    ( model, Cmd.none )
-
-        ClickedCardInCollection clickedIndex ->
-            ( { model
-                | cards = List.indexedMap (toggleIndex clickedIndex) model.cards
-              }
-            , Cmd.none
-            )
-
-        ClickedCharacterPreset clickedIndex ->
-            ( { model
-                | characters = List.indexedMap (setIndex clickedIndex) model.characters
-              }
-            , Cmd.none
-            )
-
-
 toggleIndex : Int -> Int -> ( Bool, a ) -> ( Bool, a )
 toggleIndex targteIndex index ( selected, item ) =
     if index == targteIndex then
@@ -470,6 +301,155 @@ advanceTurnState model =
             model
 
 
+returnHome : Model -> Model
+returnHome model =
+    case model.gameState of
+        Run runState ->
+            if runState.playerMinions |> List.any Minion.isAlive then
+                { model
+                    | gameState = Home
+                    , cards =
+                        (runState.deck
+                            |> Deck.resetCards
+                            |> .cards
+                            |> List.map (Tuple.pair False)
+                        )
+                            ++ model.cards
+                    , seed = runState.seed
+                }
+
+            else
+                { model
+                    | gameState = Home
+                    , seed = runState.seed
+                }
+
+        Home ->
+            model
+
+
+
+-- UPDATE
+
+
+type Msg
+    = Tick Float
+    | ClickedNextEnemy
+    | ClickedReturnHome
+    | ClickedCard Int
+    | ClickedReward Card
+    | ClickedStartRun
+    | ClickedCharacterPreset Int
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        Tick dt ->
+            case model.gameState of
+                Run runState ->
+                    ( { model
+                        | gameState =
+                            Run
+                                (runState
+                                    |> tickMinions dt
+                                    |> tickDeck dt
+                                    |> tickTurnState dt
+                                    |> advanceTurnState
+                                    |> filterDeadMinions
+                                )
+                      }
+                    , Cmd.none
+                    )
+
+                Home ->
+                    ( model, Cmd.none )
+
+        ClickedNextEnemy ->
+            ( nextEncounter model, Cmd.none )
+
+        ClickedReturnHome ->
+            let
+                newModel : Model
+                newModel =
+                    returnHome model
+            in
+            ( newModel
+            , Codec.saveCards (List.map Tuple.second newModel.cards)
+            )
+
+        ClickedCard index ->
+            case model.gameState of
+                Run runState ->
+                    ( { model | gameState = Run (playCard index runState) }, Cmd.none )
+
+                Home ->
+                    ( { model
+                        | cards = List.indexedMap (toggleIndex index) model.cards
+                      }
+                    , Cmd.none
+                    )
+
+        ClickedReward card ->
+            case model.gameState of
+                Run runState ->
+                    ( { model
+                        | gameState =
+                            Run
+                                { runState
+                                    | turnState = Victory []
+                                    , deck = Deck.addCard card runState.deck
+                                }
+                      }
+                        |> nextEncounter
+                    , Cmd.none
+                    )
+
+                Home ->
+                    ( model, Cmd.none )
+
+        ClickedStartRun ->
+            let
+                player =
+                    model.characters |> List.filter Tuple.first |> List.map Tuple.second |> List.head
+
+                deck =
+                    model.cards |> List.filter Tuple.first |> List.map Tuple.second |> Deck.new
+            in
+            case player of
+                Just p ->
+                    ( { model
+                        | gameState =
+                            Run
+                                (RunState
+                                    [ p ]
+                                    [ Content.Opponents.badger ]
+                                    Recovering
+                                    [ Content.Opponents.rabbit
+                                    , Content.Opponents.chick
+                                    , Content.Opponents.badger
+                                    , Content.Opponents.badger
+                                    ]
+                                    (deck |> Deck.drawHand 5)
+                                    model.seed
+                                )
+                        , cards = model.cards |> List.filter (Tuple.first >> not)
+                      }
+                        |> resetSelection
+                    , Cmd.none
+                    )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        ClickedCharacterPreset clickedIndex ->
+            ( { model
+                | characters = List.indexedMap (setIndex clickedIndex) model.characters
+              }
+            , Cmd.none
+            )
+
+
 
 -- VIEW
 -- viewCustomMeter : Int -> Int -> Html msg
@@ -620,7 +600,7 @@ viewDeckHand deck =
     let
         cardAttributes index card =
             [ Html.Attributes.classList [ ( "semi-transparent", Deck.canAfford deck card.cost |> not ) ]
-            , Html.Events.onClick (ClickedPlayerCard index)
+            , Html.Events.onClick (ClickedCard index)
             ]
     in
     Html.div [ Html.Attributes.class "flex gap-medium" ] (List.indexedMap (\index card -> viewCard (cardAttributes index card) card) deck.hand)
@@ -717,7 +697,7 @@ viewHome model =
         (List.indexedMap
             (\index ( selected, card ) ->
                 viewCard
-                    [ Html.Events.onClick (ClickedCardInCollection index)
+                    [ Html.Events.onClick (ClickedCard index)
                     , Html.Attributes.classList [ ( "glow-beige", selected ) ]
                     , Html.Attributes.class "padding-medium"
                     ]
