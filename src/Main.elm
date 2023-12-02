@@ -536,65 +536,43 @@ viewCardCost cost =
     Html.p [] [ Html.text ("Cost: " ++ String.fromInt cost) ]
 
 
+characterClasses : Int -> TurnState -> Bool -> List (Attribute msg)
+characterClasses minionIndex turnState isAlly =
+    let
+        isAttacking : Bool
+        isAttacking =
+            case turnState of
+                Attacking teamFlag index _ _ ->
+                    minionIndex == index && isAlly == teamFlag
 
--- characterClasses : TurnState -> Bool -> List (Attribute msg)
--- characterClasses turnState isPlayer =
---     let
---         isAttacking : Bool
---         isAttacking =
---             case turnState of
---                 Attacking characterType index action _ ->
---                     case action of
---                         Card.Damage _ ->
---                             characterType == isPlayer
---                 _ ->
---                     False
---     in
---     [ Html.Attributes.class (characterTypeString isPlayer)
---     , Html.Attributes.classList
---         [ ( "attacking", isAttacking )
---         ]
---     ]
+                _ ->
+                    False
+    in
+    if isAlly then
+        [ Html.Attributes.classList
+            [ ( "text-glow-beige", isAttacking )
+            , ( "translate-right", isAttacking )
+            ]
+        , Html.Attributes.class "transition-transform"
+        ]
+
+    else
+        [ Html.Attributes.classList
+            [ ( "text-glow-beige", isAttacking )
+            , ( "translate-left", isAttacking )
+            ]
+        , Html.Attributes.class "transition-transform"
+        ]
 
 
 viewCharacter : List (Attribute msg) -> Minion -> Html msg
-viewCharacter attrs character =
+viewCharacter iconAttrs character =
     Html.div
-        (Html.Attributes.class "flex flex-column gap-medium" :: attrs)
-        [ Html.h1 [ Html.Attributes.class "font-big center-text" ] [ Html.text (String.fromChar character.icon) ]
-
-        -- , Html.Keyed.node "div" [ Html.Attributes.class "health-history" ] (List.map viewHealthHistoryItem character.healthHistory)
+        [ Html.Attributes.class "flex flex-column gap-medium" ]
+        [ Html.h1 (Html.Attributes.class "font-big center-text" :: iconAttrs) [ Html.text (String.fromChar character.icon) ]
         , Html.p [] [ Html.text ("health: " ++ String.fromInt character.health) ]
-
-        -- , Html.p []
-        --     [ Html.text
-        --         ("hlt: "
-        --             ++ String.fromInt (Tuple.first character.health)
-        --             ++ "/"
-        --             ++ String.fromInt (Tuple.second character.health)
-        --         )
-        --     ]
-        -- , Html.meter
-        --     [ Html.Attributes.value (Tuple.first character.health |> String.fromInt)
-        --     , Html.Attributes.max (Tuple.second character.health |> String.fromInt)
-        --     ]
-        --     []
-        -- , viewCustomMeter (Tuple.second character.health) (Tuple.first character.health)
-        -- , Html.p [] [ Html.text "energy" ]
-        -- , Html.div [ Html.Attributes.class "energy" ] ([ character.energy ] |> List.filterMap viewEnergy)
-        -- , Html.div [ Html.Attributes.class "hand" ] (List.map (viewSmallCard character) character.hand)
         , Html.p [] [ Html.text "cooldown" ]
         , viewCooldown (Tuple.first character.ability)
-
-        -- , Html.details [ Html.Attributes.class "stats" ]
-        --     [ Html.summary []
-        --         [ Html.text "Stats" ]
-        --     , Html.div []
-        --         (Character.deriveStats character
-        --             |> List.map viewStat
-        --         )
-        --     ]
-        -- , Html.ul [ Html.Attributes.class "buffs" ] (List.map viewBuff character.buffs)
         ]
 
 
@@ -695,8 +673,20 @@ viewRun runState =
 
         _ ->
             [ Html.div [ Html.Attributes.style "width" "100%", Html.Attributes.class "flex space-evenly gap-large" ]
-                [ Html.div [ Html.Attributes.class "flex gap-medium" ] (List.map (viewCharacter []) (List.reverse runState.playerMinions))
-                , Html.div [ Html.Attributes.class "flex gap-medium" ] (List.map (.minion >> viewCharacter []) runState.opponentMinions)
+                [ Html.div [ Html.Attributes.class "flex gap-medium" ]
+                    (List.indexedMap
+                        (\index minion ->
+                            viewCharacter (characterClasses index runState.turnState True) minion
+                        )
+                        (List.reverse runState.playerMinions)
+                    )
+                , Html.div [ Html.Attributes.class "flex gap-medium" ]
+                    (List.indexedMap
+                        (\index opponent ->
+                            viewCharacter (characterClasses index runState.turnState False) opponent.minion
+                        )
+                        runState.opponentMinions
+                    )
                 ]
             , viewDeckStatus runState.deck
             , viewDeckHand runState.deck
