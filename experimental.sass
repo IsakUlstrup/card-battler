@@ -6,7 +6,11 @@ $spacing-large: 2rem
 $beige-color: hsl(50, 100%, 94%)
 $grey-color: hsl(0, 0%, 15%)
 
-$mint-color: hsl(150, 54%, 76%)
+$saturation: 60%
+$level: 75%
+
+$mint-color: hsl(150, $saturation, $level)
+$pink-color: hsl(337, $saturation, $level)
 
 $gradient-color-adjust: 5
 
@@ -65,6 +69,9 @@ body
 
 .bg-mint
     background: linear-gradient(lighten($mint-color, $gradient-color-adjust), darken($mint-color, $gradient-color-adjust))
+
+.bg-pink
+    background: linear-gradient(lighten($pink-color, $gradient-color-adjust), darken($pink-color, $gradient-color-adjust))
 
 // Decoration
 .debug-border

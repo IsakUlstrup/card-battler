@@ -600,7 +600,7 @@ viewCharacter attrs character =
 
 viewMinionPreview : List (Attribute msg) -> Minion -> Html msg
 viewMinionPreview attrs minion =
-    Html.div (Html.Attributes.class "flex flex-column gap-small pointer padding-medium border border-radius-medium" :: attrs)
+    Html.div (Html.Attributes.class "flex flex-column gap-small pointer padding-medium border border-radius-medium bg-pink" :: attrs)
         [ Html.h1 [ Html.Attributes.class "center-text font-big no-select" ] [ Html.text (String.fromChar minion.icon) ]
         , Html.p [] [ Html.text ("health: " ++ String.fromInt minion.health) ]
         , Html.p [] [ Html.text ("attack: " ++ String.fromInt (Tuple.second minion.ability)) ]
