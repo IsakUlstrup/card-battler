@@ -621,7 +621,7 @@ viewMinionPreview attrs minion =
 viewCard : List (Attribute msg) -> Card -> Html msg
 viewCard attrs card =
     Html.div
-        (Html.Attributes.class "flex flex-column gap-medium padding-medium border border-radius-medium pointer no-select width-medium height-large" :: attrs)
+        (Html.Attributes.class "flex flex-column gap-medium padding-medium border border-radius-medium pointer no-select width-medium height-large bg-mint text-grey" :: attrs)
         [ Html.h3 [ Html.Attributes.class "center-text" ] [ Html.text card.name ]
         , card.cost |> viewCardCost
         , Html.p [] [ Html.text (Deck.actionToString card.action) ]
@@ -712,7 +712,7 @@ viewHome model =
         viewMinionPreset index ( selected, minion ) =
             viewMinionPreview
                 [ Html.Events.onClick (ClickedCharacterPreset index)
-                , Html.Attributes.classList [ ( "border-green", selected ) ]
+                , Html.Attributes.classList [ ( "glow-beige", selected ) ]
                 , Html.Attributes.class "width-medium"
                 ]
                 minion
@@ -728,7 +728,7 @@ viewHome model =
             (\index ( selected, card ) ->
                 viewCard
                     [ Html.Events.onClick (ClickedCardInCollection index)
-                    , Html.Attributes.classList [ ( "border-green", selected ) ]
+                    , Html.Attributes.classList [ ( "glow-beige", selected ) ]
                     , Html.Attributes.class "padding-medium"
                     ]
                     card
@@ -742,7 +742,7 @@ view : Model -> Html Msg
 view model =
     main_
         [ Html.Attributes.id "app"
-        , Html.Attributes.class "flex flex-column center-cross padding-medium gap-large beige-text helvetica"
+        , Html.Attributes.class "flex flex-column center-cross padding-medium gap-large text-beige helvetica"
         ]
         (case model.gameState of
             Run runState ->

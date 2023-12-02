@@ -6,6 +6,10 @@ $spacing-large: 2rem
 $beige-color: hsl(50, 100%, 94%)
 $grey-color: hsl(0, 0%, 15%)
 
+$mint-color: hsl(150, 54%, 76%)
+
+$gradient-color-adjust: 5
+
 // Reset
 *
     padding: 0
@@ -53,8 +57,14 @@ body
     height: 15rem
 
 // Colors
-.beige-text
+.text-beige
     color: $beige-color
+
+.text-grey
+    color: $grey-color
+
+.bg-mint
+    background: linear-gradient(lighten($mint-color, $gradient-color-adjust), darken($mint-color, $gradient-color-adjust))
 
 // Decoration
 .debug-border
@@ -65,6 +75,9 @@ body
 
 .border-green
     border-color: green
+
+.glow-beige
+    box-shadow: 0 0 1rem $beige-color
 
 .border-radius-medium
     border-radius: $spacing-medium
