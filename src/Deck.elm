@@ -165,8 +165,8 @@ actionToString action =
         Damage power ->
             "Damage " ++ String.fromInt power
 
-        Summon _ ->
-            "Summon"
+        Summon minion ->
+            "Summon " ++ String.fromChar minion.icon
 
 
 actionToIcon : Action -> String
@@ -175,8 +175,8 @@ actionToIcon action =
         Damage power ->
             "🗡️" ++ String.fromInt power
 
-        Summon _ ->
-            "s"
+        Summon minion ->
+            "s" ++ String.fromChar minion.icon
 
 
 type alias Card =
