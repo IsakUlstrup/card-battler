@@ -621,8 +621,8 @@ viewMinionPreview attrs minion =
 viewCard : List (Attribute msg) -> Card -> Html msg
 viewCard attrs card =
     Html.div
-        (Html.Attributes.class "flex flex-column gap-medium padding-medium border border-radius-medium pointer no-select" :: attrs)
-        [ Html.h3 [] [ Html.text card.name ]
+        (Html.Attributes.class "flex flex-column gap-medium padding-medium border border-radius-medium pointer no-select width-medium height-large" :: attrs)
+        [ Html.h3 [ Html.Attributes.class "center-text" ] [ Html.text card.name ]
         , card.cost |> viewCardCost
         , Html.p [] [ Html.text (Deck.actionToString card.action) ]
         ]
@@ -713,7 +713,7 @@ viewHome model =
             viewMinionPreview
                 [ Html.Events.onClick (ClickedCharacterPreset index)
                 , Html.Attributes.classList [ ( "border-green", selected ) ]
-                , Html.Attributes.style "width" "12rem"
+                , Html.Attributes.class "width-medium"
                 ]
                 minion
     in
