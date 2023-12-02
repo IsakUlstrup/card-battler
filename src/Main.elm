@@ -12,7 +12,6 @@ import Html exposing (Attribute, Html, main_)
 import Html.Attributes
 import Html.Events
 import Minion exposing (Minion)
-import Opponent exposing (Opponent)
 import Random exposing (Seed)
 import Run exposing (Run)
 
@@ -111,15 +110,6 @@ resetSelection model =
         | cards = model.cards |> List.map (Tuple.mapFirst (always False))
         , characters = model.characters |> List.map (Tuple.mapFirst (always False))
     }
-
-
-
--- updateFlag : (Character -> Character) -> Bool -> RunState -> RunState
--- updateFlag f isPlayer model =
---     if isPlayer then
---         { model | characters = model.characters |> Tuple.mapFirst f }
---     else
---         { model | characters = model.characters |> Tuple.mapSecond f }
 
 
 returnHome : Model -> Model
@@ -274,20 +264,6 @@ update msg model =
 
 
 -- VIEW
--- viewCustomMeter : Int -> Int -> Html msg
--- viewCustomMeter max value =
---     Html.div [ Html.Attributes.class "custom-meter" ]
---         [ Html.div
---             [ Html.Attributes.class "trail"
---             , Html.Attributes.style "width" (String.fromFloat (toFloat value / toFloat max * 100) ++ "%")
---             ]
---             []
---         , Html.div
---             [ Html.Attributes.class "value"
---             , Html.Attributes.style "width" (String.fromFloat (toFloat value / toFloat max * 100) ++ "%")
---             ]
---             []
---         ]
 
 
 viewCooldown : Cooldown -> Html msg
@@ -297,28 +273,6 @@ viewCooldown ( cd, maxCd ) =
         , Html.Attributes.max (String.fromFloat maxCd)
         ]
         []
-
-
-
--- viewBuff : Buff -> Html msg
--- viewBuff buff =
---     Html.li [ Html.Attributes.class "buff" ]
---         [ Html.text
---             (Stat.toString (Tuple.first buff.statModifier)
---                 ++ " x"
---                 ++ String.fromFloat (Tuple.second buff.statModifier)
---             )
---         , viewCooldown buff.duration
---         ]
--- viewStat : ( Stat, Float ) -> Html msg
--- viewStat ( statType, statValue ) =
---     Html.tr []
---         [ Html.td [] [ Html.text (Stat.toString statType) ]
---         , Html.td [] [ Html.text (String.fromFloat statValue) ]
---         ]
--- viewHealthHistoryItem : ( Int, Int ) -> ( String, Html msg )
--- viewHealthHistoryItem ( id, delta ) =
---     ( "item" ++ String.fromInt id, Html.p [] [ Html.text (String.fromInt delta) ] )
 
 
 viewEnergy : Float -> Html msg
@@ -385,16 +339,6 @@ viewMinionPreview attrs minion =
         , Html.p [] [ Html.text ("health: " ++ String.fromInt minion.health) ]
         , Html.p [] [ Html.text ("attack: " ++ String.fromInt (Tuple.second minion.ability)) ]
         , Html.p [] [ Html.text ("speed: " ++ String.fromInt minion.speed) ]
-
-        -- , Html.table []
-        --     -- (Character.deriveStats character
-        --     --     |> List.map viewStat
-        --     -- )
-        --     [ Html.tr []
-        --         [ Html.td [] [ Html.text "Speed" ]
-        --         , Html.td [] [ Html.text (String.fromInt minion.speed) ]
-        --         ]
-        --     ]
         ]
 
 
@@ -491,8 +435,6 @@ viewRun runState =
                 ]
             , viewDeckStatus runState.deck
             , viewDeckHand runState.deck
-
-            -- , viewPlayerHand (Tuple.first runState.characters)
             ]
 
 
