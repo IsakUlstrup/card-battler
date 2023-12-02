@@ -1,4 +1,4 @@
-module Main exposing (Model, Msg, TurnState, main)
+module Main exposing (Model, Msg, main)
 
 import Browser
 import Browser.Events
@@ -14,40 +14,11 @@ import Html.Events
 import Minion exposing (Minion)
 import Opponent exposing (Opponent)
 import Random exposing (Seed)
-
-
-
--- CONSTANTS
-
-
-characterAnimationDuration : Float
-characterAnimationDuration =
-    150
-
-
-
--- TURN STATE
-
-
-type TurnState
-    = Recovering
-    | Attacking Bool Int Int Cooldown
-    | Defeat
-    | Reward (List Card)
-
-
-type alias RunState =
-    { playerMinions : List Minion
-    , opponentMinions : List Opponent
-    , turnState : TurnState
-    , encounters : List Opponent
-    , deck : Deck
-    , seed : Seed
-    }
+import Run exposing (Run)
 
 
 type GameState
-    = Run RunState
+    = Run Run
     | Home
 
 
@@ -123,7 +94,7 @@ nextEncounter model =
                                             :: runState.opponentMinions
                                             |> List.filter (.minion >> Minion.isAlive)
                                     , encounters = List.drop 1 runState.encounters
-                                    , turnState = Recovering
+                                    , turnState = Run.Recovering
                                 }
                     }
 
@@ -132,24 +103,6 @@ nextEncounter model =
 
         Home ->
             model
-
-
-nextEncounter2 : RunState -> RunState
-nextEncounter2 runState =
-    case List.head runState.encounters of
-        Just character ->
-            { runState
-                | playerMinions = List.map Minion.resetCooldown runState.playerMinions
-                , opponentMinions =
-                    character
-                        :: runState.opponentMinions
-                        |> List.filter (.minion >> Minion.isAlive)
-                , encounters = List.drop 1 runState.encounters
-                , turnState = Recovering
-            }
-
-        Nothing ->
-            runState
 
 
 resetSelection : Model -> Model
@@ -167,174 +120,6 @@ resetSelection model =
 --         { model | characters = model.characters |> Tuple.mapFirst f }
 --     else
 --         { model | characters = model.characters |> Tuple.mapSecond f }
-
-
-playCard : Int -> RunState -> RunState
-playCard index model =
-    case Deck.playCardAtIndex index model.deck of
-        ( newDeck, Just (Damage dmg) ) ->
-            { model
-                | deck = newDeck
-                , opponentMinions = List.map (Opponent.updateMinion (Minion.damage dmg)) (List.take 1 model.opponentMinions) ++ List.drop 1 model.opponentMinions
-            }
-
-        ( newDeck, Just (Summon minion) ) ->
-            { model
-                | deck = newDeck
-                , playerMinions = minion :: model.playerMinions
-            }
-
-        ( _, Nothing ) ->
-            model
-
-
-tickMinions : Float -> RunState -> RunState
-tickMinions dt model =
-    case model.turnState of
-        Recovering ->
-            { model
-                | playerMinions = List.map (Minion.tick dt) model.playerMinions
-                , opponentMinions = List.map (Opponent.updateMinion (Minion.tick dt)) model.opponentMinions
-            }
-
-        _ ->
-            model
-
-
-tickDeck : Float -> RunState -> RunState
-tickDeck dt runState =
-    { runState | deck = Deck.tickEnergy dt runState.deck }
-
-
-tickTurnState : Float -> RunState -> RunState
-tickTurnState dt model =
-    case model.turnState of
-        Recovering ->
-            model
-
-        Attacking isPlayer index action cooldown ->
-            { model | turnState = Attacking isPlayer index action (Cooldown.tick dt cooldown) }
-
-        Defeat ->
-            model
-
-        Reward _ ->
-            model
-
-
-filterDeadMinions : RunState -> RunState
-filterDeadMinions runState =
-    { runState | playerMinions = List.filter Minion.isAlive runState.playerMinions }
-
-
-setRecoveringState : RunState -> RunState
-setRecoveringState model =
-    { model | turnState = Recovering }
-
-
-setDefeatState : RunState -> RunState
-setDefeatState model =
-    { model | turnState = Defeat }
-
-
-setVictoryState : List Card -> RunState -> RunState
-setVictoryState rewards model =
-    { model | turnState = Reward rewards }
-
-
-getDeadOpponent : RunState -> Maybe Opponent
-getDeadOpponent model =
-    model.opponentMinions
-        |> List.filter (Opponent.filterMinion (Minion.isAlive >> not))
-        |> List.head
-
-
-playerWipe : RunState -> Bool
-playerWipe model =
-    model.playerMinions
-        |> List.all (Minion.isAlive >> not)
-
-
-getReadyMinion : RunState -> Maybe ( Bool, Minion )
-getReadyMinion runState =
-    (runState.playerMinions |> List.map (Tuple.pair True))
-        ++ (runState.opponentMinions |> List.map .minion |> List.map (Tuple.pair False))
-        |> List.filter (\( _, minion ) -> Minion.isReady minion)
-        |> List.head
-
-
-resetDoneCooldowns : RunState -> RunState
-resetDoneCooldowns runState =
-    let
-        resetIfDone minion =
-            if Minion.isReady minion then
-                Minion.resetCooldown minion
-
-            else
-                minion
-    in
-    { runState
-        | playerMinions = List.map resetIfDone runState.playerMinions
-        , opponentMinions = List.map (Opponent.updateMinion resetIfDone) runState.opponentMinions
-    }
-
-
-advanceTurnState : RunState -> RunState
-advanceTurnState model =
-    case model.turnState of
-        Recovering ->
-            case ( playerWipe model, getDeadOpponent model ) of
-                ( True, _ ) ->
-                    setDefeatState model
-
-                ( _, Just opponent ) ->
-                    let
-                        ( rewards, seed ) =
-                            Random.step (Opponent.generateLoot opponent) model.seed
-                    in
-                    if List.isEmpty rewards then
-                        nextEncounter2 model
-
-                    else
-                        setVictoryState rewards { model | seed = seed }
-
-                _ ->
-                    case getReadyMinion model of
-                        Just ( True, minion ) ->
-                            { model
-                                | turnState = Attacking True 0 (Tuple.second minion.ability) (Cooldown.new characterAnimationDuration)
-
-                                -- , playerMinions = List.map Minion.resetCooldown model.playerMinions
-                            }
-
-                        Just ( False, minion ) ->
-                            { model
-                                | turnState = Attacking False 0 (Tuple.second minion.ability) (Cooldown.new characterAnimationDuration)
-
-                                -- , opponentMinions = List.map (Opponent.updateMinion Minion.resetCooldown) model.opponentMinions
-                            }
-
-                        _ ->
-                            model
-
-        Attacking isPlayer _ attack cooldown ->
-            if Cooldown.isDone cooldown then
-                (if isPlayer then
-                    { model | opponentMinions = List.map (Opponent.updateMinion (Minion.damage attack)) (List.take 1 model.opponentMinions) ++ List.drop 1 model.opponentMinions }
-
-                 else
-                    { model | playerMinions = List.map (Minion.damage attack) (List.take 1 model.playerMinions) ++ List.drop 1 model.playerMinions }
-                )
-                    |> setRecoveringState
-
-            else
-                model
-
-        Defeat ->
-            model
-
-        Reward _ ->
-            model
 
 
 returnHome : Model -> Model
@@ -388,12 +173,12 @@ update msg model =
                         | gameState =
                             Run
                                 (runState
-                                    |> tickMinions dt
-                                    |> tickDeck dt
-                                    |> tickTurnState dt
-                                    |> advanceTurnState
-                                    |> filterDeadMinions
-                                    |> resetDoneCooldowns
+                                    |> Run.tickMinions dt
+                                    |> Run.tickDeck dt
+                                    |> Run.tickTurnState dt
+                                    |> Run.advanceTurnState
+                                    |> Run.filterDeadMinions
+                                    |> Run.resetDoneCooldowns
                                 )
                       }
                     , Cmd.none
@@ -418,7 +203,7 @@ update msg model =
         ClickedCard index ->
             case model.gameState of
                 Run runState ->
-                    ( { model | gameState = Run (playCard index runState) }, Cmd.none )
+                    ( { model | gameState = Run (Run.playCard index runState) }, Cmd.none )
 
                 Home ->
                     ( { model
@@ -434,7 +219,7 @@ update msg model =
                         | gameState =
                             Run
                                 { runState
-                                    | turnState = Reward []
+                                    | turnState = Run.Reward []
                                     , deck = Deck.addCard card runState.deck
                                 }
                       }
@@ -458,10 +243,10 @@ update msg model =
                     ( { model
                         | gameState =
                             Run
-                                (RunState
+                                (Run.Run
                                     [ p ]
                                     [ Content.Opponents.badger ]
-                                    Recovering
+                                    Run.Recovering
                                     [ Content.Opponents.rabbit
                                     , Content.Opponents.chick
                                     , Content.Opponents.badger
@@ -553,13 +338,13 @@ viewCardCost cost =
     Html.p [] [ Html.text ("Cost: " ++ String.fromInt cost) ]
 
 
-characterClasses : Int -> TurnState -> Bool -> List (Attribute msg)
+characterClasses : Int -> Run.TurnState -> Bool -> List (Attribute msg)
 characterClasses minionIndex turnState isAlly =
     let
         isAttacking : Bool
         isAttacking =
             case turnState of
-                Attacking teamFlag index _ _ ->
+                Run.Attacking teamFlag index _ _ ->
                     minionIndex == index && isAlly == teamFlag
 
                 _ ->
@@ -677,13 +462,13 @@ viewEncounters encounters =
         ]
 
 
-viewRun : RunState -> List (Html Msg)
+viewRun : Run -> List (Html Msg)
 viewRun runState =
     case runState.turnState of
-        Defeat ->
+        Run.Defeat ->
             [ viewDefeat ]
 
-        Reward rewards ->
+        Run.Reward rewards ->
             [ viewVictory (List.map .minion runState.encounters) rewards
             ]
 
