@@ -23,12 +23,13 @@ type alias Deck =
     , played : List Card
     , energy : Float
     , maxEnergy : Int
+    , handSize : Int
     }
 
 
 new : List Card -> Deck
 new cards =
-    Deck cards [] [] 0 10
+    Deck cards [] [] 0 10 5
 
 
 {-| Put all cards back in deck
@@ -44,7 +45,11 @@ resetCards deck =
 
 addCard : Card -> Deck -> Deck
 addCard card deck =
-    { deck | cards = card :: deck.cards }
+    if List.length deck.hand < deck.handSize then
+        { deck | hand = card :: deck.hand }
+
+    else
+        { deck | cards = card :: deck.cards }
 
 
 drawHand : Int -> Deck -> Deck
