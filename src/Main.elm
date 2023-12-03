@@ -388,51 +388,52 @@ viewVictory =
         ]
 
 
-viewRewards : List Card -> Html Msg
-viewRewards rewards =
+viewRewards : Run -> Html Msg
+viewRewards run =
     let
         viewReward reward =
             viewCard [ Html.Events.onClick (ClickedReward reward) ] reward
     in
-    Html.div [ Html.Attributes.class "flex flex-column gap-large" ]
-        [ Html.h1 [ Html.Attributes.class "center-text" ] [ Html.text "Pick a card" ]
-        , Html.div [ Html.Attributes.class "flex gap-medium" ] (List.map viewReward rewards)
-        ]
+    case run.turnState of
+        Run.Reward rewards ->
+            Html.div [ Html.Attributes.class "flex flex-column gap-large modal border-radius-medium padding-medium" ]
+                [ Html.h1 [ Html.Attributes.class "center-text" ] [ Html.text "Pick a card" ]
+                , Html.div [ Html.Attributes.class "flex gap-medium" ] (List.map viewReward rewards)
+                ]
+
+        _ ->
+            Html.div [] []
 
 
 viewRun : Run -> List (Html Msg)
 viewRun runState =
-    case runState.turnState of
-        Run.Reward rewards ->
-            [ viewRewards rewards ]
+    if List.isEmpty runState.opponentMinions && List.isEmpty runState.encounters then
+        [ viewVictory ]
 
-        _ ->
-            if List.isEmpty runState.opponentMinions && List.isEmpty runState.encounters then
-                [ viewVictory ]
+    else if Run.playerWipe runState then
+        [ viewDefeat ]
 
-            else if Run.playerWipe runState then
-                [ viewDefeat ]
-
-            else
-                [ Html.div [ Html.Attributes.style "width" "100%", Html.Attributes.class "flex space-evenly gap-large" ]
-                    [ Html.div [ Html.Attributes.class "flex gap-medium" ]
-                        (List.indexedMap
-                            (\index minion ->
-                                viewCharacter (characterClasses index runState.turnState True) minion
-                            )
-                            (List.reverse runState.playerMinions)
-                        )
-                    , Html.div [ Html.Attributes.class "flex gap-medium" ]
-                        (List.indexedMap
-                            (\index opponent ->
-                                viewCharacter (characterClasses index runState.turnState False) opponent.minion
-                            )
-                            runState.opponentMinions
-                        )
-                    ]
-                , viewDeckStatus runState.deck
-                , viewDeckHand runState.deck
-                ]
+    else
+        [ Html.div [ Html.Attributes.style "width" "100%", Html.Attributes.class "flex space-evenly gap-large" ]
+            [ Html.div [ Html.Attributes.class "flex gap-medium" ]
+                (List.indexedMap
+                    (\index minion ->
+                        viewCharacter (characterClasses index runState.turnState True) minion
+                    )
+                    (List.reverse runState.playerMinions)
+                )
+            , Html.div [ Html.Attributes.class "flex gap-medium" ]
+                (List.indexedMap
+                    (\index opponent ->
+                        viewCharacter (characterClasses index runState.turnState False) opponent.minion
+                    )
+                    runState.opponentMinions
+                )
+            ]
+        , viewDeckStatus runState.deck
+        , viewDeckHand runState.deck
+        , viewRewards runState
+        ]
 
 
 viewHome : Model -> List (Html Msg)

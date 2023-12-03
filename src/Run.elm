@@ -62,7 +62,12 @@ tickMinions dt run =
 
 tickDeck : Float -> Run -> Run
 tickDeck dt run =
-    { run | deck = Deck.tickEnergy dt run.deck }
+    case run.turnState of
+        Recovering ->
+            { run | deck = Deck.tickEnergy dt run.deck }
+
+        _ ->
+            run
 
 
 tickTurnState : Float -> Run -> Run
