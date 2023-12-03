@@ -168,7 +168,7 @@ update msg model =
                                     |> Run.tickTurnState dt
                                     |> Run.advanceTurnState
                                     |> Run.filterDeadMinions
-                                    |> Run.resetDoneCooldowns
+                                 -- |> Run.resetDoneCooldowns
                                 )
                       }
                     , Cmd.none
@@ -235,9 +235,22 @@ update msg model =
                             Run
                                 (Run.Run
                                     [ p ]
-                                    [ Content.Opponents.badger ]
+                                    [ Content.Opponents.badger
+                                    , Content.Opponents.rabbit
+                                    , Content.Opponents.chick
+                                    , Content.Opponents.badger
+                                    ]
                                     Run.Recovering
                                     [ Content.Opponents.rabbit
+                                    , Content.Opponents.chick
+                                    , Content.Opponents.badger
+                                    , Content.Opponents.badger
+                                    , Content.Opponents.chick
+                                    , Content.Opponents.badger
+                                    , Content.Opponents.badger
+                                    , Content.Opponents.chick
+                                    , Content.Opponents.badger
+                                    , Content.Opponents.badger
                                     , Content.Opponents.chick
                                     , Content.Opponents.badger
                                     , Content.Opponents.badger

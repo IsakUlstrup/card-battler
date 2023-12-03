@@ -1,4 +1,4 @@
-module Run exposing (Run, TurnState(..), advanceTurnState, filterDeadMinions, playCard, playerWipe, resetDoneCooldowns, tickDeck, tickMinions, tickTurnState)
+module Run exposing (Run, TurnState(..), advanceTurnState, filterDeadMinions, playCard, playerWipe, tickDeck, tickMinions, tickTurnState)
 
 import Cooldown exposing (Cooldown)
 import Deck exposing (Card, Deck)
@@ -81,7 +81,7 @@ tickTurnState dt run =
             { run | turnState = PlayerAttacking index action (Cooldown.tick dt cooldown) }
 
         OpponentAttacking index action cooldown ->
-            { run | turnState = PlayerAttacking index action (Cooldown.tick dt cooldown) }
+            { run | turnState = OpponentAttacking index action (Cooldown.tick dt cooldown) }
 
         Reward _ ->
             run
@@ -117,35 +117,69 @@ playerWipe run =
         || List.isEmpty run.playerMinions
 
 
-getReadyPlayerMinion : Run -> Maybe ( Int, Minion )
+getReadyPlayerMinion : Run -> ( Run, Maybe ( Int, Minion ) )
 getReadyPlayerMinion run =
-    run.playerMinions
-        |> List.indexedMap Tuple.pair
-        |> List.filter (\( _, minion ) -> Minion.isReady minion)
-        |> List.head
-
-
-getReadyOpposingMinion : Run -> Maybe ( Int, Minion )
-getReadyOpposingMinion run =
-    (run.opponentMinions |> List.map .minion |> List.indexedMap Tuple.pair)
-        |> List.filter (\( _, minion ) -> Minion.isReady minion)
-        |> List.head
-
-
-resetDoneCooldowns : Run -> Run
-resetDoneCooldowns run =
     let
-        resetIfDone minion =
-            if Minion.isReady minion then
+        getReady =
+            run.playerMinions
+                |> List.indexedMap Tuple.pair
+                |> List.filter (\( _, minion ) -> Minion.isReady minion)
+                |> List.head
+
+        resetCooldownAtIndex targetIndex index minion =
+            if index == targetIndex then
                 Minion.resetCooldown minion
 
             else
                 minion
     in
-    { run
-        | playerMinions = List.map resetIfDone run.playerMinions
-        , opponentMinions = List.map (Opponent.updateMinion resetIfDone) run.opponentMinions
-    }
+    case getReady of
+        Just ( index, minion ) ->
+            ( { run | playerMinions = List.indexedMap (resetCooldownAtIndex index) run.playerMinions }
+            , Just ( index, minion )
+            )
+
+        Nothing ->
+            ( run
+            , Nothing
+            )
+
+
+getReadyOpposingMinion : Run -> ( Run, Maybe ( Int, Minion ) )
+getReadyOpposingMinion run =
+    let
+        getReady =
+            run.opponentMinions
+                |> List.map .minion
+                |> List.indexedMap Tuple.pair
+                |> List.filter (\( _, minion ) -> Minion.isReady minion)
+                |> List.head
+
+        resetCooldownAtIndex targetIndex index minion =
+            if index == targetIndex then
+                Opponent.updateMinion Minion.resetCooldown minion
+
+            else
+                minion
+    in
+    case getReady of
+        Just ( index, minion ) ->
+            ( { run | opponentMinions = List.indexedMap (resetCooldownAtIndex index) run.opponentMinions }
+            , Just ( index, minion )
+            )
+
+        Nothing ->
+            ( run
+            , Nothing
+            )
+
+
+
+-- getReadyOpposingMinion : Run -> Maybe ( Int, Minion )
+-- getReadyOpposingMinion run =
+--     (run.opponentMinions |> List.map .minion |> List.indexedMap Tuple.pair)
+--         |> List.filter (\( _, minion ) -> Minion.isReady minion)
+--         |> List.head
 
 
 updateFirstPlayer : (Minion -> Minion) -> Run -> Run
@@ -161,19 +195,19 @@ updateFirstOpponent f run =
 setAttackingState : Run -> Run
 setAttackingState run =
     case getReadyPlayerMinion run of
-        Just ( index, minion ) ->
-            { run
+        ( newRun, Just ( index, minion ) ) ->
+            { newRun
                 | turnState = PlayerAttacking index (Tuple.second minion.ability) (Cooldown.new characterAnimationDuration)
             }
 
-        Nothing ->
+        ( _, Nothing ) ->
             case getReadyOpposingMinion run of
-                Just ( index, minion ) ->
-                    { run
+                ( newRun2, Just ( index, minion ) ) ->
+                    { newRun2
                         | turnState = OpponentAttacking index (Tuple.second minion.ability) (Cooldown.new characterAnimationDuration)
                     }
 
-                Nothing ->
+                ( _, Nothing ) ->
                     run
 
 
