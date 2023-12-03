@@ -137,6 +137,16 @@ resetDoneCooldowns run =
     }
 
 
+updateFirstPlayer : (Minion -> Minion) -> Run -> Run
+updateFirstPlayer f run =
+    { run | playerMinions = List.map f (List.take 1 run.playerMinions) ++ List.drop 1 run.playerMinions }
+
+
+updateFirstOpponent : (Minion -> Minion) -> Run -> Run
+updateFirstOpponent f run =
+    { run | opponentMinions = List.map (Opponent.updateMinion f) (List.take 1 run.opponentMinions) ++ List.drop 1 run.opponentMinions }
+
+
 advanceTurnState : Run -> Run
 advanceTurnState model =
     case model.turnState of
@@ -158,15 +168,11 @@ advanceTurnState model =
                         Just ( True, minion ) ->
                             { model
                                 | turnState = Attacking True 0 (Tuple.second minion.ability) (Cooldown.new characterAnimationDuration)
-
-                                -- , playerMinions = List.map Minion.resetCooldown model.playerMinions
                             }
 
                         Just ( False, minion ) ->
                             { model
                                 | turnState = Attacking False 0 (Tuple.second minion.ability) (Cooldown.new characterAnimationDuration)
-
-                                -- , opponentMinions = List.map (Opponent.updateMinion Minion.resetCooldown) model.opponentMinions
                             }
 
                         _ ->
@@ -175,10 +181,10 @@ advanceTurnState model =
         Attacking isPlayer _ attack cooldown ->
             if Cooldown.isDone cooldown then
                 (if isPlayer then
-                    { model | opponentMinions = List.map (Opponent.updateMinion (Minion.damage attack)) (List.take 1 model.opponentMinions) ++ List.drop 1 model.opponentMinions }
+                    updateFirstOpponent (Minion.damage attack) model
 
                  else
-                    { model | playerMinions = List.map (Minion.damage attack) (List.take 1 model.playerMinions) ++ List.drop 1 model.playerMinions }
+                    updateFirstPlayer (Minion.damage attack) model
                 )
                     |> setRecoveringState
 
