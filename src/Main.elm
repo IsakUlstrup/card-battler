@@ -454,7 +454,7 @@ viewHome model =
     , Html.div [ Html.Attributes.class "flex gap-medium" ]
         (List.indexedMap viewMinionPreset model.characters)
     , Html.h3 [] [ Html.text "Card Collection" ]
-    , Html.div [ Html.Attributes.class "flex flex-wrap gap-medium" ]
+    , Html.div [ Html.Attributes.class "flex space-evenly flex-wrap gap-medium" ]
         (List.indexedMap
             (\index ( selected, card ) ->
                 viewCard
