@@ -322,23 +322,28 @@ characterClasses minionIndex turnState isAlly =
 
 
 viewCharacter : List (Attribute msg) -> Minion -> Html msg
-viewCharacter iconAttrs character =
+viewCharacter iconAttrs minion =
     Html.div
         [ Html.Attributes.class "flex flex-column gap-medium" ]
-        [ Html.h1 (Html.Attributes.class "font-big center-text" :: iconAttrs) [ Html.text (String.fromChar character.icon) ]
-        , Html.p [] [ Html.text ("health: " ++ String.fromInt character.health) ]
-        , Html.p [] [ Html.text "cooldown" ]
-        , viewCooldown (Tuple.first character.ability)
+        [ Html.h1 (Html.Attributes.class "font-big center-text" :: iconAttrs) [ Html.text (String.fromChar minion.icon) ]
+        , Html.div [ Html.Attributes.class "flex gap-medium" ]
+            [ Html.p [ Html.Attributes.class "pos-relative heart" ] [ Html.text (String.fromInt minion.health) ]
+            , Html.p [ Html.Attributes.class "pos-relative sword" ] [ Html.text (String.fromInt (Tuple.second minion.ability)) ]
+            , Html.p [ Html.Attributes.class "pos-relative lightning" ] [ Html.text (String.fromInt minion.speed) ]
+            ]
+        , viewCooldown (Tuple.first minion.ability)
         ]
 
 
 viewMinionPreview : List (Attribute msg) -> Minion -> Html msg
 viewMinionPreview attrs minion =
-    Html.div (Html.Attributes.class "flex flex-column gap-small pointer padding-medium border border-radius-medium bg-pink" :: attrs)
+    Html.div (Html.Attributes.class "flex flex-column gap-small pointer padding-medium" :: attrs)
         [ Html.h1 [ Html.Attributes.class "center-text font-big no-select" ] [ Html.text (String.fromChar minion.icon) ]
-        , Html.p [] [ Html.text ("health: " ++ String.fromInt minion.health) ]
-        , Html.p [] [ Html.text ("attack: " ++ String.fromInt (Tuple.second minion.ability)) ]
-        , Html.p [] [ Html.text ("speed: " ++ String.fromInt minion.speed) ]
+        , Html.div [ Html.Attributes.class "flex gap-medium" ]
+            [ Html.p [ Html.Attributes.class "pos-relative heart" ] [ Html.text (String.fromInt minion.health) ]
+            , Html.p [ Html.Attributes.class "pos-relative sword" ] [ Html.text (String.fromInt (Tuple.second minion.ability)) ]
+            , Html.p [ Html.Attributes.class "pos-relative lightning" ] [ Html.text (String.fromInt minion.speed) ]
+            ]
         ]
 
 
