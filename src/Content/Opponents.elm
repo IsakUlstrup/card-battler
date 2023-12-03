@@ -17,4 +17,4 @@ rabbit =
 
 chick : Opponent
 chick =
-    Opponent.new Minions.chick []
+    Opponent.new Minions.chick [ ( 100, Cards.summonTurtle ) ]

@@ -3,6 +3,7 @@ module Content.Cards exposing
     , basicCard2
     , expensiveCard
     , summonCard
+    , summonTurtle
     )
 
 import Content.Minions as Minions
@@ -31,3 +32,8 @@ expensiveCard =
 summonCard : Card
 summonCard =
     Deck.newCard "Summon rabbit" (Deck.Summon Minions.rabbit) 2
+
+
+summonTurtle : Card
+summonTurtle =
+    Deck.newCard "Summon Turtle" (Deck.Summon Minions.turtle) 3

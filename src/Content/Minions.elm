@@ -1,4 +1,4 @@
-module Content.Minions exposing (badger, butterfly, chick, panda, rabbit, unicorn)
+module Content.Minions exposing (badger, butterfly, chick, panda, rabbit, turtle, unicorn)
 
 import Minion exposing (Minion)
 
@@ -26,6 +26,15 @@ butterfly =
     Minion.new
         '🦋'
         10
+        0
+        1
+
+
+turtle : Minion
+turtle =
+    Minion.new
+        '🐢'
+        200
         0
         1
 
