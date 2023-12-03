@@ -19,7 +19,8 @@ type alias Run =
 
 type TurnState
     = Recovering
-    | Attacking Bool Int Int Cooldown
+    | PlayerAttacking Int Int Cooldown
+    | OpponentAttacking Int Int Cooldown
     | Reward (List Card)
 
 
@@ -76,8 +77,11 @@ tickTurnState dt run =
         Recovering ->
             run
 
-        Attacking isPlayer index action cooldown ->
-            { run | turnState = Attacking isPlayer index action (Cooldown.tick dt cooldown) }
+        PlayerAttacking index action cooldown ->
+            { run | turnState = PlayerAttacking index action (Cooldown.tick dt cooldown) }
+
+        OpponentAttacking index action cooldown ->
+            { run | turnState = PlayerAttacking index action (Cooldown.tick dt cooldown) }
 
         Reward _ ->
             run
@@ -113,10 +117,17 @@ playerWipe run =
         || List.isEmpty run.playerMinions
 
 
-getReadyMinion : Run -> Maybe ( Bool, Minion )
-getReadyMinion run =
-    (run.playerMinions |> List.map (Tuple.pair True))
-        ++ (run.opponentMinions |> List.map .minion |> List.map (Tuple.pair False))
+getReadyPlayerMinion : Run -> Maybe ( Int, Minion )
+getReadyPlayerMinion run =
+    run.playerMinions
+        |> List.indexedMap Tuple.pair
+        |> List.filter (\( _, minion ) -> Minion.isReady minion)
+        |> List.head
+
+
+getReadyOpposingMinion : Run -> Maybe ( Int, Minion )
+getReadyOpposingMinion run =
+    (run.opponentMinions |> List.map .minion |> List.indexedMap Tuple.pair)
         |> List.filter (\( _, minion ) -> Minion.isReady minion)
         |> List.head
 
@@ -149,19 +160,21 @@ updateFirstOpponent f run =
 
 setAttackingState : Run -> Run
 setAttackingState run =
-    case getReadyMinion run of
-        Just ( True, minion ) ->
+    case getReadyPlayerMinion run of
+        Just ( index, minion ) ->
             { run
-                | turnState = Attacking True 0 (Tuple.second minion.ability) (Cooldown.new characterAnimationDuration)
+                | turnState = PlayerAttacking index (Tuple.second minion.ability) (Cooldown.new characterAnimationDuration)
             }
 
-        Just ( False, minion ) ->
-            { run
-                | turnState = Attacking False 0 (Tuple.second minion.ability) (Cooldown.new characterAnimationDuration)
-            }
+        Nothing ->
+            case getReadyOpposingMinion run of
+                Just ( index, minion ) ->
+                    { run
+                        | turnState = OpponentAttacking index (Tuple.second minion.ability) (Cooldown.new characterAnimationDuration)
+                    }
 
-        _ ->
-            run
+                Nothing ->
+                    run
 
 
 advanceTurnState : Run -> Run
@@ -183,14 +196,19 @@ advanceTurnState run =
                 Nothing ->
                     setAttackingState run
 
-        Attacking isPlayer _ attack cooldown ->
+        PlayerAttacking _ attack cooldown ->
             if Cooldown.isDone cooldown then
-                (if isPlayer then
-                    updateFirstOpponent (Minion.damage attack) run
+                run
+                    |> updateFirstOpponent (Minion.damage attack)
+                    |> setRecoveringState
 
-                 else
-                    updateFirstPlayer (Minion.damage attack) run
-                )
+            else
+                run
+
+        OpponentAttacking _ attack cooldown ->
+            if Cooldown.isDone cooldown then
+                run
+                    |> updateFirstPlayer (Minion.damage attack)
                     |> setRecoveringState
 
             else

@@ -298,8 +298,11 @@ characterClasses minion minionIndex turnState isAlly =
         isAttacking : Bool
         isAttacking =
             case turnState of
-                Run.Attacking teamFlag index _ _ ->
-                    minionIndex == index && isAlly == teamFlag
+                Run.PlayerAttacking index _ _ ->
+                    minionIndex == index && isAlly
+
+                Run.OpponentAttacking index _ _ ->
+                    minionIndex == index && not isAlly
 
                 _ ->
                     False
@@ -427,7 +430,7 @@ viewRun runState =
                     (\index minion ->
                         viewCharacter (characterClasses minion index runState.turnState True) minion
                     )
-                    (List.reverse runState.playerMinions)
+                    runState.playerMinions
                 )
             , Html.div [ Html.Attributes.class "flex gap-medium" ]
                 (List.indexedMap
