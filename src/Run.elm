@@ -93,8 +93,8 @@ setRecoveringState run =
     { run | turnState = Recovering }
 
 
-setVictoryState : List Card -> Run -> Run
-setVictoryState rewards run =
+setRewardState : List Card -> Run -> Run
+setRewardState rewards run =
     { run | turnState = Reward rewards }
 
 
@@ -147,56 +147,61 @@ updateFirstOpponent f run =
     { run | opponentMinions = List.map (Opponent.updateMinion f) (List.take 1 run.opponentMinions) ++ List.drop 1 run.opponentMinions }
 
 
+setAttackingState : Run -> Run
+setAttackingState run =
+    case getReadyMinion run of
+        Just ( True, minion ) ->
+            { run
+                | turnState = Attacking True 0 (Tuple.second minion.ability) (Cooldown.new characterAnimationDuration)
+            }
+
+        Just ( False, minion ) ->
+            { run
+                | turnState = Attacking False 0 (Tuple.second minion.ability) (Cooldown.new characterAnimationDuration)
+            }
+
+        _ ->
+            run
+
+
 advanceTurnState : Run -> Run
-advanceTurnState model =
-    case model.turnState of
+advanceTurnState run =
+    case run.turnState of
         Recovering ->
-            case getDeadOpponent model of
+            case getDeadOpponent run of
                 Just opponent ->
                     let
                         ( rewards, seed ) =
-                            Random.step (Opponent.generateLoot opponent) model.seed
+                            Random.step (Opponent.generateLoot opponent) run.seed
                     in
                     if List.isEmpty rewards then
-                        nextEncounter2 model
+                        nextEncounter run
 
                     else
-                        setVictoryState rewards { model | seed = seed }
+                        setRewardState rewards { run | seed = seed }
 
-                _ ->
-                    case getReadyMinion model of
-                        Just ( True, minion ) ->
-                            { model
-                                | turnState = Attacking True 0 (Tuple.second minion.ability) (Cooldown.new characterAnimationDuration)
-                            }
-
-                        Just ( False, minion ) ->
-                            { model
-                                | turnState = Attacking False 0 (Tuple.second minion.ability) (Cooldown.new characterAnimationDuration)
-                            }
-
-                        _ ->
-                            model
+                Nothing ->
+                    setAttackingState run
 
         Attacking isPlayer _ attack cooldown ->
             if Cooldown.isDone cooldown then
                 (if isPlayer then
-                    updateFirstOpponent (Minion.damage attack) model
+                    updateFirstOpponent (Minion.damage attack) run
 
                  else
-                    updateFirstPlayer (Minion.damage attack) model
+                    updateFirstPlayer (Minion.damage attack) run
                 )
                     |> setRecoveringState
 
             else
-                model
+                run
 
         Reward _ ->
-            model
+            run
 
 
-nextEncounter2 : Run -> Run
-nextEncounter2 runState =
+nextEncounter : Run -> Run
+nextEncounter runState =
     case List.head runState.encounters of
         Just character ->
             { runState
