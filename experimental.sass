@@ -135,6 +135,19 @@ body
 .lightning::before
     content: "⚡"
 
+// Animations
+@keyframes rise-fade
+    0%
+        opacity: 1
+        transform: translateY(0rem)
+
+    100%
+        opacity: 0
+        transform: translateY(-3rem)
+
+.rise-fade
+    animation: rise-fade 750ms ease-in forwards
+
 // Experimental
 
 .modal

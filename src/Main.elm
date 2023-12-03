@@ -292,8 +292,8 @@ viewCardCost cost =
     Html.p [] [ Html.text ("Cost: " ++ String.fromInt cost) ]
 
 
-characterClasses : Int -> Run.TurnState -> Bool -> List (Attribute msg)
-characterClasses minionIndex turnState isAlly =
+characterClasses : Minion -> Int -> Run.TurnState -> Bool -> List (Attribute msg)
+characterClasses minion minionIndex turnState isAlly =
     let
         isAttacking : Bool
         isAttacking =
@@ -308,6 +308,7 @@ characterClasses minionIndex turnState isAlly =
         [ Html.Attributes.classList
             [ ( "text-glow-beige", isAttacking )
             , ( "translate-right", isAttacking )
+            , ( "rise-fade", minion |> Minion.isAlive |> not )
             ]
         , Html.Attributes.class "transition-transform"
         ]
@@ -316,6 +317,7 @@ characterClasses minionIndex turnState isAlly =
         [ Html.Attributes.classList
             [ ( "text-glow-beige", isAttacking )
             , ( "translate-left", isAttacking )
+            , ( "rise-fade", minion |> Minion.isAlive |> not )
             ]
         , Html.Attributes.class "transition-transform"
         ]
@@ -423,14 +425,14 @@ viewRun runState =
             [ Html.div [ Html.Attributes.class "flex gap-medium" ]
                 (List.indexedMap
                     (\index minion ->
-                        viewCharacter (characterClasses index runState.turnState True) minion
+                        viewCharacter (characterClasses minion index runState.turnState True) minion
                     )
                     (List.reverse runState.playerMinions)
                 )
             , Html.div [ Html.Attributes.class "flex gap-medium" ]
                 (List.indexedMap
                     (\index opponent ->
-                        viewCharacter (characterClasses index runState.turnState False) opponent.minion
+                        viewCharacter (characterClasses opponent.minion index runState.turnState False) opponent.minion
                     )
                     runState.opponentMinions
                 )
