@@ -98,7 +98,7 @@ nextEncounter model =
                     }
 
                 Nothing ->
-                    model
+                    { model | gameState = Run { runState | turnState = Run.Recovering, opponentMinions = [] } }
 
         Home ->
             model
@@ -380,62 +380,59 @@ viewDefeat =
         ]
 
 
-viewVictory : List Minion -> List Card -> Html Msg
-viewVictory encounters rewards =
+viewVictory : Html Msg
+viewVictory =
+    Html.div [ Html.Attributes.class "flex flex-column gap-large" ]
+        [ Html.h1 [ Html.Attributes.class "center-text" ] [ Html.text "Victory!" ]
+        , Html.button [ Html.Events.onClick ClickedReturnHome ] [ Html.text "Return home" ]
+        ]
+
+
+viewRewards : List Card -> Html Msg
+viewRewards rewards =
     let
         viewReward reward =
             viewCard [ Html.Events.onClick (ClickedReward reward) ] reward
     in
     Html.div [ Html.Attributes.class "flex flex-column gap-large" ]
-        [ Html.h1 [ Html.Attributes.class "center-text" ] [ Html.text "Victory!" ]
+        [ Html.h1 [ Html.Attributes.class "center-text" ] [ Html.text "Pick a card" ]
         , Html.div [ Html.Attributes.class "flex gap-medium" ] (List.map viewReward rewards)
-        , if List.isEmpty encounters then
-            Html.button [ Html.Events.onClick ClickedReturnHome, Html.Attributes.class "padding-small" ] [ Html.text "Return home" ]
-
-          else
-            Html.button [ Html.Events.onClick ClickedNextEnemy, Html.Attributes.class "padding-small" ] [ Html.text "Skip reward" ]
-        , viewEncounters encounters
-        ]
-
-
-viewEncounters : List Minion -> Html msg
-viewEncounters encounters =
-    Html.div []
-        [ Html.h3 [] [ Html.text "Next encounters" ]
-        , Html.div [ Html.Attributes.class "flex gap-medium" ] (List.map (\character -> Html.p [ Html.Attributes.class "font-big" ] [ Html.text (String.fromChar character.icon) ]) encounters)
         ]
 
 
 viewRun : Run -> List (Html Msg)
 viewRun runState =
     case runState.turnState of
-        Run.Defeat ->
-            [ viewDefeat ]
-
         Run.Reward rewards ->
-            [ viewVictory (List.map .minion runState.encounters) rewards
-            ]
+            [ viewRewards rewards ]
 
         _ ->
-            [ Html.div [ Html.Attributes.style "width" "100%", Html.Attributes.class "flex space-evenly gap-large" ]
-                [ Html.div [ Html.Attributes.class "flex gap-medium" ]
-                    (List.indexedMap
-                        (\index minion ->
-                            viewCharacter (characterClasses index runState.turnState True) minion
+            if List.isEmpty runState.opponentMinions && List.isEmpty runState.encounters then
+                [ viewVictory ]
+
+            else if Run.playerWipe runState then
+                [ viewDefeat ]
+
+            else
+                [ Html.div [ Html.Attributes.style "width" "100%", Html.Attributes.class "flex space-evenly gap-large" ]
+                    [ Html.div [ Html.Attributes.class "flex gap-medium" ]
+                        (List.indexedMap
+                            (\index minion ->
+                                viewCharacter (characterClasses index runState.turnState True) minion
+                            )
+                            (List.reverse runState.playerMinions)
                         )
-                        (List.reverse runState.playerMinions)
-                    )
-                , Html.div [ Html.Attributes.class "flex gap-medium" ]
-                    (List.indexedMap
-                        (\index opponent ->
-                            viewCharacter (characterClasses index runState.turnState False) opponent.minion
+                    , Html.div [ Html.Attributes.class "flex gap-medium" ]
+                        (List.indexedMap
+                            (\index opponent ->
+                                viewCharacter (characterClasses index runState.turnState False) opponent.minion
+                            )
+                            runState.opponentMinions
                         )
-                        runState.opponentMinions
-                    )
+                    ]
+                , viewDeckStatus runState.deck
+                , viewDeckHand runState.deck
                 ]
-            , viewDeckStatus runState.deck
-            , viewDeckHand runState.deck
-            ]
 
 
 viewHome : Model -> List (Html Msg)

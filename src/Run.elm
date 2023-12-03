@@ -1,4 +1,4 @@
-module Run exposing (Run, TurnState(..), advanceTurnState, filterDeadMinions, playCard, resetDoneCooldowns, tickDeck, tickMinions, tickTurnState)
+module Run exposing (Run, TurnState(..), advanceTurnState, filterDeadMinions, playCard, playerWipe, resetDoneCooldowns, tickDeck, tickMinions, tickTurnState)
 
 import Cooldown exposing (Cooldown)
 import Deck exposing (Card, Deck)
@@ -20,7 +20,6 @@ type alias Run =
 type TurnState
     = Recovering
     | Attacking Bool Int Int Cooldown
-    | Defeat
     | Reward (List Card)
 
 
@@ -75,9 +74,6 @@ tickTurnState dt run =
         Attacking isPlayer index action cooldown ->
             { run | turnState = Attacking isPlayer index action (Cooldown.tick dt cooldown) }
 
-        Defeat ->
-            run
-
         Reward _ ->
             run
 
@@ -90,11 +86,6 @@ filterDeadMinions run =
 setRecoveringState : Run -> Run
 setRecoveringState run =
     { run | turnState = Recovering }
-
-
-setDefeatState : Run -> Run
-setDefeatState run =
-    { run | turnState = Defeat }
 
 
 setVictoryState : List Card -> Run -> Run
@@ -111,8 +102,10 @@ getDeadOpponent run =
 
 playerWipe : Run -> Bool
 playerWipe run =
-    run.playerMinions
+    (run.playerMinions
         |> List.all (Minion.isAlive >> not)
+    )
+        || List.isEmpty run.playerMinions
 
 
 getReadyMinion : Run -> Maybe ( Bool, Minion )
@@ -143,11 +136,8 @@ advanceTurnState : Run -> Run
 advanceTurnState model =
     case model.turnState of
         Recovering ->
-            case ( playerWipe model, getDeadOpponent model ) of
-                ( True, _ ) ->
-                    setDefeatState model
-
-                ( _, Just opponent ) ->
+            case getDeadOpponent model of
+                Just opponent ->
                     let
                         ( rewards, seed ) =
                             Random.step (Opponent.generateLoot opponent) model.seed
@@ -189,9 +179,6 @@ advanceTurnState model =
 
             else
                 model
-
-        Defeat ->
-            model
 
         Reward _ ->
             model
