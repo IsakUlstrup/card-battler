@@ -367,11 +367,14 @@ viewMinionPreview attrs minion =
 
 viewCard : List (Attribute msg) -> Card -> Html msg
 viewCard attrs card =
-    Html.div
-        (Html.Attributes.class "flex flex-column gap-medium padding-medium border border-radius-medium pointer no-select width-medium height-large bg-mint text-grey" :: attrs)
-        [ Html.h3 [ Html.Attributes.class "center-text" ] [ Html.text card.name ]
-        , card.cost |> viewCardCost
-        , Html.p [] [ Html.text (Deck.actionToString card.action) ]
+    Html.div (Html.Attributes.class "flex center-cross gap-medium bg-mint border-radius-medium padding-small pointer no-select text-grey" :: attrs)
+        [ Html.h1 [ Html.Attributes.class "font-big" ] [ Html.text "✨" ]
+        , Html.div
+            [ Html.Attributes.class "flex flex-column gap-small padding-small border-radius-small bg-beige-transparent bg-blur" ]
+            [ Html.h3 [ Html.Attributes.class "center-text" ] [ Html.text card.name ]
+            , card.cost |> viewCardCost
+            , Html.p [] [ Html.text (Deck.actionToString card.action) ]
+            ]
         ]
 
 

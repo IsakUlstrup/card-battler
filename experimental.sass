@@ -70,6 +70,9 @@ body
 .text-grey
     color: $grey-color
 
+.bg-beige-transparent
+    background-color: transparentize($beige-color, 0.5)
+
 .bg-mint
     background: linear-gradient(lighten($mint-color, $gradient-color-adjust), darken($mint-color, $gradient-color-adjust))
 
@@ -95,11 +98,17 @@ body
 .text-glow-beige
     text-shadow: 0 0 1rem $beige-color
 
+.border-radius-small
+    border-radius: $spacing-small
+
 .border-radius-medium
     border-radius: $spacing-medium
 
 .semi-transparent
     opacity: 0.5
+
+.bg-blur
+    backdrop-filter: blur(3px)
 
 // Type
 .helvetica
