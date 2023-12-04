@@ -1,4 +1,5 @@
 // Palette
+$spacing-x-small: 0.25rem
 $spacing-small: 0.5rem
 $spacing-medium: 1rem
 $spacing-large: 2rem
@@ -33,11 +34,20 @@ body
 .flex-wrap
     flex-wrap: wrap
 
+.flex-auto
+    flex: auto
+
 .space-evenly
     justify-content: space-evenly
 
 .center-cross
     align-items: center
+
+.strech-cross
+    align-items: stretch
+
+.padding-x-small
+    padding: $spacing-x-small
 
 .padding-small
     padding: $spacing-small
@@ -71,7 +81,7 @@ body
     color: $grey-color
 
 .bg-beige-transparent
-    background-color: transparentize($beige-color, 0.5)
+    background-color: transparentize($beige-color, 0.6)
 
 .bg-mint
     background: linear-gradient(lighten($mint-color, $gradient-color-adjust), darken($mint-color, $gradient-color-adjust))

@@ -367,10 +367,10 @@ viewMinionPreview attrs minion =
 
 viewCard : List (Attribute msg) -> Card -> Html msg
 viewCard attrs card =
-    Html.div (Html.Attributes.class "flex center-cross gap-medium bg-mint border-radius-medium padding-small pointer no-select text-grey" :: attrs)
+    Html.div (Html.Attributes.class "flex strech-cross gap-medium bg-pink border-radius-medium padding-small pointer no-select text-grey" :: attrs)
         [ Html.h1 [ Html.Attributes.class "font-big" ] [ Html.text "✨" ]
         , Html.div
-            [ Html.Attributes.class "flex flex-column gap-small padding-small border-radius-small bg-beige-transparent bg-blur" ]
+            [ Html.Attributes.class "flex flex-column flex-auto gap-small padding-small border-radius-small bg-beige-transparent bg-blur" ]
             [ Html.h3 [ Html.Attributes.class "center-text" ] [ Html.text card.name ]
             , card.cost |> viewCardCost
             , Html.p [] [ Html.text (Deck.actionToString card.action) ]
@@ -395,7 +395,7 @@ viewDeckHand deck =
             , Html.Events.onClick (ClickedCard index)
             ]
     in
-    Html.div [ Html.Attributes.class "flex gap-medium" ] (List.indexedMap (\index card -> viewCard (cardAttributes index card) card) deck.hand)
+    Html.div [ Html.Attributes.class "flex flex-column gap-medium width-large" ] (List.indexedMap (\index card -> viewCard (cardAttributes index card) card) deck.hand)
 
 
 viewDefeat : Html Msg
@@ -424,7 +424,7 @@ viewRewards run =
         Run.Reward rewards ->
             Html.div [ Html.Attributes.class "flex flex-column gap-large modal border-radius-medium padding-medium" ]
                 [ Html.h1 [ Html.Attributes.class "center-text" ] [ Html.text "Pick a card" ]
-                , Html.div [ Html.Attributes.class "flex gap-medium" ] (List.map viewReward rewards)
+                , Html.div [ Html.Attributes.class "flex flex-column gap-medium" ] (List.map viewReward rewards)
                 ]
 
         _ ->
@@ -486,7 +486,6 @@ viewHome model =
                 viewCard
                     [ Html.Events.onClick (ClickedCard index)
                     , Html.Attributes.classList [ ( "glow-beige", selected ) ]
-                    , Html.Attributes.class "padding-medium"
                     ]
                     card
             )
