@@ -41,7 +41,7 @@ playCard index run =
         ( newDeck, Just (Deck.Summon minion) ) ->
             { run
                 | deck = newDeck
-                , playerMinions = run.playerMinions ++ [ minion ]
+                , playerMinions = minion :: run.playerMinions
             }
 
         ( _, Nothing ) ->

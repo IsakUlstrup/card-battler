@@ -450,7 +450,7 @@ viewRun runState =
 
     else
         [ Html.div [ Html.Attributes.style "width" "100%", Html.Attributes.class "flex space-evenly gap-large padding-medium scroll-x" ]
-            [ Html.div [ Html.Attributes.class "flex gap-medium" ]
+            [ Html.div [ Html.Attributes.class "flex gap-medium flex-reverse" ]
                 (List.indexedMap
                     (\index minion ->
                         viewCharacter (characterClasses minion index runState.turnState True) minion
