@@ -288,7 +288,7 @@ viewCooldownCircle ( cd, maxCd ) =
         , Html.Attributes.style "background" "rgba(255, 255, 255, 0.2)"
         , Html.Attributes.style "transform" ("scale(" ++ String.fromFloat (cd / maxCd) ++ ")")
         , Html.Attributes.style "width" "100%"
-        , Html.Attributes.style "height" "100%"
+        , Html.Attributes.style "aspect-ratio" "1/1"
         , Html.Attributes.style "border-radius" "999rem"
         , Html.Attributes.style "z-index" "-1"
         , Html.Attributes.style "transition" "transform 300ms"
