@@ -45,7 +45,8 @@ actionEncoder action =
 cardEncoder : Card -> Encode.Value
 cardEncoder card =
     Encode.object
-        [ ( "name", Encode.string card.name )
+        [ ( "icon", Encode.string (String.fromChar card.icon) )
+        , ( "name", Encode.string card.name )
         , ( "action", actionEncoder card.action )
         , ( "cost", costEncoder card.cost )
         ]
@@ -124,7 +125,8 @@ decodeAction =
 
 decodeCard : Decoder Card
 decodeCard =
-    Decode.map3 Deck.newCard
+    Decode.map4 Deck.newCard
+        (Decode.field "icon" decodeChar)
         (Decode.field "name" Decode.string)
         (Decode.field "action" decodeAction)
         (Decode.field "cost" Decode.int)

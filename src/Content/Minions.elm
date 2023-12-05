@@ -51,7 +51,7 @@ badger =
 rabbit : Minion
 rabbit =
     Minion.new
-        '🐰'
+        '🐇'
         5
         5
         1

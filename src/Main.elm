@@ -358,11 +358,7 @@ viewCharacter iconAttrs minion =
         , Html.div [ Html.Attributes.class "flex gap-small" ]
             [ Html.p [ Html.Attributes.class "pos-relative heart" ] [ Html.text (String.fromInt minion.health) ]
             , Html.p [ Html.Attributes.class "pos-relative sword" ] [ Html.text (String.fromInt (Tuple.second minion.ability)) ]
-
-            -- , Html.p [ Html.Attributes.class "pos-relative lightning" ] [ Html.text (String.fromInt minion.speed) ]
             ]
-
-        -- , viewCooldown (Tuple.first minion.ability)
         ]
 
 
@@ -381,7 +377,7 @@ viewMinionPreview attrs minion =
 viewCard : List (Attribute msg) -> Card -> Html msg
 viewCard attrs card =
     Html.div (Html.Attributes.class "flex strech-cross gap-medium bg-pink border-radius-medium padding-small pointer no-select text-grey" :: attrs)
-        [ Html.h1 [ Html.Attributes.class "font-big" ] [ Html.text "✨" ]
+        [ Html.h1 [ Html.Attributes.class "font-big" ] [ Html.text (String.fromChar card.icon) ]
         , Html.div
             [ Html.Attributes.class "flex flex-column flex-auto gap-small padding-small border-radius-small bg-beige-transparent bg-blur" ]
             [ Html.h3 [ Html.Attributes.class "center-text" ] [ Html.text card.name ]

@@ -185,12 +185,13 @@ actionToIcon action =
 
 
 type alias Card =
-    { name : String
+    { icon : Char
+    , name : String
     , action : Action
     , cost : Int
     }
 
 
-newCard : String -> Action -> Int -> Card
-newCard name action cost =
-    Card name action cost
+newCard : Char -> String -> Action -> Int -> Card
+newCard icon name action cost =
+    Card icon name action cost

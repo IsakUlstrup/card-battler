@@ -16,24 +16,24 @@ import Deck exposing (Card)
 
 basicCard : Card
 basicCard =
-    Deck.newCard "Tackle" (Deck.Damage 1) 2
+    Deck.newCard '🤛' "Tackle" (Deck.Damage 1) 2
 
 
 basicCard2 : Card
 basicCard2 =
-    Deck.newCard "Slam" (Deck.Damage 2) 3
+    Deck.newCard '💥' "Slam" (Deck.Damage 2) 3
 
 
 expensiveCard : Card
 expensiveCard =
-    Deck.newCard "Fireball" (Deck.Damage 10) 7
+    Deck.newCard '🔥' "Fireball" (Deck.Damage 10) 7
 
 
 summonCard : Card
 summonCard =
-    Deck.newCard "Summon rabbit" (Deck.Summon Minions.rabbit) 2
+    Deck.newCard '🐇' "Summon rabbit" (Deck.Summon Minions.rabbit) 2
 
 
 summonTurtle : Card
 summonTurtle =
-    Deck.newCard "Summon Turtle" (Deck.Summon Minions.turtle) 3
+    Deck.newCard '🐢' "Summon Turtle" (Deck.Summon Minions.turtle) 3
