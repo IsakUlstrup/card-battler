@@ -255,7 +255,7 @@ update msg model =
                                     , Content.Opponents.badger
                                     , Content.Opponents.badger
                                     ]
-                                    (deck |> Deck.drawHand 5)
+                                    (deck |> Deck.drawHand)
                                     model.seed
                                 )
                         , cards = model.cards |> List.filter (Tuple.first >> not)

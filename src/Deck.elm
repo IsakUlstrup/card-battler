@@ -29,7 +29,7 @@ type alias Deck =
 
 new : List Card -> Deck
 new cards =
-    Deck cards [] [] 0 10 5
+    Deck cards [] [] 0 10 3
 
 
 {-| Put all cards back in deck
@@ -52,11 +52,11 @@ addCard card deck =
         { deck | cards = card :: deck.cards }
 
 
-drawHand : Int -> Deck -> Deck
-drawHand size deck =
+drawHand : Deck -> Deck
+drawHand deck =
     { deck
-        | hand = List.take size deck.cards
-        , cards = List.drop size deck.cards
+        | hand = List.take deck.handSize deck.cards
+        , cards = List.drop deck.handSize deck.cards
     }
 
 
