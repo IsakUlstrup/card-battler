@@ -279,12 +279,19 @@ update msg model =
 -- VIEW
 
 
-viewCooldown : Cooldown -> Html msg
-viewCooldown ( cd, maxCd ) =
-    Html.progress
-        [ Html.Attributes.value (String.fromFloat cd)
-        , Html.Attributes.max (String.fromFloat maxCd)
+viewCooldownCircle : Cooldown -> Html msg
+viewCooldownCircle ( cd, maxCd ) =
+    Html.div
+        [ Html.Attributes.style "position" "absolute"
+        , Html.Attributes.style "top" "0"
+        , Html.Attributes.style "left" "0"
+        , Html.Attributes.style "background" "rgba(255, 255, 255, 0.2)"
+        , Html.Attributes.style "transform" ("scale(" ++ String.fromFloat (cd / maxCd) ++ ")")
         , Html.Attributes.style "width" "100%"
+        , Html.Attributes.style "height" "100%"
+        , Html.Attributes.style "border-radius" "999rem"
+        , Html.Attributes.style "z-index" "-1"
+        , Html.Attributes.style "transition" "transform 300ms"
         ]
         []
 
@@ -343,15 +350,19 @@ characterClasses minion minionIndex turnState isAlly =
 viewCharacter : List (Attribute msg) -> Minion -> Html msg
 viewCharacter iconAttrs minion =
     Html.div
-        [ Html.Attributes.class "flex flex-column gap-medium" ]
-        [ Html.h1 (Html.Attributes.class "center-text" :: iconAttrs) [ Html.text (String.fromChar minion.icon) ]
+        [ Html.Attributes.class "flex flex-column center-cross gap-medium" ]
+        [ Html.div [ Html.Attributes.style "position" "relative", Html.Attributes.class "padding-small" ]
+            [ viewCooldownCircle (Tuple.first minion.ability)
+            , Html.h1 (Html.Attributes.class "center-text" :: iconAttrs) [ Html.text (String.fromChar minion.icon) ]
+            ]
         , Html.div [ Html.Attributes.class "flex gap-small" ]
             [ Html.p [ Html.Attributes.class "pos-relative heart" ] [ Html.text (String.fromInt minion.health) ]
             , Html.p [ Html.Attributes.class "pos-relative sword" ] [ Html.text (String.fromInt (Tuple.second minion.ability)) ]
 
             -- , Html.p [ Html.Attributes.class "pos-relative lightning" ] [ Html.text (String.fromInt minion.speed) ]
             ]
-        , viewCooldown (Tuple.first minion.ability)
+
+        -- , viewCooldown (Tuple.first minion.ability)
         ]
 
 
