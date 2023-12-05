@@ -298,8 +298,8 @@ viewCooldownCircle ( cd, maxCd ) =
 
 viewEnergy : Float -> Html msg
 viewEnergy amount =
-    Html.div []
-        [ Html.p [] [ Html.text (String.fromInt (floor amount)) ]
+    Html.div [ Html.Attributes.class "flex" ]
+        [ Html.p [] [ Html.text ("Energy: " ++ String.fromInt (floor amount)) ]
         , Html.progress
             [ Html.Attributes.value (String.fromFloat (amount - toFloat (floor amount)))
             , Html.Attributes.max "1"
@@ -449,7 +449,7 @@ viewRun runState =
         [ viewDefeat ]
 
     else
-        [ Html.div [ Html.Attributes.style "width" "100%", Html.Attributes.class "flex space-evenly gap-large" ]
+        [ Html.div [ Html.Attributes.style "width" "100%", Html.Attributes.class "flex space-evenly gap-large padding-medium scroll-x" ]
             [ Html.div [ Html.Attributes.class "flex gap-medium" ]
                 (List.indexedMap
                     (\index minion ->
@@ -489,7 +489,7 @@ viewHome model =
     , Html.div [ Html.Attributes.class "flex gap-medium" ]
         (List.indexedMap viewMinionPreset model.characters)
     , Html.h3 [] [ Html.text "Card Collection" ]
-    , Html.div [ Html.Attributes.class "grid-3 gap-large" ]
+    , Html.div [ Html.Attributes.class "flex flex-wrap gap-large" ]
         (List.indexedMap
             (\index ( selected, card ) ->
                 viewCard
