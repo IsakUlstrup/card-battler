@@ -284,6 +284,7 @@ viewCooldown ( cd, maxCd ) =
     Html.progress
         [ Html.Attributes.value (String.fromFloat cd)
         , Html.Attributes.max (String.fromFloat maxCd)
+        , Html.Attributes.style "width" "100%"
         ]
         []
 
@@ -343,11 +344,12 @@ viewCharacter : List (Attribute msg) -> Minion -> Html msg
 viewCharacter iconAttrs minion =
     Html.div
         [ Html.Attributes.class "flex flex-column gap-medium" ]
-        [ Html.h1 (Html.Attributes.class "font-big center-text" :: iconAttrs) [ Html.text (String.fromChar minion.icon) ]
-        , Html.div [ Html.Attributes.class "flex gap-medium" ]
+        [ Html.h1 (Html.Attributes.class "center-text" :: iconAttrs) [ Html.text (String.fromChar minion.icon) ]
+        , Html.div [ Html.Attributes.class "flex gap-small" ]
             [ Html.p [ Html.Attributes.class "pos-relative heart" ] [ Html.text (String.fromInt minion.health) ]
             , Html.p [ Html.Attributes.class "pos-relative sword" ] [ Html.text (String.fromInt (Tuple.second minion.ability)) ]
-            , Html.p [ Html.Attributes.class "pos-relative lightning" ] [ Html.text (String.fromInt minion.speed) ]
+
+            -- , Html.p [ Html.Attributes.class "pos-relative lightning" ] [ Html.text (String.fromInt minion.speed) ]
             ]
         , viewCooldown (Tuple.first minion.ability)
         ]
@@ -395,7 +397,7 @@ viewDeckHand deck =
             , Html.Events.onClick (ClickedCard index)
             ]
     in
-    Html.div [ Html.Attributes.class "flex flex-column gap-medium width-large" ] (List.indexedMap (\index card -> viewCard (cardAttributes index card) card) deck.hand)
+    Html.div [ Html.Attributes.class "flex flex-column gap-medium" ] (List.indexedMap (\index card -> viewCard (cardAttributes index card) card) deck.hand)
 
 
 viewDefeat : Html Msg
@@ -498,7 +500,7 @@ view : Model -> Html Msg
 view model =
     main_
         [ Html.Attributes.id "app"
-        , Html.Attributes.class "flex flex-column center-cross padding-medium gap-large text-beige helvetica"
+        , Html.Attributes.class "flex flex-column padding-medium gap-large text-beige helvetica"
         ]
         (case model.gameState of
             Run runState ->
