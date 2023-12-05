@@ -238,21 +238,16 @@ update msg model =
                                     [ Content.Opponents.badger
                                     , Content.Opponents.rabbit
                                     , Content.Opponents.chick
-                                    , Content.Opponents.badger
                                     ]
                                     Run.Recovering
                                     [ Content.Opponents.rabbit
                                     , Content.Opponents.chick
                                     , Content.Opponents.badger
+                                    , Content.Opponents.chick
                                     , Content.Opponents.badger
                                     , Content.Opponents.chick
                                     , Content.Opponents.badger
-                                    , Content.Opponents.badger
                                     , Content.Opponents.chick
-                                    , Content.Opponents.badger
-                                    , Content.Opponents.badger
-                                    , Content.Opponents.chick
-                                    , Content.Opponents.badger
                                     , Content.Opponents.badger
                                     ]
                                     (deck |> Deck.drawHand)
