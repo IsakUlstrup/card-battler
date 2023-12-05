@@ -1,4 +1,4 @@
-module Run exposing (Run, TurnState(..), advanceTurnState, filterDeadMinions, playCard, playerWipe, tickDeck, tickMinions, tickTurnState)
+module Run exposing (Run, TurnState(..), advanceTurnState, enemyWipe, filterDeadMinions, playCard, playerWipe, tickDeck, tickMinions, tickTurnState)
 
 import Cooldown exposing (Cooldown)
 import Deck exposing (Card, Deck)
@@ -180,6 +180,16 @@ getReadyOpposingMinion run =
 --     (run.opponentMinions |> List.map .minion |> List.indexedMap Tuple.pair)
 --         |> List.filter (\( _, minion ) -> Minion.isReady minion)
 --         |> List.head
+
+
+enemyWipe : Run -> Bool
+enemyWipe run =
+    case ( run.opponentMinions, run.encounters ) of
+        ( [], [] ) ->
+            True
+
+        _ ->
+            False
 
 
 updateFirstPlayer : (Minion -> Minion) -> Run -> Run

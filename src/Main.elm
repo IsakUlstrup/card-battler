@@ -98,7 +98,16 @@ nextEncounter model =
                     }
 
                 Nothing ->
-                    { model | gameState = Run { runState | turnState = Run.Recovering, opponentMinions = [] } }
+                    { model
+                        | gameState =
+                            Run
+                                { runState
+                                    | turnState = Run.Recovering
+                                    , opponentMinions =
+                                        runState.opponentMinions
+                                            |> List.filter (.minion >> Minion.isAlive)
+                                }
+                    }
 
         Home ->
             model
@@ -167,7 +176,7 @@ update msg model =
                                     |> Run.tickDeck dt
                                     |> Run.tickTurnState dt
                                     |> Run.advanceTurnState
-                                    |> Run.filterDeadMinions
+                                 -- |> Run.filterDeadMinions
                                  -- |> Run.resetDoneCooldowns
                                 )
                       }
@@ -437,7 +446,7 @@ viewRewards run =
 
 viewRun : Run -> List (Html Msg)
 viewRun runState =
-    if List.isEmpty runState.opponentMinions && List.isEmpty runState.encounters then
+    if Run.enemyWipe runState then
         [ viewVictory ]
 
     else if Run.playerWipe runState then
