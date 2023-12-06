@@ -176,7 +176,7 @@ update msg model =
                                     |> Run.tickDeck dt
                                     |> Run.tickTurnState dt
                                     |> Run.advanceTurnState
-                                 -- |> Run.filterDeadMinions
+                                    |> Run.filterDeadMinions
                                  -- |> Run.resetDoneCooldowns
                                 )
                       }
@@ -245,8 +245,6 @@ update msg model =
                                 (Run.Run
                                     [ p ]
                                     [ Content.Opponents.badger
-                                    , Content.Opponents.rabbit
-                                    , Content.Opponents.chick
                                     ]
                                     Run.Recovering
                                     [ Content.Opponents.rabbit
