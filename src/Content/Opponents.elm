@@ -7,14 +7,14 @@ import Opponent exposing (Opponent)
 
 badger : Opponent
 badger =
-    Opponent.new Minions.badger [ ( 10, Cards.basicCard ) ]
+    Opponent.new Minions.badger []
 
 
 rabbit : Opponent
 rabbit =
-    Opponent.new Minions.rabbit [ ( 10, Cards.basicCard ), ( 10, Cards.summonCard ) ]
+    Opponent.new Minions.rabbit [ ( 50, Cards.basicCard ), ( 50, Cards.summonCard ), ( 1, Cards.summonTurtle ) ]
 
 
 chick : Opponent
 chick =
-    Opponent.new Minions.chick [ ( 100, Cards.summonTurtle ) ]
+    Opponent.new Minions.chick []
