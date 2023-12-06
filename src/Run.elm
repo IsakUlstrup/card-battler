@@ -184,7 +184,7 @@ getReadyOpposingMinion run =
 
 enemyWipe : Run -> Bool
 enemyWipe run =
-    case ( run.opponentMinions, run.encounters ) of
+    case ( List.filter (.minion >> Minion.isAlive) run.opponentMinions, run.encounters ) of
         ( [], [] ) ->
             True
 
