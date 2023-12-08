@@ -312,17 +312,17 @@ viewCardCost cost =
     Html.p [] [ Html.text ("Cost: " ++ String.fromInt cost) ]
 
 
-characterClasses : Minion -> Int -> Run.TurnState -> Bool -> List (Attribute msg)
-characterClasses minion minionIndex turnState isAlly =
+characterClasses : Minion -> Run.TurnState -> Bool -> List (Attribute msg)
+characterClasses minion turnState isAlly =
     let
         isAttacking : Bool
         isAttacking =
             case turnState of
                 Run.PlayerAttacking index _ _ ->
-                    minionIndex == index && isAlly
+                    minion == index && isAlly
 
                 Run.OpponentAttacking index _ _ ->
-                    minionIndex == index && not isAlly
+                    minion == index && not isAlly
 
                 _ ->
                     False
@@ -450,21 +450,21 @@ viewRun runState =
     else
         [ Html.div [ Html.Attributes.class "flex space-evenly gap-large padding-medium scroll-x" ]
             [ Html.div []
-                [ viewCharacter [] runState.playerCharacter
+                [ viewCharacter (characterClasses runState.playerCharacter runState.turnState True ++ [ Html.Attributes.class "font-big" ]) runState.playerCharacter
                 , Html.div [ Html.Attributes.class "flex gap-medium flex-reverse" ]
-                    (List.indexedMap
-                        (\index minion ->
-                            viewCharacter (characterClasses minion index runState.turnState True) minion
+                    (List.map
+                        (\minion ->
+                            viewCharacter (characterClasses minion runState.turnState True) minion
                         )
                         runState.playerMinions
                     )
                 ]
             , Html.div []
-                [ viewCharacter [] runState.opponentCharacter.minion
+                [ viewCharacter (characterClasses runState.opponentCharacter.minion runState.turnState False ++ [ Html.Attributes.class "font-big" ]) runState.opponentCharacter.minion
                 , Html.div [ Html.Attributes.class "flex gap-medium" ]
-                    (List.indexedMap
-                        (\index minion ->
-                            viewCharacter (characterClasses minion index runState.turnState False) minion
+                    (List.map
+                        (\minion ->
+                            viewCharacter (characterClasses minion runState.turnState False) minion
                         )
                         runState.opponentMinions
                     )

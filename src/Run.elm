@@ -21,8 +21,8 @@ type alias Run =
 
 type TurnState
     = Recovering
-    | PlayerAttacking Int Int Cooldown
-    | OpponentAttacking Int Int Cooldown
+    | PlayerAttacking Minion Int Cooldown
+    | OpponentAttacking Minion Int Cooldown
     | Reward (List Card)
 
 
@@ -43,7 +43,7 @@ playCard index run =
         ( newDeck, Just (Deck.Summon minion) ) ->
             { run
                 | deck = newDeck
-                , playerMinions = minion :: run.playerMinions
+                , playerMinions = minion :: run.playerMinions |> List.take 5
             }
 
         ( _, Nothing ) ->
@@ -111,7 +111,7 @@ playerWipe run =
     run.playerCharacter |> Minion.isAlive |> not
 
 
-getReadyPlayerMinion : Run -> ( Run, Maybe ( Int, Minion ) )
+getReadyPlayerMinion : Run -> ( Run, Maybe Minion )
 getReadyPlayerMinion run =
     let
         getReady =
@@ -130,16 +130,22 @@ getReadyPlayerMinion run =
     case getReady of
         Just ( index, minion ) ->
             ( { run | playerMinions = List.indexedMap (resetCooldownAtIndex index) run.playerMinions }
-            , Just ( index, minion )
+            , Just (Minion.resetCooldown minion)
             )
 
         Nothing ->
-            ( run
-            , Nothing
-            )
+            if Minion.isReady run.playerCharacter then
+                ( { run | playerCharacter = Minion.resetCooldown run.playerCharacter }
+                , Just (Minion.resetCooldown run.playerCharacter)
+                )
+
+            else
+                ( run
+                , Nothing
+                )
 
 
-getReadyOpposingMinion : Run -> ( Run, Maybe ( Int, Minion ) )
+getReadyOpposingMinion : Run -> ( Run, Maybe Minion )
 getReadyOpposingMinion run =
     let
         getReady =
@@ -158,13 +164,19 @@ getReadyOpposingMinion run =
     case getReady of
         Just ( index, minion ) ->
             ( { run | opponentMinions = List.indexedMap (resetCooldownAtIndex index) run.opponentMinions }
-            , Just ( index, minion )
+            , Just (Minion.resetCooldown minion)
             )
 
         Nothing ->
-            ( run
-            , Nothing
-            )
+            if Minion.isReady run.opponentCharacter.minion then
+                ( { run | opponentCharacter = Opponent.updateMinion Minion.resetCooldown run.opponentCharacter }
+                , Just (Minion.resetCooldown run.opponentCharacter.minion)
+                )
+
+            else
+                ( run
+                , Nothing
+                )
 
 
 enemyWipe : Run -> Bool
@@ -200,16 +212,16 @@ updateFirstOpponent f run =
 setAttackingState : Run -> Run
 setAttackingState run =
     case getReadyPlayerMinion run of
-        ( newRun, Just ( index, minion ) ) ->
+        ( newRun, Just minion ) ->
             { newRun
-                | turnState = PlayerAttacking index (Tuple.second minion.ability) (Cooldown.new characterAnimationDuration)
+                | turnState = PlayerAttacking minion (Tuple.second minion.ability) (Cooldown.new characterAnimationDuration)
             }
 
         ( _, Nothing ) ->
             case getReadyOpposingMinion run of
-                ( newRun2, Just ( index, minion ) ) ->
+                ( newRun2, Just minion ) ->
                     { newRun2
-                        | turnState = OpponentAttacking index (Tuple.second minion.ability) (Cooldown.new characterAnimationDuration)
+                        | turnState = OpponentAttacking minion (Tuple.second minion.ability) (Cooldown.new characterAnimationDuration)
                     }
 
                 ( _, Nothing ) ->

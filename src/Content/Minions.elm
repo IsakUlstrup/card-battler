@@ -35,7 +35,7 @@ vampire =
     Minion.new
         '🧛'
         200
-        1
+        0
         2
 
 
