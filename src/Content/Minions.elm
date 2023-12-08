@@ -1,4 +1,4 @@
-module Content.Minions exposing (badger, butterfly, chick, panda, rabbit, turtle, unicorn)
+module Content.Minions exposing (badger, butterfly, chick, fairy, panda, rabbit, turtle, unicorn, vampire, zombie)
 
 import Minion exposing (Minion)
 
@@ -7,6 +7,33 @@ panda : Minion
 panda =
     Minion.new
         '🐼'
+        200
+        1
+        2
+
+
+fairy : Minion
+fairy =
+    Minion.new
+        '🧚'
+        200
+        1
+        2
+
+
+zombie : Minion
+zombie =
+    Minion.new
+        '🧟'
+        200
+        1
+        2
+
+
+vampire : Minion
+vampire =
+    Minion.new
+        '🧛'
         200
         1
         2

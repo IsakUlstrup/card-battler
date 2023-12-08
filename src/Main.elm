@@ -53,7 +53,7 @@ init flags =
     ( Model
         Home
         (loadCards |> List.map (Tuple.pair False))
-        ([ Minions.panda, Minions.unicorn, Minions.butterfly ] |> List.map (Tuple.pair False))
+        ([ Minions.fairy, Minions.zombie, Minions.vampire ] |> List.map (Tuple.pair False))
         (Random.initialSeed flags.timestamp)
     , Cmd.none
     )
@@ -88,10 +88,8 @@ nextEncounter model =
                             Run
                                 { runState
                                     | playerMinions = List.map Minion.resetCooldown runState.playerMinions
-                                    , opponentMinions =
-                                        character
-                                            :: runState.opponentMinions
-                                            |> List.filter (.minion >> Minion.isAlive)
+                                    , opponentCharacter = character
+                                    , opponentMinions = []
                                     , encounters = List.drop 1 runState.encounters
                                     , turnState = Run.Recovering
                                 }
@@ -103,9 +101,7 @@ nextEncounter model =
                             Run
                                 { runState
                                     | turnState = Run.Recovering
-                                    , opponentMinions =
-                                        runState.opponentMinions
-                                            |> List.filter (.minion >> Minion.isAlive)
+                                    , opponentMinions = []
                                 }
                     }
 
@@ -243,9 +239,10 @@ update msg model =
                         | gameState =
                             Run
                                 (Run.Run
-                                    [ p ]
-                                    [ Content.Opponents.badger
-                                    ]
+                                    p
+                                    []
+                                    Content.Opponents.badger
+                                    []
                                     Run.Recovering
                                     [ Content.Opponents.rabbit
                                     , Content.Opponents.chick
@@ -452,20 +449,26 @@ viewRun runState =
 
     else
         [ Html.div [ Html.Attributes.class "flex space-evenly gap-large padding-medium scroll-x" ]
-            [ Html.div [ Html.Attributes.class "flex gap-medium flex-reverse" ]
-                (List.indexedMap
-                    (\index minion ->
-                        viewCharacter (characterClasses minion index runState.turnState True) minion
+            [ Html.div []
+                [ viewCharacter [] runState.playerCharacter
+                , Html.div [ Html.Attributes.class "flex gap-medium flex-reverse" ]
+                    (List.indexedMap
+                        (\index minion ->
+                            viewCharacter (characterClasses minion index runState.turnState True) minion
+                        )
+                        runState.playerMinions
                     )
-                    runState.playerMinions
-                )
-            , Html.div [ Html.Attributes.class "flex gap-medium" ]
-                (List.indexedMap
-                    (\index opponent ->
-                        viewCharacter (characterClasses opponent.minion index runState.turnState False) opponent.minion
+                ]
+            , Html.div []
+                [ viewCharacter [] runState.opponentCharacter.minion
+                , Html.div [ Html.Attributes.class "flex gap-medium" ]
+                    (List.indexedMap
+                        (\index minion ->
+                            viewCharacter (characterClasses minion index runState.turnState False) minion
+                        )
+                        runState.opponentMinions
                     )
-                    runState.opponentMinions
-                )
+                ]
             ]
         , viewDeckStatus runState.deck
         , viewDeckHand runState.deck

@@ -8,8 +8,10 @@ import Random exposing (Seed)
 
 
 type alias Run =
-    { playerMinions : List Minion
-    , opponentMinions : List Opponent
+    { playerCharacter : Minion
+    , playerMinions : List Minion
+    , opponentCharacter : Opponent
+    , opponentMinions : List Minion
     , turnState : TurnState
     , encounters : List Opponent
     , deck : Deck
@@ -35,7 +37,7 @@ playCard index run =
         ( newDeck, Just (Deck.Damage dmg) ) ->
             { run
                 | deck = newDeck
-                , opponentMinions = List.map (Opponent.updateMinion (Minion.damage dmg)) (List.take 1 run.opponentMinions) ++ List.drop 1 run.opponentMinions
+                , opponentMinions = List.map (Minion.damage dmg) (List.take 1 run.opponentMinions) ++ List.drop 1 run.opponentMinions
             }
 
         ( newDeck, Just (Deck.Summon minion) ) ->
@@ -53,8 +55,10 @@ tickMinions dt run =
     case run.turnState of
         Recovering ->
             { run
-                | playerMinions = List.map (Minion.tick dt) run.playerMinions
-                , opponentMinions = List.map (Opponent.updateMinion (Minion.tick dt)) run.opponentMinions
+                | playerCharacter = Minion.tick dt run.playerCharacter
+                , playerMinions = List.map (Minion.tick dt) run.playerMinions
+                , opponentCharacter = Opponent.updateMinion (Minion.tick dt) run.opponentCharacter
+                , opponentMinions = List.map (Minion.tick dt) run.opponentMinions
             }
 
         _ ->
@@ -102,19 +106,9 @@ setRewardState rewards run =
     { run | turnState = Reward rewards }
 
 
-getDeadOpponent : Run -> Maybe Opponent
-getDeadOpponent run =
-    run.opponentMinions
-        |> List.filter (Opponent.filterMinion (Minion.isAlive >> not))
-        |> List.head
-
-
 playerWipe : Run -> Bool
 playerWipe run =
-    (run.playerMinions
-        |> List.all (Minion.isAlive >> not)
-    )
-        || List.isEmpty run.playerMinions
+    run.playerCharacter |> Minion.isAlive |> not
 
 
 getReadyPlayerMinion : Run -> ( Run, Maybe ( Int, Minion ) )
@@ -150,14 +144,13 @@ getReadyOpposingMinion run =
     let
         getReady =
             run.opponentMinions
-                |> List.map .minion
                 |> List.indexedMap Tuple.pair
                 |> List.filter (\( _, minion ) -> Minion.isReady minion)
                 |> List.head
 
         resetCooldownAtIndex targetIndex index minion =
             if index == targetIndex then
-                Opponent.updateMinion Minion.resetCooldown minion
+                Minion.resetCooldown minion
 
             else
                 minion
@@ -174,18 +167,10 @@ getReadyOpposingMinion run =
             )
 
 
-
--- getReadyOpposingMinion : Run -> Maybe ( Int, Minion )
--- getReadyOpposingMinion run =
---     (run.opponentMinions |> List.map .minion |> List.indexedMap Tuple.pair)
---         |> List.filter (\( _, minion ) -> Minion.isReady minion)
---         |> List.head
-
-
 enemyWipe : Run -> Bool
 enemyWipe run =
-    case ( List.filter (.minion >> Minion.isAlive) run.opponentMinions, run.encounters ) of
-        ( [], [] ) ->
+    case ( run.opponentCharacter.minion |> Minion.isAlive |> not, run.encounters ) of
+        ( True, [] ) ->
             True
 
         _ ->
@@ -194,12 +179,22 @@ enemyWipe run =
 
 updateFirstPlayer : (Minion -> Minion) -> Run -> Run
 updateFirstPlayer f run =
-    { run | playerMinions = List.map f (List.take 1 run.playerMinions) ++ List.drop 1 run.playerMinions }
+    case run.playerMinions of
+        x :: xs ->
+            { run | playerMinions = f x :: xs }
+
+        [] ->
+            { run | playerCharacter = f run.playerCharacter }
 
 
 updateFirstOpponent : (Minion -> Minion) -> Run -> Run
 updateFirstOpponent f run =
-    { run | opponentMinions = List.map (Opponent.updateMinion f) (List.take 1 run.opponentMinions) ++ List.drop 1 run.opponentMinions }
+    case run.opponentMinions of
+        x :: xs ->
+            { run | opponentMinions = f x :: xs }
+
+        [] ->
+            { run | opponentCharacter = Opponent.updateMinion f run.opponentCharacter }
 
 
 setAttackingState : Run -> Run
@@ -225,20 +220,19 @@ advanceTurnState : Run -> Run
 advanceTurnState run =
     case run.turnState of
         Recovering ->
-            case getDeadOpponent run of
-                Just opponent ->
-                    let
-                        ( rewards, seed ) =
-                            Random.step (Opponent.generateLoot opponent) run.seed
-                    in
-                    if List.isEmpty rewards then
-                        nextEncounter run
+            if Minion.isAlive run.opponentCharacter.minion then
+                setAttackingState run
 
-                    else
-                        setRewardState rewards { run | seed = seed }
+            else
+                let
+                    ( rewards, seed ) =
+                        Random.step (Opponent.generateLoot run.opponentCharacter) run.seed
+                in
+                if List.isEmpty rewards then
+                    nextEncounter run
 
-                Nothing ->
-                    setAttackingState run
+                else
+                    setRewardState rewards { run | seed = seed }
 
         PlayerAttacking _ attack cooldown ->
             if Cooldown.isDone cooldown then
@@ -269,9 +263,8 @@ nextEncounter runState =
             { runState
                 | playerMinions = List.map Minion.resetCooldown runState.playerMinions
                 , opponentMinions =
-                    character
-                        :: runState.opponentMinions
-                        |> List.filter (.minion >> Minion.isAlive)
+                    []
+                , opponentCharacter = character
                 , encounters = List.drop 1 runState.encounters
                 , turnState = Recovering
             }
